@@ -26,5 +26,17 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	
+public:
+	//팰 이름
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName PalName;
+	//팰 일종류
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName WorkType;
+	//팰 일속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float WorkSpeed;
+	//팰 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UAnimMontage* WorkMontage;
 };

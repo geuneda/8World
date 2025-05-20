@@ -11,12 +11,7 @@ APal::APal()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//박스 메쉬(임시)
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("'/Engine/EngineMeshes/SkeletalCube.SkeletalCube'"));
-	if (tempMesh.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(tempMesh.Object);
-	}
+
 	
 }
 
