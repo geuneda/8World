@@ -12,9 +12,11 @@ ATree::ATree()
 
 	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
 	RootComponent = Box;
+	Box->SetBoxExtent(FVector(60,60,200));
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	Mesh->SetupAttachment(RootComponent);
+	Mesh->SetRelativeLocation(FVector(0,0,-170));
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh> tempMesh(TEXT("/Script/Engine.StaticMesh'/Game/Resources/Tree/Tree.Tree'"));
 	if (tempMesh.Succeeded())

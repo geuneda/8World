@@ -13,6 +13,7 @@ ARock::ARock()
 	PrimaryActorTick.bCanEverTick = true;
 
 	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
+	Box->SetBoxExtent(FVector(130,170,160));
 	RootComponent = Box;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));

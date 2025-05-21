@@ -24,7 +24,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// 스태틱 메시
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UStaticMeshComponent* Mesh;
 	// 충돌체
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UBoxComponent* Box;
 };
