@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
-#include "EightWorldProjectCharacter.generated.h"
+#include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -16,7 +16,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AEightWorldProjectCharacter : public ACharacter
+class APlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -45,7 +45,7 @@ class AEightWorldProjectCharacter : public ACharacter
 	UInputAction* LookAction;
 
 public:
-	AEightWorldProjectCharacter();
+	APlayerCharacter();
 	
 
 protected:
@@ -68,5 +68,10 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+public:
+	/** 플레이어 스탯 컴포넌트 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStatComp")
+	class UPlayerStatComp* PlayerStatComp;
 };
 
