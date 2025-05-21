@@ -23,6 +23,8 @@ ATree::ATree()
 	{
 		Mesh->SetStaticMesh(tempMesh.Object);
 	}
+
+	Tags.Add(FName("Tree"));
 }
 
 // Called when the game starts or when spawned

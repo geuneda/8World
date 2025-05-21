@@ -24,6 +24,8 @@ ARock::ARock()
 	{
 		Mesh->SetStaticMesh(tempMesh.Object);
 	}
+
+	Tags.Add(FName("Rock"));
 }
 
 // Called when the game starts or when spawned
