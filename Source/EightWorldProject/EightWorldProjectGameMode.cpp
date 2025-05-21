@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EightWorldProjectGameMode.h"
-#include "EightWorldProjectCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 AEightWorldProjectGameMode::AEightWorldProjectGameMode()
