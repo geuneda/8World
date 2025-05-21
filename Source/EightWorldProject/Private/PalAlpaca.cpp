@@ -3,6 +3,8 @@
 
 #include "PalAlpaca.h"
 
+#include "PalWorkComponent.h"
+
 // Sets default values
 APalAlpaca::APalAlpaca()
 {
@@ -16,6 +18,8 @@ APalAlpaca::APalAlpaca()
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-11.f), FRotator(0,-90,0));
 	}
+
+	PalworkComp = CreateDefaultSubobject<UPalWorkComponent>(TEXT("PalWorkComp"));
 	
 }
 
