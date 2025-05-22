@@ -20,15 +20,41 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-
+	//팰 메시
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UPalWorkComponent* PalworkComp;
+
+	//팰 모드 스위치 함수
+	void SwitchWildState();
+	void SwitchBattleState();
+	void SwitchWorkerState();
+	
+	//팰 Wild 모드 함수
+	void HandleWildPatrol();
+	void HandleWildPlayerHitToPal();
+	void HandleWildDetectPlayer();
+	void HandleWildChase();
+	void HandleWildAttack();
+	void HandleWildReturn();
+
+	//팰 Battle 모드 함수
+	void HandleBattleFollowPlayer();
+	void HandleBattleDetectTarget();
+	void HandleBattleChase();
+	void HandleBattleAttack();
+
+	//팰 Worker 모드 함수
+	void HandleWorkerIdle();
+	void HandleWorkerFindWork();
+	void HandleWorkerMovetoTarget();
+	void HandleWorkerWorking();
+	void HandleWorkerReturn();
 	
 };
