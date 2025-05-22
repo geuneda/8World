@@ -29,6 +29,26 @@ void UPlayerStatComp::BeginPlay()
 void UPlayerStatComp::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// 마나 리젠
+	RegenMPTimer += DeltaTime;
 	
+	if (RegenMPTimer >= RegenMPInterval)
+	{
+		RegenMP();
+		RegenMPTimer = 0;
+	}
+}
+
+void UPlayerStatComp::RegenMP()
+{
+	// 휴식중이 아니면 회복하지 않음.
+	if (!bIsRest) return;
+	
+	if (MP < MaxMP)
+	{
+		MP += 10;
+		FMath::Clamp(MP, 0, MaxMP);
+	}
 }
 

@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "InputActionValue.h"
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-struct FInputActionValue;
+class UPlayerAttackComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -44,6 +45,10 @@ class APlayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	/** Attack Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AttackAction;
+
 public:
 	APlayerCharacter();
 	
@@ -73,5 +78,18 @@ public:
 	/** 플레이어 스탯 컴포넌트 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStatComp")
 	class UPlayerStatComp* PlayerStatComp;
+
+	/** 플레이어 공격 컴포넌트 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerAttackComp")
+	class UPlayerAttackComponent* PlayerAttackComp;
+
+	/** 공격 입력 처리 */
+	void Attack(const FInputActionValue& Value);
+
+	/** 공격 입력 종료 처리 */
+	void StopAttack(const FInputActionValue& Value);
+
+	/** TakeDamage 재정의 */
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 };
 

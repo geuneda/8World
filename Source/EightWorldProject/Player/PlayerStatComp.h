@@ -23,17 +23,28 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	
 	// 플레이어
 	class APlayerCharacter* Player;
-
 	// 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HP)
 	float HP;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HP)
 	float MaxHP;
+	
 	// 기력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP)
 	float MP;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MaxMP;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP)
+	float MaxMP = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP)
+	float RegenMPInterval = 1.0f;
+	float RegenMPTimer;
+	
+	// 휴식중인지 여부
+	bool bIsRest;
+
+public:
+	void RegenMP();
 };
