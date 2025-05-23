@@ -40,9 +40,14 @@ APlayerCharacter::APlayerCharacter()
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	WalkSpeed = 300.f;
+	SprintSpeed = 800.f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	
+	// 달리기 상태 초기화
+	bIsSprinting = false;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -65,6 +70,12 @@ APlayerCharacter::APlayerCharacter()
 	if (attackInput.Succeeded())
 	{
 		AttackAction = attackInput.Object;
+	}
+	
+	ConstructorHelpers::FObjectFinder<UInputAction> sprintInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_Sprint.IA_Sprint'"));
+	if (sprintInput.Succeeded())
+	{
+		SprintAction = sprintInput.Object;
 	}
 
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
@@ -109,6 +120,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// Attacking
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Attack);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopAttack);
+		
+		// Sprinting
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Sprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
 	}
 	else
 	{
@@ -197,6 +212,63 @@ void APlayerCharacter::MainUIInit()
 
 	MainUI = Cast<UMainUI>(CreateWidget<UMainUI>(GetWorld(), MainUIWidget));
 	MainUI->AddToViewport();
+}
+
+// 달리기 입력 처리
+void APlayerCharacter::Sprint(const FInputActionValue& Value)
+{
+	// 마나가 충분한지 확인
+	if (PlayerStatComp && PlayerStatComp->GetMP() > 0)
+	{
+		bIsSprinting = true;
+		
+		// 달리기 속도로 변경
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		
+		// 휴식 상태 해제
+		PlayerStatComp->SetRestState(false);
+		
+		// 마나 소모 타이머 시작
+		GetWorldTimerManager().SetTimer(SprintManaTimerHandle, this, &APlayerCharacter::ConsumeManaForSprint, 1.0f, true, 0.0f);
+	}
+}
+
+// 달리기 입력 종료 처리
+void APlayerCharacter::StopSprint(const FInputActionValue& Value)
+{
+	if (bIsSprinting)
+	{
+		bIsSprinting = false;
+		
+		// 걷기 속도로 복귀
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		
+		// 휴식 상태로 변경
+		if (PlayerStatComp)
+		{
+			PlayerStatComp->SetRestState(true);
+		}
+		
+		// 마나 소모 타이머 중지
+		GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
+	}
+}
+
+// 달리기 마나 소모 처리
+void APlayerCharacter::ConsumeManaForSprint()
+{
+	if (PlayerStatComp && bIsSprinting)
+	{
+		// 마나 감소
+		float CurrentMP = PlayerStatComp->GetMP();
+		PlayerStatComp->SetMP(CurrentMP - 1.0f);
+		
+		// 마나가 0이 되면 달리기 중지
+		if (PlayerStatComp->GetMP() <= 0)
+		{
+			StopSprint(FInputActionValue());
+		}
+	}
 }
 
 // TakeDamage 재정의

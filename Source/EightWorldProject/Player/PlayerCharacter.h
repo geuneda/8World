@@ -49,6 +49,10 @@ class APlayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AttackAction;
 
+	/** Sprint Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SprintAction;
+
 public:
 	APlayerCharacter();
 	
@@ -65,6 +69,18 @@ protected:
 			
 
 protected:
+	/** 달리기 상태 */
+	bool bIsSprinting;
+
+	/** 달리기 속도 */
+	float SprintSpeed;
+
+	/** 걷기 속도 */
+	float WalkSpeed;
+
+	/** 마나 소모 타이머 핸들 */
+	FTimerHandle SprintManaTimerHandle;
+
 	virtual void BeginPlay() override;
 
 	virtual void NotifyControllerChanged() override;
@@ -91,6 +107,18 @@ public:
 
 	/** 공격 입력 종료 처리 */
 	void StopAttack(const FInputActionValue& Value);
+
+	/** 달리기 입력 처리 */
+	void Sprint(const FInputActionValue& Value);
+
+	/** 달리기 입력 종료 처리 */
+	void StopSprint(const FInputActionValue& Value);
+
+	/** 달리기 상태 확인 */
+	bool IsSprinting() const { return bIsSprinting; }
+
+	/** 달리기 마나 소모 처리 */
+	void ConsumeManaForSprint();
 
 	/** TakeDamage 재정의 */
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
