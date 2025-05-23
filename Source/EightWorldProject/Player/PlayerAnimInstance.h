@@ -37,6 +37,10 @@ public:
 	// 공격 타이밍 애님 노티파이
 	UFUNCTION()
 	void AnimNotify_AttackTiming();
+
+	// 점프 애니메이션 재생
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void PlayJumpMontage();
 	
 
 public:
@@ -44,7 +48,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	class UAnimMontage* AttackMontage;
 
-	// 속도
+	// 점프 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* JumpMontage;
+
+	// Movement 속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	float Speed;
 

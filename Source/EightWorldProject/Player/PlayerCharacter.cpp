@@ -12,6 +12,7 @@
 #include "PlayerAttackComponent.h"
 #include "PlayerStatComp.h"
 #include "InputActionValue.h"
+#include "PlayerAnimInstance.h"
 #include "EightWorldProject/UI/MainUI.h"
 #include "Engine/LocalPlayer.h"
 
@@ -39,7 +40,7 @@ APlayerCharacter::APlayerCharacter()
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = 300.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
@@ -96,7 +97,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
@@ -167,6 +168,16 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void APlayerCharacter::MyJump(const FInputActionValue& Value)
+{
+	bPressedJump = true;
+	JumpKeyHoldTime = 0.0f;
+
+	auto anim = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+
+	anim->PlayJumpMontage();
 }
 
 void APlayerCharacter::BeginPlay()
