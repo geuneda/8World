@@ -102,26 +102,30 @@ float ATree::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, ACo
 	float PreviousHealth = CurrentHealth;
 	CurrentHealth -= ActualDamage;
 	
-	// 체력이 아이템 스폰 간격만큼 감소했는지 확인
-	if (LastItemSpawnHealth - CurrentHealth >= ItemSpawnHealthInterval)
+	// ResourceManager에 데미지 알림
+	AResourceManager* ResourceManager = AResourceManager::GetInstance();
+	if (ResourceManager)
 	{
-		// 아이템 스폰
-		SpawnResourceItem();
-		
-		// 마지막 아이템 스폰 체력 업데이트
-		LastItemSpawnHealth = CurrentHealth;
-	}
-	
-	// 체력이 최소 체력 이하로 감소했는지 확인
-	if (CurrentHealth <= MinHealth)
-	{
-		// 비활성화
-		Deactivate();
-		
-		// ResourceManager에 비활성화 알림
-		AResourceManager* ResourceManager = AResourceManager::GetInstance();
-		if (ResourceManager)
+		// 체력이 아이템 스폰 간격만큼 감소했는지 확인
+		if (LastItemSpawnHealth - CurrentHealth >= ItemSpawnHealthInterval)
 		{
+			// 아이템 스폰 요청
+			FVector SpawnLocation = GetActorLocation();
+			SpawnLocation.X += FMath::RandRange(-50.0f, 50.0f);
+			SpawnLocation.Y += FMath::RandRange(-50.0f, 50.0f);
+			SpawnLocation.Z += 50.0f; // 약간 위에 스폰
+			
+			// ResourceManager를 통해 아이템 스폰
+			ResourceManager->SpawnResourceItem(ResourceID, SpawnLocation, FRotator::ZeroRotator);
+			
+			// 마지막 아이템 스폰 체력 업데이트
+			LastItemSpawnHealth = CurrentHealth;
+		}
+		
+		// 체력이 최소 체력 이하로 감소했는지 확인
+		if (CurrentHealth <= MinHealth)
+		{
+			// ResourceManager에 비활성화 요청
 			ResourceManager->DeactivateTree(this);
 		}
 	}
@@ -140,7 +144,7 @@ void ATree::Activate()
 	LastItemSpawnHealth = MaxHealth;
 	
 	// 콜리전 활성화
-	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	
 	// 메시 표시
 	Mesh->SetVisibility(true);
@@ -153,58 +157,8 @@ void ATree::Deactivate()
 	bIsActive = false;
 	
 	// 콜리전 비활성화
-	Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh->SetCollisionProfileName(TEXT("NoCollision"));
 	
 	// 메시 숨김
 	Mesh->SetVisibility(false);
-}
-
-// 아이템 스폰
-void ATree::SpawnResourceItem()
-{
-	// ResourceManager를 통해 아이템 스폰
-	AResourceManager* ResourceManager = AResourceManager::GetInstance();
-	if (!ResourceManager)
-	{
-		return;
-	}
-	
-	// ResourceDataManager를 통해 데이터 가져오기
-	UResourceDataManager* DataManager = UResourceDataManager::GetInstance();
-	if (DataManager)
-	{
-		// 자원 데이터 가져오기
-		FResourceData* ResourceData = DataManager->GetResourceData(ResourceID);
-		if (ResourceData)
-		{
-			// 아이템 스폰 위치 계산 (자원 주변에 랜덤하게 스폰)
-			FVector SpawnLocation = GetActorLocation();
-			SpawnLocation.X += FMath::RandRange(-50.0f, 50.0f);
-			SpawnLocation.Y += FMath::RandRange(-50.0f, 50.0f);
-			SpawnLocation.Z += 50.0f; // 약간 위에 스폰
-			
-			// 리소스 ID와 동일한 아이템 ID를 가진 아이템 스폰
-			FName ItemID = ResourceID; // 리소스 ID와 동일한 아이템 ID 사용
-			
-			// 아이템 데이터 확인
-			FItemData* ItemData = DataManager->GetItemData(ItemID);
-			if (ItemData)
-			{
-				// 아이템 스폰
-				ResourceManager->SpawnResourceItem(ItemID, SpawnLocation, FRotator::ZeroRotator);
-				UE_LOG(LogTemp, Warning, TEXT("[Tree] 아이템 스폰: %s"), *ItemID.ToString());
-				return;
-			}
-		}
-	
-		// 데이터가 없는 경우 기본 아이템 스폰
-		FVector SpawnLocation = GetActorLocation();
-		SpawnLocation.X += FMath::RandRange(-50.0f, 50.0f);
-		SpawnLocation.Y += FMath::RandRange(-50.0f, 50.0f);
-		SpawnLocation.Z += 50.0f; // 약간 위에 스폰
-	
-		// 기본 아이템 스폰
-		ResourceManager->SpawnResourceItem(ResourceID, SpawnLocation, FRotator::ZeroRotator);
-		UE_LOG(LogTemp, Warning, TEXT("[Tree] 기본 아이템 스폰: %s"), *ResourceID.ToString());
-	}
 }
