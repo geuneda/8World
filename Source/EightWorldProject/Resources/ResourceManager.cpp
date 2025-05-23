@@ -76,11 +76,13 @@ void AResourceManager::DeactivateRock(ARock* Rock)
 {
 	if (Rock && Rock->IsActive())
 	{
-		// 비활성화
+		// 비활성화 상태 설정
 		Rock->Deactivate();
 		
 		// 재활성화 타이머 설정
 		DeactivatedRocks.Add(Rock, RespawnTime);
+		
+		UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] Rock 비활성화: %s"), *Rock->GetName());
 	}
 }
 
@@ -114,11 +116,13 @@ void AResourceManager::DeactivateTree(ATree* Tree)
 {
 	if (Tree && Tree->IsActive())
 	{
-		// 비활성화
+		// 비활성화 상태 설정
 		Tree->Deactivate();
 		
 		// 재활성화 타이머 설정
 		DeactivatedTrees.Add(Tree, RespawnTime);
+		
+		UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] Tree 비활성화: %s"), *Tree->GetName());
 	}
 }
 

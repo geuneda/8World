@@ -39,10 +39,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Resource")
 	bool IsActive() const { return bIsActive; }
 
-	// 아이템 스폰
-	UFUNCTION(BlueprintCallable, Category = "Resource")
-	void SpawnResourceItem();
-
 	// 리소스 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
 	FName ResourceID;
