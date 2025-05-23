@@ -20,13 +20,9 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	
 	// 플레이어
 	class APlayerCharacter* Player;
+	
 	// 체력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HP)
 	float HP;
@@ -45,6 +41,37 @@ public:
 	// 휴식중인지 여부
 	bool bIsRest;
 
-public:
+public:	
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	// HP Getter/Setter
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	float GetHP() const { return HP; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetHP(float NewHP);
+	
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	float GetMaxHP() const { return MaxHP; }
+	
+	// MP Getter/Setter
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	float GetMP() const { return MP; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetMP(float NewMP);
+	
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	float GetMaxMP() const { return MaxMP; }
+	
+	// MP Regeneration
+	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void RegenMP();
+	
+	// Rest State
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	bool IsResting() const { return bIsRest; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetRestState(bool bNewRestState) { bIsRest = bNewRestState; }
 };

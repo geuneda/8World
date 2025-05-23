@@ -4,6 +4,8 @@
 #include "PlayerStatComp.h"
 
 #include "PlayerCharacter.h"
+#include "EightWorldProject/UI/MainUI.h"
+#include "EightWorldProject/UI/MPUI.h"
 
 // Sets default values for this component's properties
 UPlayerStatComp::UPlayerStatComp()
@@ -20,8 +22,9 @@ void UPlayerStatComp::BeginPlay()
 
 	Player = Cast<APlayerCharacter>(GetOwner());
 
-	HP = MaxHP;
-	MP = MaxMP;
+	// Initialize HP and MP to their maximum values
+	SetHP(MaxHP);
+	SetMP(MaxMP);
 }
 
 
@@ -40,15 +43,26 @@ void UPlayerStatComp::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	}
 }
 
+void UPlayerStatComp::SetHP(float NewHP)
+{
+	HP = FMath::Clamp(NewHP, 0.0f, MaxHP);
+}
+
+void UPlayerStatComp::SetMP(float NewMP)
+{
+	MP = FMath::Clamp(NewMP, 0.0f, MaxMP);
+
+	Player->MainUI->MPUI->SetMP(GetMP(), GetMaxMP());
+}
+
 void UPlayerStatComp::RegenMP()
 {
 	// 휴식중이 아니면 회복하지 않음.
-	if (!bIsRest) return;
+	if (!IsResting()) return;
 	
-	if (MP < MaxMP)
+	if (GetMP() < GetMaxMP())
 	{
-		MP += 10;
-		FMath::Clamp(MP, 0, MaxMP);
+		SetMP(GetMP() + 10);
 	}
 }
 

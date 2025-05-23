@@ -102,7 +102,7 @@ void UPlayerAnimInstance::PlayAttackMontage()
 		UE_LOG(LogTemp, Warning, TEXT("[AnimInstance] 몽타주 재생 시작"));
 		Montage_Play(AttackMontage, 1.0f);
 		UE_LOG(LogTemp, Warning, TEXT("[AnimInstance] 몽타주 재생 완료"));
-		PlayerCharacter->PlayerStatComp->bIsRest = false;
+		PlayerCharacter->PlayerStatComp->SetRestState(false);
 	}
 	else
 	{
@@ -121,7 +121,7 @@ void UPlayerAnimInstance::StopAttackMontage()
 	
 	// 현재 재생 중인 몽타주 중지
 	Montage_Stop(0.25f, AttackMontage);
-	PlayerCharacter->PlayerStatComp->bIsRest = true;
+	PlayerCharacter->PlayerStatComp->SetRestState(true);
 }
 
 // 공격 애니메이션 재생 중인지 확인

@@ -12,6 +12,7 @@
 #include "PlayerAttackComponent.h"
 #include "PlayerStatComp.h"
 #include "InputActionValue.h"
+#include "EightWorldProject/UI/MainUI.h"
 #include "Engine/LocalPlayer.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -63,6 +64,12 @@ APlayerCharacter::APlayerCharacter()
 	if (attackInput.Succeeded())
 	{
 		AttackAction = attackInput.Object;
+	}
+
+	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
+	if (mainUIWidget.Succeeded())
+	{
+		MainUIWidget = mainUIWidget.Class;
 	}
 }
 
@@ -162,6 +169,25 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void APlayerCharacter::BeginPlay()
+{
+	// 컴포넌트보다 먼저 UI 생성
+	MainUIInit();
+	
+	Super::BeginPlay();
+}
+
+void APlayerCharacter::MainUIInit()
+{
+	auto pc = Cast<APlayerController>(GetController());
+	if (!pc) return;
+
+	if (!MainUIWidget) return;
+
+	MainUI = Cast<UMainUI>(CreateWidget<UMainUI>(GetWorld(), MainUIWidget));
+	MainUI->AddToViewport();
+}
+
 // TakeDamage 재정의
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -171,11 +197,11 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	// 플레이어 스탯 컴포넌트가 있다면 체력 감소
 	if (PlayerStatComp)
 	{
-		PlayerStatComp->HP -= ActualDamage;
-		PlayerStatComp->HP = FMath::Clamp(PlayerStatComp->HP, 0.0f, PlayerStatComp->MaxHP);
+		PlayerStatComp->SetHP(PlayerStatComp->GetHP()-ActualDamage);
+		PlayerStatComp->SetHP(FMath::Clamp(PlayerStatComp->GetHP(), 0.0f, PlayerStatComp->GetMaxHP()));
 		
 		// 체력이 0 이하면 사망 처리 (추후 구현)
-		if (PlayerStatComp->HP <= 0.0f)
+		if (PlayerStatComp->GetHP() <= 0.0f)
 		{
 			// 사망 처리 로직
 		}
