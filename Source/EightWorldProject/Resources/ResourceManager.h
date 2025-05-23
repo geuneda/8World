@@ -73,7 +73,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ResourceManager")
 	static AResourceManager* GetInstance();
 
-private:
 	// 돌 오브젝트 풀
 	UPROPERTY()
 	TArray<ARock*> RockPool;
@@ -81,6 +80,8 @@ private:
 	// 나무 오브젝트 풀
 	UPROPERTY()
 	TArray<ATree*> TreePool;
+	
+private:
 
 	// 비활성화된 돌 오브젝트와 재활성화 시간
 	UPROPERTY()
