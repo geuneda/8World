@@ -60,9 +60,12 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	void MyJump(const FInputActionValue& Value);
 			
 
 protected:
+	virtual void BeginPlay() override;
 
 	virtual void NotifyControllerChanged() override;
 
@@ -91,5 +94,18 @@ public:
 
 	/** TakeDamage 재정의 */
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+
+public: // ---------------------------UI_FUNC-------------------------------------
+
+	void MainUIInit();
+
+public: // ---------------------------UI-------------------------------------
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UMainUI* MainUI;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UMainUI> MainUIWidget;
+
 };
 

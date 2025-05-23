@@ -29,38 +29,19 @@ void UPlayerAttackComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] BeginPlay 호출"));
-	
 	// 플레이어 캐릭터 참조 가져오기
 	PlayerCharacter = Cast<APlayerCharacter>(GetOwner());
 	
 	if (!PlayerCharacter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("[Attack] 오류: PlayerCharacter 가져오기 실패"));
 		return;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] PlayerCharacter 가져오기 성공: %s"), *PlayerCharacter->GetName());
 	
 	// 플레이어 스탯 컴포넌트 참조 가져오기
 	PlayerStatComp = PlayerCharacter->PlayerStatComp;
 	
-	if (!PlayerStatComp)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Attack] 오류: PlayerStatComp 가져오기 실패"));
-	}
-	
 	// 플레이어 애니메이션 인스턴스 가져오기
 	PlayerAnimInstance = Cast<UPlayerAnimInstance>(PlayerCharacter->GetMesh()->GetAnimInstance());
-	
-	if (!PlayerAnimInstance)
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Attack] 오류: PlayerAnimInstance 가져오기 실패"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] PlayerAnimInstance 가져오기 성공"));
-	}
 	
 	// 공격 콜라이더를 플레이어 캐릭터에 부착
 	AttackCollider->AttachToComponent(PlayerCharacter->GetMesh(), 
@@ -68,7 +49,6 @@ void UPlayerAttackComponent::BeginPlay()
 		FName("AttackSocket")); // 소켓에 부착
 	
 	AttackCollider->SetRelativeLocation(FVector(0, 100, 0));
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] 공격 콜라이더 설정 완료"));
 }
 
 // 매 프레임 호출
@@ -96,7 +76,6 @@ void UPlayerAttackComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 // 공격 시작
 void UPlayerAttackComponent::StartAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] StartAttack 호출"));
 	
 	// 공격 버튼을 누르고 있는 상태로 설정
 	bIsAttackButtonPressed = true;
@@ -104,51 +83,35 @@ void UPlayerAttackComponent::StartAttack()
 	// 공격 중이면 다음 공격을 위해 상태만 설정하고 리턴
 	if (bIsAttacking)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 이미 공격 중, 다음 공격 준비"));
 		return;
 	}
 	
 	// 공격 가능 여부 확인
 	if (!CanAttack())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 공격 불가: CanAttack() 검사 실패"));
 		return;
 	}
 	
 	// 공격 상태 설정
 	bIsAttacking = true;
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] 공격 상태 설정 완료"));
 	
 	// 기력 소모
 	if (PlayerStatComp)
 	{
-		PlayerStatComp->MP -= AttackStaminaCost;
-		PlayerStatComp->MP = FMath::Clamp(PlayerStatComp->MP, 0.0f, PlayerStatComp->MaxMP);
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 기력 소모 완료: %f"), PlayerStatComp->MP);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Attack] 오류: PlayerStatComp가 없음"));
+		PlayerStatComp->SetMP(PlayerStatComp->GetMP() - AttackStaminaCost);
+		PlayerStatComp->SetMP(FMath::Clamp(PlayerStatComp->GetMP(), 0.0f, PlayerStatComp->GetMaxMP()));
 	}
 	
 	// 애니메이션 인스턴스를 통해 공격 몽타주 재생
 	if (PlayerAnimInstance)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 애니메이션 인스턴스 호출 시작"));
 		PlayerAnimInstance->PlayAttackMontage();
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 애니메이션 인스턴스 호출 완료"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[Attack] 오류: PlayerAnimInstance가 없음"));
 	}
 }
 
 // 공격 중지
 void UPlayerAttackComponent::StopAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] StopAttack 호출"));
-	
 	// 공격 버튼 해제 상태로 설정
 	bIsAttackButtonPressed = false;
 
@@ -190,7 +153,7 @@ bool UPlayerAttackComponent::CanAttack() const
 	}
 	
 	// 기력 확인
-	if (PlayerStatComp->MP < AttackStaminaCost)
+	if (PlayerStatComp->GetMP() < AttackStaminaCost)
 	{
 		return false;
 	}
@@ -201,33 +164,27 @@ bool UPlayerAttackComponent::CanAttack() const
 // 공격 애니메이션 종료 후 다음 공격 시작
 void UPlayerAttackComponent::StartNextAttack()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] StartNextAttack 호출"));
 	
 	// 공격 가능 여부 확인
 	if (!CanAttack())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 다음 공격 불가: CanAttack() 검사 실패"));
 		return;
 	}
 	
 	// 공격 상태 설정
 	bIsAttacking = true;
-	UE_LOG(LogTemp, Warning, TEXT("[Attack] 다음 공격 상태 설정 완료"));
 	
 	// 기력 소모
 	if (PlayerStatComp)
 	{
-		PlayerStatComp->MP -= AttackStaminaCost;
-		PlayerStatComp->MP = FMath::Clamp(PlayerStatComp->MP, 0.0f, PlayerStatComp->MaxMP);
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 다음 공격 기력 소모 완료: %f"), PlayerStatComp->MP);
+		PlayerStatComp->SetMP(PlayerStatComp->GetMP() - AttackStaminaCost);
+		PlayerStatComp->SetMP(FMath::Clamp(PlayerStatComp->GetMP(), 0.0f, PlayerStatComp->GetMaxMP()));
 	}
 	
 	// 애니메이션 인스턴스를 통해 공격 몽타주 재생
 	if (PlayerAnimInstance)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 다음 공격 애니메이션 재생 시작"));
 		PlayerAnimInstance->PlayAttackMontage();
-		UE_LOG(LogTemp, Warning, TEXT("[Attack] 다음 공격 애니메이션 재생 완료"));
 	}
 }
 
