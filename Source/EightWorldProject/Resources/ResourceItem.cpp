@@ -23,12 +23,7 @@ AResourceItem::AResourceItem()
 	SphereCollider = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollider"));
 	SphereCollider->SetupAttachment(Mesh);
 	SphereCollider->SetSphereRadius(PickupRadius);
-	
-	// 충돌 설정
-	SphereCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SphereCollider->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	SphereCollider->SetCollisionResponseToAllChannels(ECR_Ignore);
-	SphereCollider->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereCollider->SetCollisionProfileName(TEXT("Item"));
 	
 	// 오버랩 이벤트 바인딩
 	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AResourceItem::OnOverlapBegin);

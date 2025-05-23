@@ -19,9 +19,7 @@ ATree::ATree()
 	Box->SetBoxExtent(FVector(50.0f, 50.0f, 150.0f));
 	
 	// 충돌 설정
-	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Box->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-	Box->SetCollisionResponseToAllChannels(ECR_Block);
+	Box->SetCollisionProfileName(TEXT("Resource"));
 
 	// 리소스 ID 설정
 	ResourceID = TEXT("Tree");

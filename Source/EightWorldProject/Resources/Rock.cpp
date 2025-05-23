@@ -20,9 +20,7 @@ ARock::ARock()
 	Box->SetBoxExtent(FVector(100, 100, 100));
 	
 	// 충돌 설정
-	Box->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Box->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-	Box->SetCollisionResponseToAllChannels(ECR_Block);
+	Box->SetCollisionProfileName(TEXT("Resource"));
 
 	// 리소스 ID 설정
 	ResourceID = TEXT("Rock");
