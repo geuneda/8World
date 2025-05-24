@@ -105,7 +105,27 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UAnimMontage* WorkMontage;
 
+	//팰 모드 구분
+	bool bIsWildMode = false;
+	bool bIsBattleMode = false;
+	bool bIsWorkerMode = false;
 
+	//팰 작업중 여부
+	bool bIsWorking = false;
+
+	//팰 작업중 get set
+	virtual bool GetPalIsWorking() const { return bIsWorking; }
+	virtual void SetPalIsWorking(bool IsWorking);
+	
+	//팰 모드 Set함수
+	virtual void SetPalMode(EPalMode Mode);
+
+	//팰 모드별 상태 Set함수
+	virtual void SetPalWildState(EPalWildState State);
+	virtual void SetPalBattleState(EPalBattleState State);
+	virtual void SetPalWorkerState(EPalWorkerState State);
+	
+	
 	//현재 상태 업데이트
 	virtual void UpdateFSM(float DeltaTime);
 };

@@ -33,10 +33,39 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USphereComponent* SphereComp;
 
-	//감지된 Actors 담기
+	//TimerHandle 자원, 팰
+	FTimerHandle SearchResourceTimerHandle;
+	FTimerHandle SearchPalTimerHandle;
+	
+	//TimerHandle 쉬고있는 자원들, 팰 체크
+	FTimerHandle CheckRestResourceTimerHandle;
+	FTimerHandle CheckRestPalTimerHandle;
+	
+	//감지된 Actors 담기 자원, 팰
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	TArray<AActor*> DetectedActors;
+	TArray<AActor*> DetectedResourceActors;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TArray<AActor*> DetectedPalWorkerActors;
 
+	//팰이 작업중이지 않은 자원, 팰 담는 배열
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TArray<AActor*> RestResourceActors;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TArray<AActor*> RestPalActors;
+
+	//초기 Resource 찾아 저장하는 함수
+	UFUNCTION()
+	void SearchAllResources();
+	//초기 PalWorker 찾아 저장하는 함수
+	UFUNCTION()
+	void SearchAllPalWorkers();
+
+	//주기적으로 쉬고 있는 자원, 팰 체크 함수
+	UFUNCTION()
+	void CheckRestResources();
+	UFUNCTION()
+	void CheckRestPals();
+	
 	//Overlap 이벤트
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

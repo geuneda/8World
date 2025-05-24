@@ -5,6 +5,9 @@
 
 #include "PalWorkComponent.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(PalLog, Log, All);
+DEFINE_LOG_CATEGORY(PalLog);
+
 // Sets default values
 APalAlpaca::APalAlpaca()
 {
@@ -27,7 +30,25 @@ APalAlpaca::APalAlpaca()
 void APalAlpaca::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//팰 Worker모드 시작 (임시)
+	SetPalMode(EPalMode::Worker);
 	
+	//팰 현재 모드 출력
+	// const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EPalMode"), true);
+	// if (EnumPtr)
+	// {
+	// 	FString EnumName = EnumPtr->GetNameStringByValue((int64)PalMode);
+	// 	UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, BeginPlay] EPalMode : %s"), *EnumName);
+	// }
+	
+	//팰 모드별 상태 초기화
+	SetPalWildState(EPalWildState::Patrol);
+	SetPalBattleState(EPalBattleState::FollowPlayer);
+	SetPalWorkerState(EPalWorkerState::Idle);
+
+	//팰 작업중 여부
+	bIsWorking = false;
 }
 
 // Called every frame
@@ -125,6 +146,7 @@ void APalAlpaca::SwitchWorkerState()
 
 void APalAlpaca::HandleWildPatrol()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWildPatrol] WildState : Patrol"));
 }
 
 void APalAlpaca::HandleWildPlayerHitToPal()
@@ -149,6 +171,7 @@ void APalAlpaca::HandleWildReturn()
 
 void APalAlpaca::HandleBattleFollowPlayer()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleBattleFollowPlayer] BattleState : FollowPlayer"));
 }
 
 void APalAlpaca::HandleBattleDetectTarget()
@@ -165,6 +188,7 @@ void APalAlpaca::HandleBattleAttack()
 
 void APalAlpaca::HandleWorkerIdle()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerIdle] WorkerState : Idle"));
 }
 
 void APalAlpaca::HandleWorkerFindWork()
@@ -183,3 +207,65 @@ void APalAlpaca::HandleWorkerReturn()
 {
 }
 
+void APalAlpaca::SetPalMode(EPalMode Mode)
+{
+	Super::SetPalMode(Mode);
+
+	if (Mode == EPalMode::Wild)
+	{
+		PalMode = EPalMode::Wild;
+		
+		bIsWildMode = true;
+		bIsBattleMode = false;
+		bIsWorkerMode = false;
+	}
+	else if (Mode == EPalMode::Battle)
+	{
+		PalMode = EPalMode::Battle;
+		
+		bIsWildMode = false;
+		bIsBattleMode = true;
+		bIsWorkerMode = false;
+	}
+	else if (Mode == EPalMode::Worker)
+	{
+		PalMode = EPalMode::Worker;
+		
+		bIsWildMode = false;
+		bIsBattleMode = false;
+		bIsWorkerMode = true;
+	}
+}
+
+void APalAlpaca::SetPalWildState(EPalWildState State)
+{
+	Super::SetPalWildState(State);
+
+	PalWildState = State;
+}
+
+void APalAlpaca::SetPalBattleState(EPalBattleState State)
+{
+	Super::SetPalBattleState(State);
+
+	PalBattleState = State;
+}
+
+void APalAlpaca::SetPalWorkerState(EPalWorkerState State)
+{
+	Super::SetPalWorkerState(State);
+
+	PalWorkerState = State;
+}
+
+bool APalAlpaca::GetPalIsWorking() const
+{
+	return Super::GetPalIsWorking();
+}
+
+void APalAlpaca::SetPalIsWorking(bool IsWorking)
+{
+	Super::SetPalIsWorking(IsWorking);
+
+	bIsWorking = IsWorking;
+}

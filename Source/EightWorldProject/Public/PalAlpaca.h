@@ -31,6 +31,19 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UPalWorkComponent* PalworkComp;
 
+	//팰 모드 Set함수
+	virtual void SetPalMode(EPalMode Mode) override;
+
+	//팰 모드별 상태 Set함수
+	virtual void SetPalWildState(EPalWildState State) override;
+	virtual void SetPalBattleState(EPalBattleState State) override;
+	virtual void SetPalWorkerState(EPalWorkerState State) override;
+
+	//팰 작업중 get set
+	UFUNCTION(BlueprintCallable, Category = "Pal")
+	virtual bool GetPalIsWorking() const override;
+	virtual void SetPalIsWorking(bool IsWorking) override;
+	
 	//팰 모드 스위치 함수
 	void SwitchWildState();
 	void SwitchBattleState();

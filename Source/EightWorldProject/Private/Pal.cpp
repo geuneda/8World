@@ -3,6 +3,8 @@
 
 #include "Pal.h"
 
+
+
 // Sets default values
 APal::APal()
 {
@@ -47,6 +49,27 @@ void APal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+
+void APal::SetPalIsWorking(bool IsWorking)
+{
+}
+
+void APal::SetPalMode(EPalMode Mode)
+{
+}
+
+void APal::SetPalWildState(EPalWildState State)
+{
+}
+
+void APal::SetPalBattleState(EPalBattleState State)
+{
+}
+
+void APal::SetPalWorkerState(EPalWorkerState State)
+{
 }
 
 void APal::UpdateFSM(float DeltaTime)
