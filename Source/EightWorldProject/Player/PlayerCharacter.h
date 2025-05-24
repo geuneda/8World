@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "InputActionValue.h"
+#include "../Inventory/InventoryComponent.h"
+#include "../Inventory/InventoryWidget.h"
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -52,6 +54,10 @@ class APlayerCharacter : public ACharacter
 	/** Sprint Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SprintAction;
+
+	/** Inventory Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* InventoryAction;
 
 public:
 	APlayerCharacter();
@@ -102,6 +108,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerAttackComp")
 	class UPlayerAttackComponent* PlayerAttackComp;
 
+	/** 아이템 습득 처리 */
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void PickupItem(class AResourceItem* Item);
+
 	/** 공격 입력 처리 */
 	void Attack(const FInputActionValue& Value);
 
@@ -134,6 +144,22 @@ public: // ---------------------------UI-------------------------------------
 	class UMainUI* MainUI;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<class UMainUI> MainUIWidget;
+
+	// 인벤토리 UI 위젯 클래스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UInventoryWidget> InventoryWidgetClass;
+
+	// 인벤토리 UI 위젯 인스턴스
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	class UInventoryWidget* InventoryWidget;
+
+	// 인벤토리 UI 표시/숨김 처리
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ToggleInventory();
+
+	// 인벤토리 컴포넌트
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	class UInventoryComponent* InventoryComponent;
 
 };
 

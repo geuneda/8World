@@ -13,8 +13,11 @@
 #include "PlayerStatComp.h"
 #include "InputActionValue.h"
 #include "PlayerAnimInstance.h"
+#include "EightWorldProject/Resources/ResourceItem.h"
 #include "EightWorldProject/UI/MainUI.h"
 #include "Engine/LocalPlayer.h"
+#include "../Inventory/InventoryComponent.h"
+#include "../Inventory/InventoryWidget.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -65,6 +68,9 @@ APlayerCharacter::APlayerCharacter()
 	
 	// 플레이어 공격 컴포넌트 생성
 	PlayerAttackComp = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("PlayerAttackComp"));
+	
+	// 인벤토리 컴포넌트 생성
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
 	ConstructorHelpers::FObjectFinder<UInputAction> attackInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_Attack.IA_Attack'"));
 	if (attackInput.Succeeded())
@@ -76,6 +82,12 @@ APlayerCharacter::APlayerCharacter()
 	if (sprintInput.Succeeded())
 	{
 		SprintAction = sprintInput.Object;
+	}
+	
+	ConstructorHelpers::FObjectFinder<UInputAction> inventoryInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_Inventory.IA_Inventory'"));
+	if (inventoryInput.Succeeded())
+	{
+		InventoryAction = inventoryInput.Object;
 	}
 
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
@@ -105,11 +117,10 @@ void APlayerCharacter::NotifyControllerChanged()
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerCharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::MyJump);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
@@ -124,6 +135,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// Sprinting
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Sprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
+		
+		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
 	}
 	else
 	{
@@ -201,6 +214,16 @@ void APlayerCharacter::BeginPlay()
 	MainUIInit();
 	
 	Super::BeginPlay();
+	
+	// 인벤토리 UI 생성
+	if (InventoryWidgetClass)
+	{
+		InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryWidgetClass);
+		if (InventoryWidget)
+		{
+			InventoryWidget->InitializeInventory(InventoryComponent);
+		}
+	}
 }
 
 void APlayerCharacter::MainUIInit()
@@ -291,4 +314,57 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	}
 
 	return ActualDamage;
+}
+
+void APlayerCharacter::PickupItem(AResourceItem* Item)
+{
+	if (!Item || !InventoryComponent)
+	{
+		return;
+	}
+	
+	// 아이템을 인벤토리에 추가
+	bool bAdded = InventoryComponent->AddItem(Item->ResourceID, Item->Quantity);
+	
+	// 인벤토리에 추가 성공하면 아이템 제거
+	if (bAdded)
+	{
+		Item->Destroy();
+	}
+	else
+	{
+		// 인벤토리에 추가 실패시 에러 로그 출력
+		UE_LOG(LogTemplateCharacter, Error, TEXT("인벤토리에 추가 실패"));
+	}
+}
+
+void APlayerCharacter::ToggleInventory()
+{
+	if (InventoryWidget)
+	{
+		if (InventoryWidget->IsInViewport())
+		{
+			InventoryWidget->RemoveFromParent();
+			
+			// 마우스 커서 해제 및 게임 입력 모드로 변경
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			if (PC)
+			{
+				PC->SetInputMode(FInputModeGameOnly());
+				PC->bShowMouseCursor = false;
+			}
+		}
+		else
+		{
+			InventoryWidget->AddToViewport();
+			
+			// 마우스 커서 표시 및 UI 입력 모드로 변경
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			if (PC)
+			{
+				PC->SetInputMode(FInputModeGameAndUI());
+				PC->bShowMouseCursor = true;
+			}
+		}
+	}
 }
