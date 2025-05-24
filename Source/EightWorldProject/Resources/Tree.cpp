@@ -200,3 +200,9 @@ AResourceManager* ATree::GetResourceManager()
 	
 	return GameMode->GetResourceManager();
 }
+
+// 작업 중 상태 설정
+void ATree::SetIsBeingWorkedOn(bool bInIsBeingWorkedOn)
+{
+	bIsBeingWorkedOn = bInIsBeingWorkedOn;
+}

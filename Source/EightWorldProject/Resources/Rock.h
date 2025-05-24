@@ -39,6 +39,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Resource")
 	bool IsActive() const { return bIsActive; }
 
+	// 작업 중인지 확인
+	UFUNCTION(BlueprintCallable, Category = "Resource")
+	bool IsBeingWorkedOn() const { return bIsBeingWorkedOn; }
+
+	// 작업 중 상태 설정
+	UFUNCTION(BlueprintCallable, Category = "Resource")
+	void SetIsBeingWorkedOn(bool bInIsBeingWorkedOn);
+
 	// 리소스 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
 	FName ResourceID;
@@ -71,6 +79,9 @@ public:
 private:
 	// 활성화 상태
 	bool bIsActive = true;
+
+	// 작업 중인지 여부 (팰이 작업 중인지 확인용)
+	bool bIsBeingWorkedOn = false;
 
 	// 마지막 아이템 스폰 체력
 	float LastItemSpawnHealth;
