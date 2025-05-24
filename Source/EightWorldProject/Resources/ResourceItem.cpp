@@ -78,12 +78,10 @@ void AResourceItem::Pickup(AActor* Collector)
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(Collector);
 	if (PlayerCharacter)
 	{
-		// 인벤토리에 아이템 추가 (추후 구현)
-		// 현재는 디버그 메시지만 출력
-		UE_LOG(LogTemp, Display, TEXT("아이템 획득 : %s 수량 : %d"), *ResourceID.ToString(), Quantity);
+		// 플레이어 캐릭터의 PickupItem 함수 호출
+		PlayerCharacter->PickupItem(this);
 		
-		// 아이템 파괴
-		Destroy();
+		UE_LOG(LogTemp, Display, TEXT("아이템 획득 시도 : %s 수량 : %d"), *ResourceID.ToString(), Quantity);
 	}
 }
 

@@ -7,6 +7,7 @@
 #include "TreeItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "../Public/PWGameMode.h"
 
 AResourceManager* AResourceManager::Instance = nullptr;
 
@@ -22,20 +23,11 @@ void AResourceManager::BeginPlay()
 	// 싱글톤 인스턴스 설정
 	Instance = this;
 	
-	// 리소스 데이터 관리자 초기화
-	ResourceDataManager = UResourceDataManager::GetInstance();
+	// 리소스 데이터 관리자 가져오기
+	ResourceDataManager = GetResourceDataManager();
 	
-	// 데이터 테이블 로드
-	if (ResourceDataManager)
-	{
-		ResourceDataManager->LoadResourceDataTable(ResourceDataTablePath);
-		ResourceDataManager->LoadItemDataTable(ItemDataTablePath);
-		UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] 데이터 테이블 로드 완료"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("[ResourceManager] 리소스 데이터 관리자 초기화 실패"));
-	}
+	UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] BeginPlay: ResourceDataManager %s"), 
+		ResourceDataManager ? TEXT("가져오기 성공") : TEXT("가져오기 실패"));
 }
 
 void AResourceManager::Tick(float DeltaTime)
@@ -129,13 +121,13 @@ void AResourceManager::DeactivateTree(ATree* Tree)
 // 아이템 스폰
 AResourceItem* AResourceManager::SpawnResourceItem(FName ResourceID, const FVector& Location, const FRotator& Rotation)
 {
-	// 리소스 데이터 관리자가 없으면 초기화
+	// 리소스 데이터 관리자가 없으면 가져오기 시도
 	if (!ResourceDataManager)
 	{
-		ResourceDataManager = UResourceDataManager::GetInstance();
+		ResourceDataManager = GetResourceDataManager();
 		if (!ResourceDataManager)
 		{
-			UE_LOG(LogTemp, Error, TEXT("[ResourceManager] SpawnResourceItem: 리소스 데이터 관리자 없음"));
+			UE_LOG(LogTemp, Error, TEXT("[ResourceManager] SpawnResourceItem: 리소스 데이터 관리자 가져오기 실패"));
 			return nullptr;
 		}
 	}
@@ -329,4 +321,31 @@ bool AResourceManager::IsTreeInPool(ATree* Tree) const
 	}
 	
 	return TreePool.Contains(Tree);
+}
+
+// PWGameMode에서 ResourceDataManager 가져오기
+UResourceDataManager* AResourceManager::GetResourceDataManager()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ResourceManager] GetResourceDataManager: World를 찾을 수 없습니다."));
+		return nullptr;
+	}
+	
+	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
+	if (!GameMode)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ResourceManager] GetResourceDataManager: PWGameMode를 찾을 수 없습니다."));
+		return nullptr;
+	}
+	
+	UResourceDataManager* DataManager = GameMode->GetResourceDataManager();
+	if (!DataManager)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[ResourceManager] GetResourceDataManager: ResourceDataManager가 없습니다."));
+		return nullptr;
+	}
+	
+	return DataManager;
 }

@@ -102,6 +102,9 @@ private:
 	// 자원 데이터 관리자 참조
 	UPROPERTY()
 	UResourceDataManager* ResourceDataManager;
+	
+	// PWGameMode에서 ResourceDataManager 가져오기
+	UResourceDataManager* GetResourceDataManager();
 
 	// 자원 데이터 테이블 경로
 	UPROPERTY(EditAnywhere, Category = "ResourceManager")

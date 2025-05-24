@@ -10,7 +10,7 @@
  * 자원 데이터 관리자 클래스
  * 데이터 테이블에서 자원 및 아이템 정보를 로드하고 관리
  */
-UCLASS()
+UCLASS(Blueprintable)
 class EIGHTWORLDPROJECT_API UResourceDataManager : public UObject
 {
 	GENERATED_BODY()
@@ -18,11 +18,9 @@ class EIGHTWORLDPROJECT_API UResourceDataManager : public UObject
 public:
 	UResourceDataManager();
 
-	// 자원 데이터 테이블 로드
-	bool LoadResourceDataTable(const FString& Path);
-
-	// 아이템 데이터 테이블 로드
-	bool LoadItemDataTable(const FString& Path);
+	// 초기화 함수
+	UFUNCTION(BlueprintCallable, Category = "Resource Data")
+	void Initialize();
 
 	// 자원 데이터 가져오기
 	FResourceData* GetResourceData(FName ResourceID);
@@ -30,18 +28,20 @@ public:
 	// 아이템 데이터 가져오기
 	FItemData* GetItemData(FName ItemID);
 
-	// 싱글톤 인스턴스 가져오기
-	static UResourceDataManager* GetInstance();
+	// 데이터 테이블 직접 설정 (블루프린트에서 사용)
+	UFUNCTION(BlueprintCallable, Category = "Resource Data")
+	void SetResourceDataTable(UDataTable* InResourceDataTable);
 
-private:
+	// 데이터 테이블 직접 설정 (블루프린트에서 사용)
+	UFUNCTION(BlueprintCallable, Category = "Resource Data")
+	void SetItemDataTable(UDataTable* InItemDataTable);
+
+public:
 	// 자원 데이터 테이블
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data Tables")
 	class UDataTable* ResourceDataTable;
 
 	// 아이템 데이터 테이블
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data Tables")
 	class UDataTable* ItemDataTable;
-
-	// 싱글톤 인스턴스
-	static UResourceDataManager* Instance;
 };

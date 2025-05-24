@@ -4,6 +4,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "ResourceManager.h"
 #include "ResourceDataManager.h"
+#include "../Public/PWGameMode.h"
+#include "Kismet/GameplayStatics.h"
 ATree::ATree()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -33,7 +35,7 @@ ATree::ATree()
 	ItemSpawnHealthInterval = 30.0f;
 	
 	// ResourceDataManager에서 설정 값 가져오기 시도
-	UResourceDataManager* DataManager = UResourceDataManager::GetInstance();
+	UResourceDataManager* DataManager = GetResourceDataManager();
 	if (DataManager)
 	{
 		FResourceData* ResourceData = DataManager->GetResourceData(ResourceID);
@@ -103,7 +105,7 @@ float ATree::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, ACo
 	CurrentHealth -= ActualDamage;
 	
 	// ResourceManager에 데미지 알림
-	AResourceManager* ResourceManager = AResourceManager::GetInstance();
+	AResourceManager* ResourceManager = GetResourceManager();
 	if (ResourceManager)
 	{
 		// 체력이 아이템 스폰 간격만큼 감소했는지 확인
@@ -161,4 +163,40 @@ void ATree::Deactivate()
 	
 	// 메시 숨김
 	Mesh->SetVisibility(false);
+}
+
+// PWGameMode에서 ResourceDataManager 가져오기
+UResourceDataManager* ATree::GetResourceDataManager()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+	
+	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
+	if (!GameMode)
+	{
+		return nullptr;
+	}
+	
+	return GameMode->GetResourceDataManager();
+}
+
+// PWGameMode에서 ResourceManager 가져오기
+AResourceManager* ATree::GetResourceManager()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+	
+	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
+	if (!GameMode)
+	{
+		return nullptr;
+	}
+	
+	return GameMode->GetResourceManager();
 }

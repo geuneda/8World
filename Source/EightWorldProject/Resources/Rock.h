@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -74,4 +74,10 @@ private:
 
 	// 마지막 아이템 스폰 체력
 	float LastItemSpawnHealth;
+	
+	// ResourceDataManager 가져오기
+	class UResourceDataManager* GetResourceDataManager();
+	
+	// ResourceManager 가져오기
+	class AResourceManager* GetResourceManager();
 };

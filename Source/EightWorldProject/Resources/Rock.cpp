@@ -1,10 +1,10 @@
-
-
 #include "Rock.h"
-#include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
 #include "ResourceManager.h"
 #include "ResourceDataManager.h"
+#include "../Public/PWGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 ARock::ARock()
 {
@@ -34,7 +34,7 @@ ARock::ARock()
 	ItemSpawnHealthInterval = 30.0f;
 	
 	// ResourceDataManager에서 설정 값 가져오기 시도
-	UResourceDataManager* DataManager = UResourceDataManager::GetInstance();
+	UResourceDataManager* DataManager = GetResourceDataManager();
 	if (DataManager)
 	{
 		FResourceData* ResourceData = DataManager->GetResourceData(ResourceID);
@@ -102,7 +102,7 @@ float ARock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, ACo
 	CurrentHealth -= ActualDamage;
 	
 	// ResourceManager에 데미지 알림
-	AResourceManager* ResourceManager = AResourceManager::GetInstance();
+	AResourceManager* ResourceManager = GetResourceManager();
 	if (ResourceManager)
 	{
 		// 체력이 아이템 스폰 간격만큼 감소했는지 확인
@@ -160,4 +160,40 @@ void ARock::Deactivate()
 	
 	// 메시 숨김
 	Mesh->SetVisibility(false);
+}
+
+// PWGameMode에서 ResourceDataManager 가져오기
+UResourceDataManager* ARock::GetResourceDataManager()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+	
+	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
+	if (!GameMode)
+	{
+		return nullptr;
+	}
+	
+	return GameMode->GetResourceDataManager();
+}
+
+// PWGameMode에서 ResourceManager 가져오기
+AResourceManager* ARock::GetResourceManager()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+	
+	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
+	if (!GameMode)
+	{
+		return nullptr;
+	}
+	
+	return GameMode->GetResourceManager();
 }

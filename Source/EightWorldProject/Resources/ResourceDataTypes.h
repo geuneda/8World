@@ -88,6 +88,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     FString ItemMeshPath;
 
+    // 아이템 아이콘 경로
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    FString ItemIconPath;
+
     // 아이템 최대 중첩 수
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     int32 MaxStackCount;
@@ -110,6 +114,7 @@ public:
         , ItemName(FText::FromString(""))
         , ItemDescription(FText::FromString(""))
         , ItemMeshPath("")
+        , ItemIconPath("")
         , MaxStackCount(99)
         , DropChance(1.0f)
         , MinDropQuantity(1)
