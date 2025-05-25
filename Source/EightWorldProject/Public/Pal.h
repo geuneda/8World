@@ -82,7 +82,7 @@ public:
 	
 	//팰 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
-	FPalInfoData PalInfo;
+	FPalInfoData AlpacaInfo;
 
 	//펠 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
@@ -101,6 +101,9 @@ public:
 	//팰 일속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float WorkSpeed;
+	// 팰 이동속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MoveSpeed;
 	//팰 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UAnimMontage* WorkMontage;
@@ -113,9 +116,22 @@ public:
 	//팰 작업중 여부
 	bool bIsWorking = false;
 
+	//작업할 자원
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* TargetResource = nullptr;
+
+	//작업 간격
+	float WorkInterval = 0.0f;
+	
 	//팰 작업중 get set
 	virtual bool GetPalIsWorking() const { return bIsWorking; }
 	virtual void SetPalIsWorking(bool IsWorking);
+
+	//팰 DataTable 데이터 받아오기 함수
+	virtual void SetTableData();
+
+	//팰 작업 실행 함수
+	virtual void PalWorking();
 	
 	//팰 모드 Set함수
 	virtual void SetPalMode(EPalMode Mode);
@@ -123,7 +139,7 @@ public:
 	//팰 모드별 상태 Set함수
 	virtual void SetPalWildState(EPalWildState State);
 	virtual void SetPalBattleState(EPalBattleState State);
-	virtual void SetPalWorkerState(EPalWorkerState State);
+	virtual void SetPalWorkerState(EPalWorkerState State, AActor* TargetActor);
 	
 	
 	//현재 상태 업데이트

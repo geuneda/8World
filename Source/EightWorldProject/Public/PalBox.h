@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Pal.h"
 #include "GameFramework/Actor.h"
 #include "PalBox.generated.h"
 
@@ -41,6 +42,7 @@ public:
 	FTimerHandle CheckRestResourceTimerHandle;
 	FTimerHandle CheckRestPalTimerHandle;
 	
+	
 	//감지된 Actors 담기 자원, 팰
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TArray<AActor*> DetectedResourceActors;
@@ -52,6 +54,12 @@ public:
 	TArray<AActor*> RestResourceActors;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TArray<AActor*> RestPalActors;
+
+	//작업중인 팰, 작업 당하는 자원 담는 배열
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TArray<AActor*> WorkedResourceActors;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TArray<AActor*> WorkedPalActors;
 
 	//초기 Resource 찾아 저장하는 함수
 	UFUNCTION()
@@ -65,6 +73,13 @@ public:
 	void CheckRestResources();
 	UFUNCTION()
 	void CheckRestPals();
+
+	//쉬고 있는 자원과 팰 하나씩 선택해서 팰에게 작업을 보내는 함수
+	UFUNCTION()
+	void FindNearResourceAndPal();
+	UFUNCTION()
+	void MakePalWorkToResource(AActor* resource, APal* palWorker);
+	
 	
 	//Overlap 이벤트
 	UFUNCTION()

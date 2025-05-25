@@ -4,6 +4,10 @@
 #include "PalAlpaca.h"
 
 #include "PalWorkComponent.h"
+#include "EightWorldProject/Resources/Rock.h"
+#include "EightWorldProject/Resources/Tree.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalLog, Log, All);
 DEFINE_LOG_CATEGORY(PalLog);
@@ -23,7 +27,16 @@ APalAlpaca::APalAlpaca()
 	}
 
 	PalworkComp = CreateDefaultSubobject<UPalWorkComponent>(TEXT("PalWorkComp"));
-	
+
+	//DataTable RowName 초기화
+	PalDataRowName = TEXT("Alpaca");
+
+	//Alpaca Anim Class
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("'/Game/PalWorld/Blueprints/AlpacaAnimation/ABP_PalAlpaca.ABP_PalAlpaca_C'"));
+	if (tempAnimInstance.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -45,10 +58,19 @@ void APalAlpaca::BeginPlay()
 	//팰 모드별 상태 초기화
 	SetPalWildState(EPalWildState::Patrol);
 	SetPalBattleState(EPalBattleState::FollowPlayer);
-	SetPalWorkerState(EPalWorkerState::Idle);
+	SetPalWorkerState(EPalWorkerState::Idle, nullptr);
 
 	//팰 작업중 여부
 	bIsWorking = false;
+
+	//팰 회전
+	this->GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	this->bUseControllerRotationYaw = false;
+	this->GetCharacterMovement()->bOrientRotationToMovement = true;
+	
+	//팰 DataTable Data 초기화
+	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalAlpaca::SetTableData, 0.1f, false);
+	
 }
 
 // Called every frame
@@ -193,18 +215,86 @@ void APalAlpaca::HandleWorkerIdle()
 
 void APalAlpaca::HandleWorkerFindWork()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerFindWork] WorkerState : FindWork, WorkerPalName : %s"), *this->GetName());
+
+	//타겟 자원이 있다면
+	if (TargetResource)
+	{
+		SetPalWorkerState(EPalWorkerState::MoveToTarget, TargetResource);
+	}
 }
 
 void APalAlpaca::HandleWorkerMovetoTarget()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerMovetoTarget] WorkerState : MovetoTarget, WorkerPalName : %s"), *this->GetName());
+
+	//Target 자원으로 이동하기
+	FVector meLoc = this->GetActorLocation();
+	FVector targetLoc = TargetResource->GetActorLocation();
+	FVector dir = (targetLoc - meLoc).GetSafeNormal2D();
+
+	//this->SetActorLocation(meLoc + dir * MoveSpeed * GetWorld()->GetDeltaSeconds());
+	AddMovementInput(dir);
+
+	//거리가 150보다 작으면 Working State 시작
+	if (FVector::DistXY(meLoc, targetLoc) < 150.f)
+	{
+		SetPalWorkerState(EPalWorkerState::Working, TargetResource);
+	}
+	
 }
 
 void APalAlpaca::HandleWorkerWorking()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
+	if (!TargetResource)
+	{
+		return;
+	}
+	//이미 타이머가 실행중이면 중복 실행 방지
+	if (GetWorldTimerManager().IsTimerActive(WorkTimerHandle))
+	{
+		return;
+	}
+	//팰 작업속도
+	if (ATree* tree = Cast<ATree>(TargetResource))
+	{
+		WorkSpeed = *AlpacaInfo.WorkSpeeds.Find("Tree");
+	}
+	else if (ARock* rock = Cast<ARock>(TargetResource))
+	{
+		WorkSpeed = *AlpacaInfo.WorkSpeeds.Find("Rock");
+	}
+	
+	WorkInterval = 1.f / WorkSpeed;
+	//WorkInterval마다 working 타이머 반복 실행
+	GetWorldTimerManager().SetTimer(WorkTimerHandle, this, &APalAlpaca::PalWorking, WorkInterval, true);
+
+	
 }
 
 void APalAlpaca::HandleWorkerReturn()
 {
+}
+
+void APalAlpaca::SetTableData()
+{
+	Super::SetTableData();
+
+	//팰 속도
+	MoveSpeed = AlpacaInfo.MoveSpeed;
+	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+	
+}
+
+void APalAlpaca::PalWorking()
+{
+	Super::PalWorking();
+	UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
+
+	//자원에 데미지 10씩 주기
+	UGameplayStatics::ApplyDamage(TargetResource, 10.f, GetController(), this, nullptr);
+	
 }
 
 void APalAlpaca::SetPalMode(EPalMode Mode)
@@ -251,11 +341,16 @@ void APalAlpaca::SetPalBattleState(EPalBattleState State)
 	PalBattleState = State;
 }
 
-void APalAlpaca::SetPalWorkerState(EPalWorkerState State)
+void APalAlpaca::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
 {
-	Super::SetPalWorkerState(State);
+	Super::SetPalWorkerState(State, TargetActor);
 
 	PalWorkerState = State;
+	//Target이 있다면
+	if (TargetActor)
+	{
+		TargetResource = TargetActor;
+	}
 }
 
 bool APalAlpaca::GetPalIsWorking() const

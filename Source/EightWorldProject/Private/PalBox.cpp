@@ -56,9 +56,10 @@ void APalBox::BeginPlay()
 	//시작때 감지된 모든 팰 Worker 담아두기
 	GetWorldTimerManager().SetTimer(SearchPalTimerHandle, this, &APalBox::SearchAllPalWorkers, 0.1f, false);
 	//주기적으로 쉬고 있는 자원 체크
-	GetWorldTimerManager().SetTimer(CheckRestResourceTimerHandle, this, &APalBox::CheckRestResources, 1.f, true);
+	GetWorldTimerManager().SetTimer(CheckRestResourceTimerHandle, this, &APalBox::CheckRestResources, 0.5f, true);
 	//주기적으로 쉬고 있는 팰 체크
-	GetWorldTimerManager().SetTimer(CheckRestPalTimerHandle, this, &APalBox::CheckRestPals, 1.f, true);
+	GetWorldTimerManager().SetTimer(CheckRestPalTimerHandle, this, &APalBox::CheckRestPals, 0.5f, true);
+
 }
 
 // Called every frame
@@ -163,6 +164,7 @@ void APalBox::CheckRestResources()
 			}
 		}
 	}
+	
 }
 
 void APalBox::CheckRestPals()
@@ -192,6 +194,91 @@ void APalBox::CheckRestPals()
 				}
 			}
 		}
+	}
+	
+	FindNearResourceAndPal();
+}
+
+void APalBox::FindNearResourceAndPal()
+{
+	FVector PalBoxLocation = this->GetActorLocation();
+	FVector TargetResourceLocation = FVector::ZeroVector;
+	float dist =  100000.f;
+	AActor* NearResourceActor = nullptr;
+	APal* pal = nullptr;
+	
+	//쉬는 팰 존재시 랜덤으로 하나 잡기
+	if (RestPalActors.Num() > 0)
+	{
+		int32 index = FMath::RandRange(0,RestPalActors.Num()-1);
+		pal = Cast<APal>(RestPalActors[index]);
+		UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Pal : %s"), *pal->GetName());
+	}
+	//가장 가까운 자원 찾기
+	for (AActor* Actor : RestResourceActors)
+	{
+		if (Actor && Actor != this)
+		{
+			TargetResourceLocation = Actor->GetActorLocation();
+			if (dist >= FVector::Dist(PalBoxLocation, TargetResourceLocation))
+			{
+				dist = FVector::Dist(PalBoxLocation, TargetResourceLocation);
+				NearResourceActor = Actor;
+			}
+		}
+	}
+	if (NearResourceActor)
+	{
+		UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Actor : %s"), *NearResourceActor->GetName());
+	}
+
+	if (pal && NearResourceActor)
+	{
+		//쉬고 있는 자원과 팰 배열에서 제거
+		if (RestPalActors.Contains(pal))
+		{
+			RestPalActors.Remove(pal);
+			pal->SetPalIsWorking(true); //작업중인 팰로 변경
+			UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Pal Actor : %s, Pal Actor GetPalIsWorking : %d, RestPalActors Removed"), *pal->GetName(),pal->GetPalIsWorking());
+		}
+		if (RestResourceActors.Contains(NearResourceActor))
+		{
+			RestResourceActors.Remove(NearResourceActor);
+			//작업당하는 자원으로 변경
+			if (ATree* tree = Cast<ATree>(NearResourceActor))
+			{
+				tree->SetIsBeingWorkedOn(true);
+				UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Tree Actor : %s, Tree Actor IsBeingWorkedOn : %d, RestResourceActors Removed"), *tree->GetName(),tree->IsBeingWorkedOn());
+			}
+			else if (ARock* rock = Cast<ARock>(NearResourceActor))
+			{
+				rock->SetIsBeingWorkedOn(true);
+				UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Rock Actor : %s, Rock Actor IsBeingWorkedOn : %d, RestResourceActors Removed"), *rock->GetName(),rock->IsBeingWorkedOn());
+			}
+		}
+		
+		MakePalWorkToResource(NearResourceActor, pal);
+	}
+}
+
+void APalBox::MakePalWorkToResource(AActor* resource, APal* palWorker)
+{
+	if (resource && palWorker)
+	{
+		//작업중인 팰, 자원 배열에 추가
+		if (!WorkedResourceActors.Contains(resource))
+		{
+			WorkedResourceActors.Add(resource);
+			UE_LOG(PalBoxLog, Warning, TEXT("[MakePalWorkToResource] Added Worked Resource : %s"), *resource->GetName());
+		}
+		if (!WorkedPalActors.Contains(palWorker))
+		{
+			WorkedPalActors.Add(palWorker);
+			UE_LOG(PalBoxLog, Warning, TEXT("[MakePalWorkToResource] Added Worked Pal : %s"), *palWorker->GetName());
+		}
+		//팰 작업 자원 찾기 시작 상태변경
+		palWorker->SetPalWorkerState(EPalWorkerState::FindWork, resource);
+		UE_LOG(PalBoxLog, Warning, TEXT("[MakePalWorkToResource] Start Working / Resource : %s, PalWorker : %s"), *resource->GetName(), *palWorker->GetName());
 	}
 }
 

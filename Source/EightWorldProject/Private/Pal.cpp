@@ -23,14 +23,14 @@ APal::APal()
 void APal::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	//DataTable 로딩
 	if (PalDataTable)
 	{
 		FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Alpaca"));
 		if (InfoData)
 		{
-			PalInfo = *InfoData;
+			AlpacaInfo = *InfoData;
 		}
 	}
 	
@@ -56,6 +56,14 @@ void APal::SetPalIsWorking(bool IsWorking)
 {
 }
 
+void APal::SetTableData()
+{
+}
+
+void APal::PalWorking()
+{
+}
+
 void APal::SetPalMode(EPalMode Mode)
 {
 }
@@ -68,7 +76,7 @@ void APal::SetPalBattleState(EPalBattleState State)
 {
 }
 
-void APal::SetPalWorkerState(EPalWorkerState State)
+void APal::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
 {
 }
 

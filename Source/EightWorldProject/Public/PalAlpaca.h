@@ -30,14 +30,25 @@ public:
 	//팰 메시
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UPalWorkComponent* PalworkComp;
+	
+	//SetTableData TimerHandle
+	FTimerHandle TableDataTimerHandle;
+	//Work TimerHandle
+	FTimerHandle WorkTimerHandle; 
+	
+	//팰 데이터 받아오는 함수
+	virtual void SetTableData() override;
 
+	//팰 작업 실행 함수
+	virtual void PalWorking() override;
+	
 	//팰 모드 Set함수
 	virtual void SetPalMode(EPalMode Mode) override;
 
 	//팰 모드별 상태 Set함수
 	virtual void SetPalWildState(EPalWildState State) override;
 	virtual void SetPalBattleState(EPalBattleState State) override;
-	virtual void SetPalWorkerState(EPalWorkerState State) override;
+	virtual void SetPalWorkerState(EPalWorkerState State, AActor* TargetActor) override;
 
 	//팰 작업중 get set
 	UFUNCTION(BlueprintCallable, Category = "Pal")
