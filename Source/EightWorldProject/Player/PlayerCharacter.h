@@ -156,10 +156,15 @@ public: // ---------------------------UI-------------------------------------
 	// 인벤토리 UI 표시/숨김 처리
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ToggleInventory();
+	
+	// 인벤토리가 열려있는지 확인
+	bool IsInventoryOpen() const { return bIsInventoryOpen; }
+	
+	// 인벤토리 상태 변수
+	bool bIsInventoryOpen = false;
 
 	// 인벤토리 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	class UInventoryComponent* InventoryComponent;
-
 };
 

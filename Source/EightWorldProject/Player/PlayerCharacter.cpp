@@ -147,7 +147,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // 공격 입력 처리
 void APlayerCharacter::Attack(const FInputActionValue& Value)
 {
-	if (PlayerAttackComp)
+	if (PlayerAttackComp && !IsInventoryOpen())
 	{
 		PlayerAttackComp->StartAttack();
 	}
@@ -187,6 +187,8 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
 {
+	if (IsInventoryOpen()) return;
+	
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -345,6 +347,7 @@ void APlayerCharacter::ToggleInventory()
 		if (InventoryWidget->IsInViewport())
 		{
 			InventoryWidget->RemoveFromParent();
+			bIsInventoryOpen = false;
 			
 			// 마우스 커서 해제 및 게임 입력 모드로 변경
 			APlayerController* PC = Cast<APlayerController>(GetController());
@@ -362,7 +365,18 @@ void APlayerCharacter::ToggleInventory()
 			APlayerController* PC = Cast<APlayerController>(GetController());
 			if (PC)
 			{
-				PC->SetInputMode(FInputModeGameAndUI());
+				FInputModeGameAndUI InputMode;
+				InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+				InputMode.SetHideCursorDuringCapture(false);
+				
+				if (InventoryWidget)
+				{
+					InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+				}
+
+				bIsInventoryOpen = true;
+				
+				PC->SetInputMode(InputMode);
 				PC->bShowMouseCursor = true;
 			}
 		}
