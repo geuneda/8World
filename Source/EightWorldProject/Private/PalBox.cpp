@@ -40,7 +40,7 @@ APalBox::APalBox()
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SphereComp->SetupAttachment(BoxComp);
-	SphereComp->SetSphereRadius(5000.f);
+	SphereComp->SetSphereRadius(6000.f);
 	SphereComp->SetCollisionProfileName("PalBox");
 	
 }
@@ -74,18 +74,36 @@ void APalBox::Tick(float DeltaTime)
 
 void APalBox::SearchAllResources()
 {
-	auto rock = Cast<APWGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetResourceManager()->RockPool;
-	auto tree = Cast<APWGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetResourceManager()->TreePool;
-	
-	for (auto r : rock)
+	// 기존 배열 초기화
+	DetectedResourceActors.Empty();
+
+	// 구체적인 타입으로 바로 검색 (Tree)
+	TArray<AActor*> OverlappingTrees;
+	SphereComp->GetOverlappingActors(OverlappingTrees, ATree::StaticClass());
+	for (AActor* Actor : OverlappingTrees)
 	{
-		DetectedResourceActors.Add(r);
+		ATree* Tree = Cast<ATree>(Actor);
+		if (Tree)
+		{
+			DetectedResourceActors.Add(Tree);
+			UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllResources] Added Tree Actor: %s, IsBeingWorkedOn: %d"), 
+				*Tree->GetName(), Tree->IsBeingWorkedOn());
+		}
 	}
-	for (auto t : tree)
+
+	// 구체적인 타입으로 바로 검색 (Rock)
+	TArray<AActor*> OverlappingRocks;
+	SphereComp->GetOverlappingActors(OverlappingRocks, ARock::StaticClass());
+	for (AActor* Actor : OverlappingRocks)
 	{
-		DetectedResourceActors.Add(t);
+		ARock* Rock = Cast<ARock>(Actor);
+		if (Rock)
+		{
+			DetectedResourceActors.Add(Rock);
+			UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllResources] Added Rock Actor: %s, IsBeingWorkedOn: %d"), 
+				*Rock->GetName(), Rock->IsBeingWorkedOn());
+		}
 	}
-	
 }
 
 void APalBox::SearchAllPalWorkers()
@@ -94,10 +112,7 @@ void APalBox::SearchAllPalWorkers()
 	SphereComp->GetOverlappingActors(OverlappingPalActors, APal::StaticClass());
 	for (AActor* Actor : OverlappingPalActors)
 	{
-		APlayerCharacter* player = Cast<APlayerCharacter>(Actor);
-		ATree* tree = Cast<ATree>(Actor);
-		ARock* rock = Cast<ARock>(Actor);
-		if (Actor && Actor != this && !DetectedPalWorkerActors.Contains(Actor) && !player && !tree && !rock)
+		if (Actor && Actor != this && !DetectedPalWorkerActors.Contains(Actor))
 		{
 			APal* pal = Cast<APal>(Actor);
 			if (pal && pal->bIsWorkerMode)
@@ -205,7 +220,7 @@ void APalBox::FindNearResourceAndPal()
 	{
 		int32 index = FMath::RandRange(0,RestPalActors.Num()-1);
 		pal = Cast<APal>(RestPalActors[index]);
-		UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Pal : %s"), *pal->GetName());
+		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Pal : %s"), *pal->GetName());
 	}
 	//가장 가까운 자원 찾기
 	for (AActor* Actor : RestResourceActors)
@@ -222,7 +237,7 @@ void APalBox::FindNearResourceAndPal()
 	}
 	if (NearResourceActor)
 	{
-		UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Actor : %s"), *NearResourceActor->GetName());
+		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Actor : %s"), *NearResourceActor->GetName());
 	}
 
 	if (pal && NearResourceActor)
@@ -232,7 +247,7 @@ void APalBox::FindNearResourceAndPal()
 		{
 			RestPalActors.Remove(pal);
 			pal->SetPalIsWorking(true); //작업중인 팰로 변경
-			UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Pal Actor : %s, Pal Actor GetPalIsWorking : %d, RestPalActors Removed"), *pal->GetName(),pal->GetPalIsWorking());
+			//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Pal Actor : %s, Pal Actor GetPalIsWorking : %d, RestPalActors Removed"), *pal->GetName(),pal->GetPalIsWorking());
 		}
 		if (RestResourceActors.Contains(NearResourceActor))
 		{
@@ -241,12 +256,12 @@ void APalBox::FindNearResourceAndPal()
 			if (ATree* tree = Cast<ATree>(NearResourceActor))
 			{
 				tree->SetIsBeingWorkedOn(true);
-				UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Tree Actor : %s, Tree Actor IsBeingWorkedOn : %d, RestResourceActors Removed"), *tree->GetName(),tree->IsBeingWorkedOn());
+				//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Tree Actor : %s, Tree Actor IsBeingWorkedOn : %d, RestResourceActors Removed"), *tree->GetName(),tree->IsBeingWorkedOn());
 			}
 			else if (ARock* rock = Cast<ARock>(NearResourceActor))
 			{
 				rock->SetIsBeingWorkedOn(true);
-				UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Rock Actor : %s, Rock Actor IsBeingWorkedOn : %d, RestResourceActors Removed"), *rock->GetName(),rock->IsBeingWorkedOn());
+				//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearResourceAndPal] Rock Actor : %s, Rock Actor IsBeingWorkedOn : %d, RestResourceActors Removed"), *rock->GetName(),rock->IsBeingWorkedOn());
 			}
 		}
 		
@@ -320,7 +335,7 @@ void APalBox::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	if (OtherActor && DetectedResourceActors.Contains(OtherActor))
 	{
 		DetectedResourceActors.Remove(OtherActor);
-		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Resource Actor : %s"), *OtherActor->GetName());
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Detected Resource Actor : %s"), *OtherActor->GetName());
 	}
 	//쉬고 있는 자원 배열에서도 제거
 	if (OtherActor && RestResourceActors.Contains(OtherActor))
@@ -328,17 +343,31 @@ void APalBox::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		RestResourceActors.Remove(OtherActor);
 		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Rest Resource Actor : %s"), *OtherActor->GetName());
 	}
+	//만약 작업중이었던 자원이면 배열에서도 제거
+	{
+		if (OtherActor && WorkedResourceActors.Contains(OtherActor))
+		{
+			WorkedResourceActors.Remove(OtherActor);
+			UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked Resource Actor : %s"), *OtherActor->GetName());
+		}
+	}
 	
 	//팰이 사라지면 배열에서 제거
 	if (OtherActor && DetectedPalWorkerActors.Contains(OtherActor))
 	{
 		DetectedPalWorkerActors.Remove(OtherActor);
-		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Pal Actor : %s"), *OtherActor->GetName());
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Detected Pal Actor : %s"), *OtherActor->GetName());
 	}
 	//쉬고 있는 팰 배열에서도 제거
 	if (OtherActor && RestPalActors.Contains(OtherActor))
 	{
 		RestPalActors.Remove(OtherActor);
 		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Rest Pal Actor : %s"), *OtherActor->GetName());
+	}
+	//만약 작업중이었던 팰이면 배열에서도 제거
+	if (OtherActor && WorkedPalActors.Contains(OtherActor))
+	{
+		WorkedPalActors.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked Pal Actor : %s"), *OtherActor->GetName());
 	}
 }

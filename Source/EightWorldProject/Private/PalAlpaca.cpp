@@ -3,7 +3,9 @@
 
 #include "PalAlpaca.h"
 
+#include "PalBox.h"
 #include "PalWorkComponent.h"
+#include "PWAIController.h"
 #include "EightWorldProject/Resources/Rock.h"
 #include "EightWorldProject/Resources/Tree.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -229,16 +231,32 @@ void APalAlpaca::HandleWorkerMovetoTarget()
 	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerMovetoTarget] WorkerState : MovetoTarget, WorkerPalName : %s"), *this->GetName());
 
 	//Target 자원으로 이동하기
-	FVector meLoc = this->GetActorLocation();
-	FVector targetLoc = TargetResource->GetActorLocation();
-	FVector dir = (targetLoc - meLoc).GetSafeNormal2D();
+	 FVector meLoc = this->GetActorLocation();
+	 FVector targetLoc = TargetResource->GetActorLocation();
+	// FVector dir = (targetLoc - meLoc).GetSafeNormal2D();
+	//
+	// //this->SetActorLocation(meLoc + dir * MoveSpeed * GetWorld()->GetDeltaSeconds());
+	// AddMovementInput(dir);
 
-	//this->SetActorLocation(meLoc + dir * MoveSpeed * GetWorld()->GetDeltaSeconds());
-	AddMovementInput(dir);
+	//Navigation Move To 
+	APWAIController* MyAIController = Cast<APWAIController>(GetController());
+	if (MyAIController)
+	{
+		if (!bIsMoveToTarget)
+		{
+			if (TargetResource)
+			{
+				MyAIController->MoveToLocation(targetLoc);
+				bIsMoveToTarget = true;
+			}
+		}
+	}
 
 	//거리가 150보다 작으면 Working State 시작
 	if (FVector::DistXY(meLoc, targetLoc) < 150.f)
 	{
+		bIsMoveToTarget = false;
+		MyAIController->StopMovement();
 		SetPalWorkerState(EPalWorkerState::Working, TargetResource);
 	}
 	
@@ -290,11 +308,50 @@ void APalAlpaca::SetTableData()
 void APalAlpaca::PalWorking()
 {
 	Super::PalWorking();
-	UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
+	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
 
 	//자원에 데미지 10씩 주기
 	UGameplayStatics::ApplyDamage(TargetResource, 10.f, GetController(), this, nullptr);
 	
+	//데미지 주다가 자원이 비활성화 되면, 자원과 팰 둘다 작업상태 멈춤 Rest상태로 Rest 배열에 자동 추가됨(자원은 재생성될때)
+	if (ATree* tree = Cast<ATree>(TargetResource))
+	{
+		//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] tree->IsActive() : %d, tree->IsBeingWorkedOn() : %d,  WorkerPalName : %s"), tree->IsActive(), tree->IsBeingWorkedOn(), *this->GetName());
+		if (tree && !tree->IsActive())
+		{
+			//자원과 팰 둘다 작업상태 멈춤
+			tree->SetIsBeingWorkedOn(false);
+			this->SetPalIsWorking(false);
+
+			//팰 상태 Idle로 초기화
+			this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
+			
+			//Work 배열에서 제거
+			// 	PalBox->WorkedPalActors.Remove(this);
+			// 	UE_LOG(PalLog, Warning, TEXT("[PalWorking] Worked Pal : %s WorkedResourceActors Removed"), *this->GetName());
+			// }
+
+		}
+	}
+	if (ARock* rock = Cast<ARock>(TargetResource))
+	{
+		//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] rock->IsActive() : %d, rock->IsBeingWorkedOn() : %d, WorkerPalName : %s"), rock->IsActive(), rock->IsBeingWorkedOn(), *this->GetName());
+		if (rock && !rock->IsActive())
+		{
+			//자원과 팰 둘다 작업상태 멈춤
+			rock->SetIsBeingWorkedOn(false);
+			this->SetPalIsWorking(false);
+
+			//팰 상태 Idle로 초기화
+			this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
+			
+			//Work 배열에서 제거
+			// 	PalBox->WorkedPalActors.Remove(this);
+			// 	UE_LOG(PalLog, Warning, TEXT("[PalWorking] Worked Pal : %s WorkedResourceActors Removed"), *this->GetName());
+			// }
+			
+		}
+	}
 }
 
 void APalAlpaca::SetPalMode(EPalMode Mode)

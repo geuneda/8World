@@ -107,12 +107,15 @@ public:
 	//팰 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UAnimMontage* WorkMontage;
-
+	
 	//팰 모드 구분
 	bool bIsWildMode = false;
 	bool bIsBattleMode = false;
 	bool bIsWorkerMode = false;
 
+	//팰 이동중 여부
+	bool bIsMoveToTarget = false;
+	
 	//팰 작업중 여부
 	bool bIsWorking = false;
 

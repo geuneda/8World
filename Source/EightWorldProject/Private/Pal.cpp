@@ -17,6 +17,7 @@ APal::APal()
 	{
 		PalDataTable = tempDataTable.Object;
 	}
+	
 }
 
 // Called when the game starts or when spawned
@@ -33,7 +34,6 @@ void APal::BeginPlay()
 			AlpacaInfo = *InfoData;
 		}
 	}
-	
 	
 }
 
