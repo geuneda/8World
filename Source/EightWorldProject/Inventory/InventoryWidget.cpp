@@ -114,6 +114,10 @@ void UInventoryWidget::UpdateInventory()
 void UInventoryWidget::HandleSlotClicked(int32 SlotIndex)
 {
 	// TODO :: 필요 시 슬롯 클릭시 행동 구현
+
+	// 기억해뒀다가 드롭 or 파괴 가능하도록 하면 될듯.
+	// 효과도 주면 좋을듯 (슬롯에서 효과 줄지 고민해봐야함.)
+	// 켰을때 초기화해주는거 생각
 }
 
 void UInventoryWidget::HandleSlotHovered(int32 SlotIndex)
@@ -151,6 +155,18 @@ void UInventoryWidget::HandleDragDropCompleted(UInventoryDragDropOperation* Oper
 	
 	if (FromSlotIndex != ToSlotIndex)
 	{
+		// 아이템 이동 처리
 		InventoryComponent->MoveItem(FromSlotIndex, ToSlotIndex);
+		
+		// 슬롯 위젯 업데이트
+		if (SlotWidgets.IsValidIndex(FromSlotIndex) && SlotWidgets[FromSlotIndex])
+		{
+			SlotWidgets[FromSlotIndex]->UpdateSlot(InventoryComponent->GetSlotData(FromSlotIndex));
+		}
+		
+		if (SlotWidgets.IsValidIndex(ToSlotIndex) && SlotWidgets[ToSlotIndex])
+		{
+			SlotWidgets[ToSlotIndex]->UpdateSlot(InventoryComponent->GetSlotData(ToSlotIndex));
+		}
 	}
 }

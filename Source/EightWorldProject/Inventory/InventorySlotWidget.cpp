@@ -5,6 +5,7 @@
 #include "Components/TextBlock.h"
 #include "EightWorldProject/Resources/ResourceDataTypes.h"
 #include "Engine/Texture2D.h"
+#include "InventoryWidget.h"
 
 void UInventorySlotWidget::NativeConstruct()
 {
@@ -63,6 +64,33 @@ bool UInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 	if (InventoryDragDrop)
 	{
 		InventoryDragDrop->TargetSlotIndex = SlotIndex;
+		
+		// 소유 플레이어의 인벤토리 컴포넌트를 통해 아이템 이동
+		APlayerController* PC = GetOwningPlayer();
+		if (PC)
+		{
+			APawn* Pawn = PC->GetPawn();
+			if (Pawn)
+			{
+				UInventoryComponent* InventoryComp = Pawn->FindComponentByClass<UInventoryComponent>();
+				if (InventoryComp)
+				{
+					// 아이템 이동 처리
+					int32 FromSlotIndex = InventoryDragDrop->SourceSlotIndex;
+					int32 ToSlotIndex = SlotIndex;
+					
+					if (FromSlotIndex != ToSlotIndex)
+					{
+						// 아이템 이동 실행
+						InventoryComp->MoveItem(FromSlotIndex, ToSlotIndex);
+						
+						// 인벤토리 컴포넌트의 이벤트를 통해 UI 업데이트
+						InventoryComp->OnInventoryUpdated.Broadcast();
+					}
+				}
+			}
+		}
+		
 		return true;
 	}
 	
