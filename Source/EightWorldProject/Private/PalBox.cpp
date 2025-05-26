@@ -4,11 +4,14 @@
 #include "PalBox.h"
 
 #include "Pal.h"
+#include "PWGameMode.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
+#include "EightWorldProject/Resources/ResourceManager.h"
 #include "EightWorldProject/Resources/Rock.h"
 #include "EightWorldProject/Resources/Tree.h"
+#include "Kismet/GameplayStatics.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalBoxLog, Log, All);
 DEFINE_LOG_CATEGORY(PalBoxLog);
@@ -71,28 +74,18 @@ void APalBox::Tick(float DeltaTime)
 
 void APalBox::SearchAllResources()
 {
-	TArray<AActor*> OverlappingResourceActors;
-	SphereComp->GetOverlappingActors(OverlappingResourceActors, AActor::StaticClass());
-	for (AActor* Actor : OverlappingResourceActors)
+	auto rock = Cast<APWGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetResourceManager()->RockPool;
+	auto tree = Cast<APWGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetResourceManager()->TreePool;
+	
+	for (auto r : rock)
 	{
-		APal* pal = Cast<APal>(Actor);
-		APlayerCharacter* player = Cast<APlayerCharacter>(Actor);
-		ATree* tree = Cast<ATree>(Actor);
-		ARock* rock = Cast<ARock>(Actor);
-		if (Actor && Actor != this && !DetectedResourceActors.Contains(Actor) && !pal && !player)
-		{
-			if (tree)
-			{
-				DetectedResourceActors.Add(tree);
-				UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllResources]Added Tree Actor : %s, Tree Actor IsBeingWorkedOn : %d"), *Actor->GetName(),tree->IsBeingWorkedOn());
-			}
-			if (rock)
-			{
-				DetectedResourceActors.Add(rock);
-				UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllResources]Added Rock Actor : %s, Rock Actor IsBeingWorkedOn : %d"), *Actor->GetName(),rock->IsBeingWorkedOn());
-			}
-		}
+		DetectedResourceActors.Add(r);
 	}
+	for (auto t : tree)
+	{
+		DetectedResourceActors.Add(t);
+	}
+	
 }
 
 void APalBox::SearchAllPalWorkers()
