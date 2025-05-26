@@ -2,37 +2,34 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "ResourceManager.h"
-#include "ResourceDataManager.h"
-#include "../Public/PWGameMode.h"
-#include "Kismet/GameplayStatics.h"
 
 ARock::ARock()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
-	// 메시 컴포넌트 생성
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	RootComponent = Mesh;
-
-	// 충돌 컴포넌트 생성
-	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
-	Box->SetupAttachment(Mesh);
+	// 충돌 컴포넌트 크기 설정
 	Box->SetBoxExtent(FVector(100, 100, 100));
 	
-	// 충돌 설정
-	Box->SetCollisionProfileName(TEXT("Resource"));
-
 	// 리소스 ID 설정
 	ResourceID = TEXT("Rock");
 
 	// 태그 추가
 	Tags.Add(FName("Rock"));
-
-	// 기본 체력 초기화
-	MaxHealth = 100.0f;
-	MinHealth = 0.0f;
-	ItemSpawnHealthInterval = 30.0f;
 	
+	// 리소스 메시 로드
+	LoadResourceMesh();
+}
+
+void ARock::HandleDeactivation()
+{
+	// ResourceManager에 비활성화 요청
+	AResourceManager* ResourceManager = GetResourceManager();
+	if (ResourceManager)
+	{
+		ResourceManager->DeactivateRock(this);
+	}
+}
+
+void ARock::LoadResourceMesh()
+{
 	// ResourceDataManager에서 설정 값 가져오기 시도
 	UResourceDataManager* DataManager = GetResourceDataManager();
 	if (DataManager)
@@ -66,140 +63,4 @@ ARock::ARock()
 			Mesh->SetStaticMesh(MeshAsset.Object);
 		}
 	}
-}
-
-void ARock::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	// 체력 초기화
-	CurrentHealth = MaxHealth;
-	LastItemSpawnHealth = MaxHealth;
-	
-	// 활성화 상태 설정
-	bIsActive = true;
-}
-
-void ARock::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-// 데미지 처리 함수 재정의
-float ARock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	// 비활성화 상태면 데미지 무시
-	if (!bIsActive)
-	{
-		return 0.0f;
-	}
-	
-	// 부모 클래스의 TakeDamage 호출
-	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	
-	// 체력 감소
-	float PreviousHealth = CurrentHealth;
-	CurrentHealth -= ActualDamage;
-	
-	// ResourceManager에 데미지 알림
-	AResourceManager* ResourceManager = GetResourceManager();
-	if (ResourceManager)
-	{
-		// 체력이 아이템 스폰 간격만큼 감소했는지 확인
-		if (LastItemSpawnHealth - CurrentHealth >= ItemSpawnHealthInterval)
-		{
-			// 아이템 스폰 요청
-			FVector SpawnLocation = GetActorLocation();
-			SpawnLocation.X += FMath::RandRange(-50.0f, 50.0f);
-			SpawnLocation.Y += FMath::RandRange(-50.0f, 50.0f);
-			SpawnLocation.Z += 50.0f; // 약간 위에 스폰
-			
-			// ResourceManager를 통해 아이템 스폰
-			ResourceManager->SpawnResourceItem(ResourceID, SpawnLocation, FRotator::ZeroRotator);
-			
-			// 마지막 아이템 스폰 체력 업데이트
-			LastItemSpawnHealth = CurrentHealth;
-		}
-		
-		// 체력이 최소 체력 이하로 감소했는지 확인
-		if (CurrentHealth <= MinHealth)
-		{
-			// ResourceManager에 비활성화 요청
-			ResourceManager->DeactivateRock(this);
-		}
-	}
-	
-	return ActualDamage;
-}
-
-// 활성화
-void ARock::Activate()
-{
-	// 활성화 상태 설정
-	bIsActive = true;
-	
-	// 체력 초기화
-	CurrentHealth = MaxHealth;
-	LastItemSpawnHealth = MaxHealth;
-	
-	// 콜리전 활성화
-	Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
-	
-	// 메시 표시
-	Mesh->SetVisibility(true);
-}
-
-// 비활성화
-void ARock::Deactivate()
-{
-	// 비활성화 상태 설정
-	bIsActive = false;
-	
-	// 콜리전 비활성화
-	Mesh->SetCollisionProfileName(TEXT("NoCollision"));
-	
-	// 메시 숨김
-	Mesh->SetVisibility(false);
-}
-
-// PWGameMode에서 ResourceDataManager 가져오기
-UResourceDataManager* ARock::GetResourceDataManager()
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-	
-	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
-	if (!GameMode)
-	{
-		return nullptr;
-	}
-	
-	return GameMode->GetResourceDataManager();
-}
-
-// PWGameMode에서 ResourceManager 가져오기
-AResourceManager* ARock::GetResourceManager()
-{
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		return nullptr;
-	}
-	
-	APWGameMode* GameMode = Cast<APWGameMode>(UGameplayStatics::GetGameMode(World));
-	if (!GameMode)
-	{
-		return nullptr;
-	}
-	
-	return GameMode->GetResourceManager();
-}
-
-// 작업 중 상태 설정
-void ARock::SetIsBeingWorkedOn(bool bInIsBeingWorkedOn)
-{
-	bIsBeingWorkedOn = bInIsBeingWorkedOn;
 }
