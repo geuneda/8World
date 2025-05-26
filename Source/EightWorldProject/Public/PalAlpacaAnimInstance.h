@@ -18,4 +18,9 @@ public:
 	UPalAlpacaAnimInstance();
 
 	virtual void NativeInitializeAnimation() override;
+
+public:
+	//팰 이동중인지 여부
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool bIsMove;
 };

@@ -3,6 +3,7 @@
 
 #include "PalAlpaca.h"
 
+#include "PalAlpacaAnimInstance.h"
 #include "PalBox.h"
 #include "PalWorkComponent.h"
 #include "PWAIController.h"
@@ -25,7 +26,7 @@ APalAlpaca::APalAlpaca()
 	if (tempMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
-		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-11.f), FRotator(0,-90,0));
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-90.f), FRotator(0,-90,0));
 	}
 
 	PalworkComp = CreateDefaultSubobject<UPalWorkComponent>(TEXT("PalWorkComp"));
@@ -71,8 +72,10 @@ void APalAlpaca::BeginPlay()
 	this->GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 	//팰 DataTable Data 초기화
-	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalAlpaca::SetTableData, 0.1f, false);
-	
+	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalAlpaca::SetTableData, 0.2f, false);
+
+	//애니메이션
+	AlpacaAnimInstance = Cast<UPalAlpacaAnimInstance>(GetMesh()->GetAnimInstance());
 }
 
 // Called every frame
@@ -91,6 +94,8 @@ void APalAlpaca::Tick(float DeltaTime)
 			break;
 		case EPalMode::Worker:
 			SwitchWorkerState();
+			break;
+		case EPalMode::Carrier:
 			break;
 	}
 }
@@ -248,6 +253,7 @@ void APalAlpaca::HandleWorkerMovetoTarget()
 			{
 				MyAIController->MoveToLocation(targetLoc);
 				bIsMoveToTarget = true;
+				AlpacaAnimInstance->bIsMove = bIsMoveToTarget;
 			}
 		}
 	}
@@ -256,6 +262,7 @@ void APalAlpaca::HandleWorkerMovetoTarget()
 	if (FVector::DistXY(meLoc, targetLoc) < 150.f)
 	{
 		bIsMoveToTarget = false;
+		AlpacaAnimInstance->bIsMove = bIsMoveToTarget;
 		MyAIController->StopMovement();
 		SetPalWorkerState(EPalWorkerState::Working, TargetResource);
 	}

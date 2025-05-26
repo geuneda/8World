@@ -14,6 +14,7 @@ enum class EPalMode : uint8
 	Wild UMETA(DisplayName = "Wild"),
 	Battle UMETA(DisplayName = "Battle"),
 	Worker UMETA(DisplayName = "Worker"),
+	Carrier UMETA(DisplayName = "Carrier"),
 };
 
 UENUM(BlueprintType)
@@ -46,6 +47,15 @@ enum class EPalWorkerState : uint8
 	Return UMETA(DisplayName = "Return"),
 };
 
+UENUM(BlueprintType)
+enum class EPalCarrierState : uint8
+{
+	Idle UMETA(DisplayName = "Idle"),
+	FindItem UMETA(DisplayName = "FindItem"),
+	MoveToTarget UMETA(DisplayName = "MoveToTarget"),
+	Carrying UMETA(DisplayName = "Carrying"),
+	Return UMETA(DisplayName = "Return"),
+};
 
 UCLASS()
 class EIGHTWORLDPROJECT_API APal : public ACharacter
@@ -79,6 +89,8 @@ public:
 	EPalBattleState PalBattleState;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
 	EPalWorkerState PalWorkerState;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
+	EPalCarrierState PalCarrierState;
 	
 	//팰 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
@@ -112,6 +124,7 @@ public:
 	bool bIsWildMode = false;
 	bool bIsBattleMode = false;
 	bool bIsWorkerMode = false;
+	bool bIsCarrierMode = false;
 
 	//팰 이동중 여부
 	bool bIsMoveToTarget = false;
@@ -119,9 +132,15 @@ public:
 	//팰 작업중 여부
 	bool bIsWorking = false;
 
+	//팰 운반중 여부
+	bool bIsCarrying = false;
+
 	//작업할 자원
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	AActor* TargetResource = nullptr;
+	//작업할 아이템
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* TargetItem = nullptr;
 
 	//작업 간격
 	float WorkInterval = 0.0f;
@@ -129,12 +148,18 @@ public:
 	//팰 작업중 get set
 	virtual bool GetPalIsWorking() const { return bIsWorking; }
 	virtual void SetPalIsWorking(bool IsWorking);
+	//팰 운반중 get set
+	virtual bool GetPalIsCarrying() const { return bIsCarrying; }
+	virtual void SetPalIsCarrying(bool IsCarrying);
 
 	//팰 DataTable 데이터 받아오기 함수
 	virtual void SetTableData();
 
 	//팰 작업 실행 함수
 	virtual void PalWorking();
+
+	//팰 운반 실행 함수
+	virtual void PalCarrying();
 	
 	//팰 모드 Set함수
 	virtual void SetPalMode(EPalMode Mode);
@@ -143,6 +168,7 @@ public:
 	virtual void SetPalWildState(EPalWildState State);
 	virtual void SetPalBattleState(EPalBattleState State);
 	virtual void SetPalWorkerState(EPalWorkerState State, AActor* TargetActor);
+	virtual void SetPalCarrierState(EPalCarrierState State, AActor* TargetActor);
 	
 	
 	//현재 상태 업데이트

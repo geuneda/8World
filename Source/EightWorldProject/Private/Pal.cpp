@@ -56,11 +56,19 @@ void APal::SetPalIsWorking(bool IsWorking)
 {
 }
 
+void APal::SetPalIsCarrying(bool IsCarrying)
+{
+}
+
 void APal::SetTableData()
 {
 }
 
 void APal::PalWorking()
+{
+}
+
+void APal::PalCarrying()
 {
 }
 
@@ -77,6 +85,10 @@ void APal::SetPalBattleState(EPalBattleState State)
 }
 
 void APal::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
+{
+}
+
+void APal::SetPalCarrierState(EPalCarrierState State)
 {
 }
 
