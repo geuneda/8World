@@ -37,7 +37,7 @@ void APalChicken::BeginPlay()
 	//팰 모드별 상태 초기화
 	SetPalWildState(EPalWildState::Patrol);
 	SetPalBattleState(EPalBattleState::FollowPlayer);
-	SetPalCarrierState(EPalCarrierState::Idle);
+	SetPalCarrierState(EPalCarrierState::Idle, nullptr);
 
 	//팰 운반중 여부
 	bIsCarrying = false;
@@ -125,19 +125,19 @@ void APalChicken::SwitchCarrierState()
 {
 	switch (PalCarrierState)
 	{
-	case EPalWorkerState::Idle:
+	case EPalCarrierState::Idle:
 		HandleCarrierIdle();
 		break;
-	case EPalWorkerState::FindWork:
+	case EPalCarrierState::FindItem:
 		HandleCarrierFindItem();
 		break;
-	case EPalWorkerState::MoveToTarget:
+	case EPalCarrierState::MoveToTarget:
 		HandleCarrierMovetoTarget();
 		break;
-	case EPalWorkerState::Working:
+	case EPalCarrierState::Carrying:
 		HandleCarrierCarrying();
 		break;
-	case EPalWorkerState::Return:
+	case EPalCarrierState::Return:
 		HandleCarrierReturn();
 		break;
 	}

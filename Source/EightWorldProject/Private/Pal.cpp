@@ -88,7 +88,7 @@ void APal::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
 {
 }
 
-void APal::SetPalCarrierState(EPalCarrierState State)
+void APal::SetPalCarrierState(EPalCarrierState State, AActor* TargetActor)
 {
 }
 
