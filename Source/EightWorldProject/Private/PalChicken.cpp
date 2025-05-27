@@ -8,6 +8,9 @@
 #include "PWAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(PalChicken, Log, All);
+DEFINE_LOG_CATEGORY(PalChicken);
+
 APalChicken::APalChicken()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -27,6 +30,9 @@ APalChicken::APalChicken()
 	{
 		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
 	}
+
+	//DataTable RowName 초기화
+	PalDataRowName = TEXT("Chicken");
 }
 
 void APalChicken::BeginPlay()
@@ -52,11 +58,8 @@ void APalChicken::BeginPlay()
 	//애니메이션
 	ChickenAnimInstance = Cast<UPalChickenAnimInstance>(GetMesh()->GetAnimInstance());
 	
-	//첫 시작 지점을 기준으로 지정
-	InitLocation = this->GetActorLocation();
-
 	//팰 DataTable Data 초기화
-	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.2f, false);
+	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.1f, false);
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -134,7 +137,7 @@ void APalChicken::SwitchCarrierState()
 	switch (PalCarrierState)
 	{
 	case EPalCarrierState::Patrol:
-		HandleCarrierIdle();
+		HandleCarrierPatrol();
 		break;
 	case EPalCarrierState::FindItem:
 		HandleCarrierFindItem();
@@ -191,8 +194,10 @@ void APalChicken::HandleBattleAttack()
 {
 }
 
-void APalChicken::HandleCarrierIdle()
+void APalChicken::HandleCarrierPatrol()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Started"));
+	
 	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
 	//네비게이션 시스템 받아오기
 	UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
@@ -201,36 +206,100 @@ void APalChicken::HandleCarrierIdle()
 		return;
 	}
 
-	//지정해둔 범위 내에 랜덤 위치 받아오기
-	FNavLocation RandomPoint;
-	bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
-	if (bFound)
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	if (!MyController)
 	{
-		APWAIController* MyController = Cast<APWAIController>(GetController());
-		if (MyController)
+		return;
+	}
+	if (!bIsPatroling)
+	{
+		//지정해둔 범위 내에 랜덤 위치 받아오기
+		FNavLocation RandomPoint;
+		//첫 시작 지점을 기준으로 지정
+		InitLocation = this->GetActorLocation();
+		bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
+		if (bFound)
 		{
-			if (!bIsPatroling)
-			{
-				bIsPatroling = true;
-				MyController->MoveToLocation(RandomPoint.Location);
-			}
+			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
+			CurrentPatrolTargetLocation = RandomPoint.Location;
+			bIsPatroling = true;
+			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+			MyController->MoveToLocation(CurrentPatrolTargetLocation);
+			
+			//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
+			//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
 		}
 	}
-
-	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기
-	if (FVector::DistXY(this->GetActorLocation(), RandomPoint.Location) < 5.f)
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
+	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
+	if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
 	{
+		//애니메이션 변경 및 다음 목표 위치로 이동하도록
 		bIsPatroling = false;
+		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+		//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Reached TargetLocation"));
 	}
 	
 }
 
 void APalChicken::HandleCarrierFindItem()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierFindItem] CarrierState : FindItem, CarrierPalName : %s"), *this->GetName());
+	//타겟 아이템이 있다면
+	if (TargetItem)
+	{
+		APWAIController* MyController = Cast<APWAIController>(GetController());
+		MyController->StopMovement();
+		//애니메이션 변경
+		bIsPatroling = false;
+		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+
+		SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
+	}
 }
 
 void APalChicken::HandleCarrierMovetoTarget()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierMovetoTarget] CarrierState : MovetoTarget, CarrierPalName : %s"), *this->GetName());
+
+	//Target 자원으로 이동하기
+	FVector meLoc = this->GetActorLocation();
+	FVector targetLoc = TargetItem->GetActorLocation();
+	
+	//AIController Move To 
+	APWAIController* MyAIController = Cast<APWAIController>(GetController());
+	if (MyAIController)
+	{
+		if (!bIsMoveToTarget)
+		{
+			if (TargetItem)
+			{
+				//이동 및 이동 애니메이션 실행
+				MyAIController->MoveToLocation(targetLoc);
+				bIsMoveToTarget = true;
+				ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+				//이동 속도 변경
+				WorkSpeed = *ChickenInfo.WorkSpeeds.Find("Item");
+				this->GetCharacterMovement()->MaxWalkSpeed = WorkSpeed;
+			}
+		}
+	}
+
+	//거리가 150보다 작으면 Working State 시작
+	if (FVector::DistXY(meLoc, targetLoc) < 45.f)
+	{
+		//이동중 애니메이션 취소
+		bIsMoveToTarget = false;
+		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+
+		//이동 정지 및 작업 상태 시작
+		MyAIController->StopMovement();
+		SetPalCarrierState(EPalCarrierState::Carrying, TargetItem);
+		
+		//작업중 애니메이션 시작
+		//bIsPlayingWorkAnim = true;
+		//ChickenAnimInstance->bIsWorking = bIsPlayingWorkAnim;
+	}
 }
 
 void APalChicken::HandleCarrierCarrying()

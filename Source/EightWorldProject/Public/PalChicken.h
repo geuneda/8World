@@ -33,7 +33,7 @@ public:
 
 	//팰 정찰 범위
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float PatrolRadius = 1000.f;
+	float PatrolRadius = 200.f;
 	//기준이 되는 위치
 	UPROPERTY(visibleAnywhere)
 	FVector InitLocation;
@@ -43,6 +43,9 @@ public:
 
 	//patrol 이동 여부
 	bool bIsPatroling = false;
+
+	//현재 타겟 위치
+	FVector CurrentPatrolTargetLocation;
 
 	//SetTableData TimerHandle
 	FTimerHandle TableDataTimerHandle;
@@ -82,7 +85,7 @@ public:
 	void HandleBattleAttack();
 
 	//팰 Carrier 모드 함수
-	void HandleCarrierIdle();
+	void HandleCarrierPatrol();
 	void HandleCarrierFindItem();
 	void HandleCarrierMovetoTarget();
 	void HandleCarrierCarrying();

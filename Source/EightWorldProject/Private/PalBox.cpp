@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
+#include "EightWorldProject/Resources/ResourceItem.h"
 #include "EightWorldProject/Resources/ResourceManager.h"
 #include "EightWorldProject/Resources/Rock.h"
 #include "EightWorldProject/Resources/Tree.h"
@@ -63,6 +64,16 @@ void APalBox::BeginPlay()
 	//주기적으로 쉬고 있는 팰 체크
 	GetWorldTimerManager().SetTimer(CheckRestPalTimerHandle, this, &APalBox::CheckRestPals, 0.5f, true);
 
+	//시작때 감지된 모든 팰 Carrier 담아두기
+	GetWorldTimerManager().SetTimer(SearchCarrierTimerHandle, this, &APalBox::SearchAllPalCarriers, 0.1f, false);
+	//주기적으로 떨어진 아이템 체크
+	GetWorldTimerManager().SetTimer(CheckDroppedItemTimerHandle, this, &APalBox::CheckDroppedItems, 0.5f, true);
+	//주기적으로 쉬고 있는 아이템 체크
+	GetWorldTimerManager().SetTimer(CheckRestItemTimerHandle, this, &APalBox::CheckRestItems, 0.5f, true);
+	//주기적으로 쉬고 있는 팰 체크
+	GetWorldTimerManager().SetTimer(CheckRestCarrierTimerHandle, this, &APalBox::CheckRestCarriers, 0.5f, true);
+
+	
 }
 
 // Called every frame
@@ -289,6 +300,189 @@ void APalBox::MakePalWorkToResource(AActor* resource, APal* palWorker)
 		UE_LOG(PalBoxLog, Warning, TEXT("[MakePalWorkToResource] Start Working / Resource : %s, PalWorker : %s"), *resource->GetName(), *palWorker->GetName());
 	}
 }
+
+void APalBox::CheckDroppedItems()
+{
+	//UE_LOG(PalBoxLog, Warning, TEXT("[CheckDroppedItems] Check"));
+	//PalBox Sphere 범위안에 Item들 찾기
+	TArray<AActor*> OverlappingDroppedItems;
+	SphereComp->GetOverlappingActors(OverlappingDroppedItems, AResourceItem::StaticClass());
+	//하나라도 있으면
+	if (OverlappingDroppedItems.Num() > 0)
+	{
+		for (AActor* Item : OverlappingDroppedItems)
+		{
+			//저장되지 않은 아이템들 찾기
+			if (Item && !DroppedItemActors.Contains(Item))
+			{	
+				DroppedItemActors.Add(Item);
+				UE_LOG(PalBoxLog, Warning, TEXT("[CheckDroppedItems]Added Item Actor : %s"), *Item->GetName());
+			}
+		}
+	}
+}
+
+void APalBox::SearchAllPalCarriers()
+{
+	TArray<AActor*> OverlappingPalActors;
+	SphereComp->GetOverlappingActors(OverlappingPalActors, APal::StaticClass());
+	for (AActor* Actor : OverlappingPalActors)
+	{
+		if (Actor && !DetectedPalCarrierActors.Contains(Actor))
+		{
+			APal* pal = Cast<APal>(Actor);
+			if (pal && pal->bIsCarrierMode)
+			{
+				DetectedPalCarrierActors.Add(pal);
+				UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllPalCarriers]Added Pal Actor : %s, Pal Actor IsCarrying : %d"), *pal->GetName(), pal->GetPalIsCarrying());
+			}
+		}
+	}
+}
+
+void APalBox::CheckRestItems()
+{
+	for (AActor* Actor : DroppedItemActors)
+	{
+		if (Actor)
+		{
+			AResourceItem* item = Cast<AResourceItem>(Actor);
+			if (item)
+			{
+				if (!item->IsBeingCarriedOn())
+				{
+					if (!RestItemActors.Contains(item))
+					{
+						RestItemActors.Add(item);
+						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, New Added"), *item->GetName(),item->IsBeingCarriedOn());
+					}
+				}
+				else
+				{
+					if (RestItemActors.Contains(item))
+					{
+						RestItemActors.Remove(item);
+						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, Removed"), *item->GetName(),item->IsBeingCarriedOn());
+					}
+				}
+			}
+			
+		}
+	}
+}
+
+void APalBox::CheckRestCarriers()
+{
+	for (AActor* Actor : DetectedPalCarrierActors)
+	{
+		if (Actor)
+		{
+			APal* pal = Cast<APal>(Actor);
+			if (pal)
+			{
+				if (!pal->GetPalIsCarrying())
+				{
+					if (!RestCarrierActors.Contains(pal))
+					{
+						RestCarrierActors.Add(pal);
+						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestCarriers] Pal Actor : %s, Pal Actor GetPalIsCarrying : %d, New Added"), *pal->GetName(),pal->GetPalIsCarrying());
+					}
+				}
+				else
+				{
+					if (RestCarrierActors.Contains(pal))
+					{
+						RestCarrierActors.Remove(pal);
+						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestCarriers] Pal Actor : %s, Pal Actor GetPalIsCarrying : %d, Removed"), *pal->GetName(),pal->GetPalIsCarrying());
+					}
+				}
+			}
+		}
+	}
+	
+	FindNearDroppedItem();
+}
+
+void APalBox::FindNearDroppedItem()
+{
+	FVector PalBoxLocation = this->GetActorLocation();
+	FVector TargetItemLocation = FVector::ZeroVector;
+	float dist =  100000.f;
+	AActor* NearItemActor = nullptr;
+	APal* pal = nullptr;
+
+	//쉬는 운반용 팰 존재시 랜덤으로 하나 잡기
+	if (RestCarrierActors.Num() > 0)
+	{
+		int32 index = FMath::RandRange(0,RestCarrierActors.Num()-1);
+		pal = Cast<APal>(RestCarrierActors[index]);
+		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Pal : %s"), *pal->GetName());
+	}
+	//가장 가까운 자원 찾기
+	for (AActor* Actor : RestItemActors)
+	{
+		if (Actor)
+		{
+			TargetItemLocation = Actor->GetActorLocation();
+			if (dist >= FVector::Dist(PalBoxLocation, TargetItemLocation))
+			{
+				dist = FVector::Dist(PalBoxLocation, TargetItemLocation);
+				NearItemActor = Actor;
+			}
+		}
+	}
+	if (NearItemActor)
+	{
+		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Actor : %s"), *NearItemActor->GetName());
+	}
+
+	if (pal && NearItemActor)
+	{
+		//쉬고 있는 자원과 팰 배열에서 제거
+		if (RestCarrierActors.Contains(pal))
+		{
+			RestCarrierActors.Remove(pal);
+			pal->SetPalIsCarrying(true); //운반중인 팰로 변경
+			//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Pal Actor : %s, Pal Actor GetPalIsCarrying : %d, RestCarrierActors Removed"), *pal->GetName(),pal->GetPalIsCarrying());
+		}
+		if (RestItemActors.Contains(NearItemActor))
+		{
+			RestItemActors.Remove(NearItemActor);
+			//작업당하는 자원으로 변경
+			if (AResourceItem* item = Cast<AResourceItem>(NearItemActor))
+			{
+				item->SetIsBeinngCarriedOn(true);
+				//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, RestItemActors Removed"), *item->GetName(),item->IsBeingCarriedOn());
+			}
+		}
+		
+		MakePalCarryToItem(NearItemActor, pal);
+	}
+}
+
+void APalBox::MakePalCarryToItem(AActor* item, APal* palCarrier)
+{
+	if (item && palCarrier)
+	{
+		// //운반중인 팰, 아이템 배열에 추가
+		// if (!WorkedResourceActors.Contains(resource))
+		// {
+		// 	WorkedResourceActors.Add(resource);
+		// 	UE_LOG(PalBoxLog, Warning, TEXT("[MakePalWorkToResource] Added Worked Resource : %s"), *resource->GetName());
+		// }
+		// if (!WorkedPalActors.Contains(palWorker))
+		// {
+		// 	WorkedPalActors.Add(palWorker);
+		// 	UE_LOG(PalBoxLog, Warning, TEXT("[MakePalWorkToResource] Added Worked Pal : %s"), *palWorker->GetName());
+		// }
+		
+		//팰 운반 아이템 찾기 시작 상태변경
+		palCarrier->SetPalCarrierState(EPalCarrierState::FindItem, item);
+		//UE_LOG(PalBoxLog, Warning, TEXT("[MakePalCarryToItem] Start Carrying / Item : %s, PalCarrier : %s"), *item->GetName(), *palCarrier->GetName());
+		
+	}
+}
+
 
 void APalBox::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                              UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
