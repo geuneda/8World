@@ -100,6 +100,18 @@ APlayerCharacter::APlayerCharacter()
 		BuildModeAction = buildModeInput.Object;
 	}
 
+	ConstructorHelpers::FObjectFinder<UInputAction> wheelDownInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelDown.IA_WheelDown'"));
+	if (wheelDownInput.Succeeded())
+	{
+		MouseWheelDownAction = wheelDownInput.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction> wheelUpInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelUp.IA_WheelUp'"));
+	if (wheelUpInput.Succeeded())
+	{
+		MouseWheelUpAction = wheelUpInput.Object;
+	}
+
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
 	if (mainUIWidget.Succeeded())
 	{
@@ -149,6 +161,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
 
 		EnhancedInputComponent->BindAction(BuildModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BuildMode);
+
+		EnhancedInputComponent->BindAction(MouseWheelDownAction, ETriggerEvent::Started, this, &APlayerCharacter::MouseWheelDown);
+		EnhancedInputComponent->BindAction(MouseWheelUpAction, ETriggerEvent::Started, this, &APlayerCharacter::MouseWheelUp);
 	}
 	else
 	{
@@ -159,6 +174,14 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // 공격 입력 처리
 void APlayerCharacter::Attack(const FInputActionValue& Value)
 {
+	if (PlayerBuildComp->bIsBuildMode && PlayerBuildComp->bCanBuild)
+	{
+		PlayerBuildComp->SpawnBuild();
+		
+		return;
+	}
+	
+	
 	if (PlayerAttackComp && !IsInventoryOpen())
 	{
 		PlayerAttackComp->StartAttack();
@@ -222,6 +245,25 @@ void APlayerCharacter::MyJump(const FInputActionValue& Value)
 	anim->PlayJumpMontage();
 }
 
+void APlayerCharacter::MouseWheelDown(const FInputActionValue& Value)
+{
+	if (PlayerBuildComp->bIsBuildMode)
+	{
+		PlayerBuildComp->BuildID = FMath::Clamp(PlayerBuildComp->BuildID+1, 0, PlayerBuildComp->BuildData.Num() - 1);
+
+		PlayerBuildComp->ChangeMesh();
+	}
+}
+
+void APlayerCharacter::MouseWheelUp(const FInputActionValue& Value)
+{
+	if (PlayerBuildComp->bIsBuildMode)
+	{
+		PlayerBuildComp->BuildID = FMath::Clamp(PlayerBuildComp->BuildID-1, 0, PlayerBuildComp->BuildData.Num() - 1);
+
+		PlayerBuildComp->ChangeMesh();
+	}
+}
 void APlayerCharacter::BeginPlay()
 {
 	// 컴포넌트보다 먼저 UI 생성

@@ -63,6 +63,12 @@ class APlayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* BuildModeAction;
 
+	/** 마우스 휠 Up/Down */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* MouseWheelUpAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* MouseWheelDownAction;
+
 public:
 	APlayerCharacter();
 	
@@ -134,6 +140,10 @@ public:
 
 	/** 건축 모드 처리 */
 	void BuildMode(const FInputActionValue& Value);
+
+	/** 마우스 휠 업/다운 처리 */
+	void MouseWheelDown(const FInputActionValue& Value);
+	void MouseWheelUp(const FInputActionValue& Value);
 
 	/** 달리기 상태 확인 */
 	bool IsSprinting() const { return bIsSprinting; }

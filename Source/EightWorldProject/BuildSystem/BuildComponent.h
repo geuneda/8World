@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Buildables.h"
 #include "BuildComponent.generated.h"
 
 
@@ -26,6 +27,14 @@ public:
 
 
 public:
+	// 데이터 테이블
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data Tables")
+	class UDataTable* BuildDataTable;
+
+	// 빌드 데이터
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
+	TArray<FBuildData> BuildData;
+	
 
 	// 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
@@ -39,7 +48,7 @@ public:
 	bool bCanBuild = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
-	int32 BuildD = 0;
+	int32 BuildID = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
 	FTransform BuildTransform;
 
@@ -55,6 +64,7 @@ public:
 	void GiveBuildColor(bool bIsGreen);
 
 	void BuildCycle();
+	
 	void ClearBuildGhostMesh();
 
 	void BuildDelay();
@@ -62,6 +72,10 @@ public:
 	void LaunchBuildMode();
 
 	void StopBuildMode();
+
+	void ChangeMesh();
+
+	void SpawnBuild();
 
 
 public: // ---------------------머티리얼----------------------------

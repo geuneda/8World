@@ -2,6 +2,7 @@
 
 #include "Camera/CameraComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 UBuildComponent::UBuildComponent()
 {
@@ -34,6 +35,22 @@ void UBuildComponent::BeginPlay()
 	Super::BeginPlay();
 
 	PlayerCharacter = Cast<APlayerCharacter>(GetOwner());
+
+	if (BuildDataTable)
+	{
+		static const FString ContextString(TEXT("BuildDataTableContext"));
+		
+		TArray<FBuildData*> OutRows;
+		BuildDataTable->GetAllRows<FBuildData>(ContextString, OutRows);
+
+		for (const FBuildData* Row : OutRows)
+		{
+			if (Row)
+			{
+				BuildData.Add(*Row);
+			}
+		}
+	}
 }
 
 
@@ -48,7 +65,7 @@ void UBuildComponent::SpawnBuildGhost()
 {
 	BuildGhostMeshComp = Cast<UStaticMeshComponent>(PlayerCharacter->AddComponentByClass(UStaticMeshComponent::StaticClass(), false, BuildTransform, false));
 
-	BuildGhostMeshComp->SetStaticMesh(Foundation);
+	BuildGhostMeshComp->SetStaticMesh(BuildData[BuildID].Mesh);
 
 	BuildGhostMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
@@ -85,7 +102,7 @@ void UBuildComponent::BuildCycle()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this->GetOwner());
 	
-	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECC_Visibility, Params);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, start, end, BuildData[BuildID].TraceChannel, Params);
 
 	if (bHit)
 	{
@@ -163,5 +180,18 @@ void UBuildComponent::LaunchBuildMode()
 void UBuildComponent::StopBuildMode()
 {
 	ClearBuildGhostMesh();
+}
+
+void UBuildComponent::ChangeMesh()
+{
+	if (IsValid(BuildGhostMeshComp))
+	{
+		BuildGhostMeshComp->SetStaticMesh(BuildData[BuildID].Mesh);
+	}
+}
+
+void UBuildComponent::SpawnBuild()
+{
+	GetWorld()->SpawnActor<AActor>(BuildData[BuildID].Actor, BuildTransform);
 }
 
