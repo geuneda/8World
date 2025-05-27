@@ -3,7 +3,7 @@
 
 #include "PalWorkComponent.h"
 
-#include "PalAlpaca.h"
+#include "PalYeti.h"
 #include "PWWorkPlaceInterface.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -46,7 +46,7 @@ AActor* UPalWorkComponent::FindAvailableWorkPlaceNearby()
 		IPWWorkPlaceInterface* WorkPlace = Cast<IPWWorkPlaceInterface>(Actor);
 		if (WorkPlace->IsAvailable())
 		{
-			WorkPlace->Reserve(Cast<APalAlpaca>(GetOwner()));
+			WorkPlace->Reserve(Cast<APalYeti>(GetOwner()));
 
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("WorkPlace : %s"), *(Actor->GetName())));
 			return Actor;

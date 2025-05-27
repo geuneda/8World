@@ -3,7 +3,7 @@
 
 #include "TaskFindWorkPlace.h"
 
-#include "PalAlpaca.h"
+#include "PalYeti.h"
 #include "PalWorkComponent.h"
 #include "PWAIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -15,7 +15,7 @@ UTaskFindWorkPlace::UTaskFindWorkPlace()
 EBTNodeResult::Type UTaskFindWorkPlace::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	APWAIController* AIController = Cast<APWAIController>(OwnerComp.GetAIOwner());
-	APalAlpaca* Pal = Cast<APalAlpaca>(AIController->GetCharacter());
+	APalYeti* Pal = Cast<APalYeti>(AIController->GetCharacter());
 
 	if (!Pal)
 	{

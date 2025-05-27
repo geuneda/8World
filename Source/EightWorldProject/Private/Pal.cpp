@@ -31,7 +31,7 @@ void APal::BeginPlay()
 		FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Alpaca"));
 		if (InfoData)
 		{
-			AlpacaInfo = *InfoData;
+			YetiInfo = *InfoData;
 		}
 	}
 	

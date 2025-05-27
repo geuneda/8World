@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "PalAlpaca.h"
+#include "PalYeti.h"
 
-#include "PalAlpacaAnimInstance.h"
+#include "PalYetiAnimInstance.h"
 #include "PalBox.h"
 #include "PalWorkComponent.h"
 #include "PWAIController.h"
@@ -16,26 +16,27 @@ DECLARE_LOG_CATEGORY_EXTERN(PalLog, Log, All);
 DEFINE_LOG_CATEGORY(PalLog);
 
 // Sets default values
-APalAlpaca::APalAlpaca()
+APalYeti::APalYeti()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	//Alpaca Mesh
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Resources/Alpaca/Alpaca.Alpaca'"));
+	//Yeti Mesh
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Resources/Pal/Yeti/Yeti.Yeti'"));
 	if (tempMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
+		GetMesh()->SetRelativeScale3D(FVector(0.4f));
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-90.f), FRotator(0,-90,0));
 	}
 
 	PalworkComp = CreateDefaultSubobject<UPalWorkComponent>(TEXT("PalWorkComp"));
 
 	//DataTable RowName 초기화
-	PalDataRowName = TEXT("Alpaca");
+	PalDataRowName = TEXT("Yeti");
 
-	//Alpaca Anim Class
-	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("'/Game/PalWorld/Blueprints/AlpacaAnimation/ABP_PalAlpaca.ABP_PalAlpaca_C'"));
+	//Yeti Anim Class
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnimInstance(TEXT("/Script/Engine.AnimBlueprint'/Game/PalWorld/Blueprints/YetiAnimation/ABP_PalYeti.ABP_PalYeti_C'"));
 	if (tempAnimInstance.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
@@ -43,7 +44,7 @@ APalAlpaca::APalAlpaca()
 }
 
 // Called when the game starts or when spawned
-void APalAlpaca::BeginPlay()
+void APalYeti::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -55,7 +56,7 @@ void APalAlpaca::BeginPlay()
 	// if (EnumPtr)
 	// {
 	// 	FString EnumName = EnumPtr->GetNameStringByValue((int64)PalMode);
-	// 	UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, BeginPlay] EPalMode : %s"), *EnumName);
+	// 	UE_LOG(PalLog, Warning, TEXT("[PalYeti, BeginPlay] EPalMode : %s"), *EnumName);
 	// }
 	
 	//팰 모드별 상태 초기화
@@ -72,14 +73,14 @@ void APalAlpaca::BeginPlay()
 	this->GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 	//팰 DataTable Data 초기화
-	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalAlpaca::SetTableData, 0.2f, false);
+	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalYeti::SetTableData, 0.2f, false);
 
 	//애니메이션
-	AlpacaAnimInstance = Cast<UPalAlpacaAnimInstance>(GetMesh()->GetAnimInstance());
+	YetiAnimInstance = Cast<UPalYetiAnimInstance>(GetMesh()->GetAnimInstance());
 }
 
 // Called every frame
-void APalAlpaca::Tick(float DeltaTime)
+void APalYeti::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -101,13 +102,13 @@ void APalAlpaca::Tick(float DeltaTime)
 }
 
 // Called to bind functionality to input
-void APalAlpaca::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void APalYeti::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
 
-void APalAlpaca::SwitchWildState()
+void APalYeti::SwitchWildState()
 {
 	switch (PalWildState)
 	{
@@ -132,7 +133,7 @@ void APalAlpaca::SwitchWildState()
 	}
 }
 
-void APalAlpaca::SwitchBattleState()
+void APalYeti::SwitchBattleState()
 {
 	switch (PalBattleState)
 	{
@@ -151,7 +152,7 @@ void APalAlpaca::SwitchBattleState()
 	}
 }
 
-void APalAlpaca::SwitchWorkerState()
+void APalYeti::SwitchWorkerState()
 {
 	switch (PalWorkerState)
 	{
@@ -173,56 +174,56 @@ void APalAlpaca::SwitchWorkerState()
 	}
 }
 
-void APalAlpaca::HandleWildPatrol()
+void APalYeti::HandleWildPatrol()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWildPatrol] WildState : Patrol"));
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWildPatrol] WildState : Patrol"));
 }
 
-void APalAlpaca::HandleWildPlayerHitToPal()
-{
-}
-
-void APalAlpaca::HandleWildDetectPlayer()
+void APalYeti::HandleWildPlayerHitToPal()
 {
 }
 
-void APalAlpaca::HandleWildChase()
+void APalYeti::HandleWildDetectPlayer()
 {
 }
 
-void APalAlpaca::HandleWildAttack()
+void APalYeti::HandleWildChase()
 {
 }
 
-void APalAlpaca::HandleWildReturn()
+void APalYeti::HandleWildAttack()
 {
 }
 
-void APalAlpaca::HandleBattleFollowPlayer()
-{
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleBattleFollowPlayer] BattleState : FollowPlayer"));
-}
-
-void APalAlpaca::HandleBattleDetectTarget()
+void APalYeti::HandleWildReturn()
 {
 }
 
-void APalAlpaca::HandleBattleChase()
+void APalYeti::HandleBattleFollowPlayer()
+{
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleBattleFollowPlayer] BattleState : FollowPlayer"));
+}
+
+void APalYeti::HandleBattleDetectTarget()
 {
 }
 
-void APalAlpaca::HandleBattleAttack()
+void APalYeti::HandleBattleChase()
 {
 }
 
-void APalAlpaca::HandleWorkerIdle()
+void APalYeti::HandleBattleAttack()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerIdle] WorkerState : Idle"));
 }
 
-void APalAlpaca::HandleWorkerFindWork()
+void APalYeti::HandleWorkerIdle()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerFindWork] WorkerState : FindWork, WorkerPalName : %s"), *this->GetName());
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerIdle] WorkerState : Idle"));
+}
+
+void APalYeti::HandleWorkerFindWork()
+{
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerFindWork] WorkerState : FindWork, WorkerPalName : %s"), *this->GetName());
 
 	//타겟 자원이 있다면
 	if (TargetResource)
@@ -231,9 +232,9 @@ void APalAlpaca::HandleWorkerFindWork()
 	}
 }
 
-void APalAlpaca::HandleWorkerMovetoTarget()
+void APalYeti::HandleWorkerMovetoTarget()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerMovetoTarget] WorkerState : MovetoTarget, WorkerPalName : %s"), *this->GetName());
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerMovetoTarget] WorkerState : MovetoTarget, WorkerPalName : %s"), *this->GetName());
 
 	//Target 자원으로 이동하기
 	 FVector meLoc = this->GetActorLocation();
@@ -253,7 +254,7 @@ void APalAlpaca::HandleWorkerMovetoTarget()
 			{
 				MyAIController->MoveToLocation(targetLoc);
 				bIsMoveToTarget = true;
-				AlpacaAnimInstance->bIsMove = bIsMoveToTarget;
+				YetiAnimInstance->bIsMove = bIsMoveToTarget;
 			}
 		}
 	}
@@ -261,17 +262,24 @@ void APalAlpaca::HandleWorkerMovetoTarget()
 	//거리가 150보다 작으면 Working State 시작
 	if (FVector::DistXY(meLoc, targetLoc) < 150.f)
 	{
+		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
-		AlpacaAnimInstance->bIsMove = bIsMoveToTarget;
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+
+		//이동 정지 및 작업 상태 시작
 		MyAIController->StopMovement();
 		SetPalWorkerState(EPalWorkerState::Working, TargetResource);
+		
+		//작업중 애니메이션 시작
+		bIsPlayingWorkAnim = true;
+		YetiAnimInstance->bIsWorking = bIsPlayingWorkAnim;
 	}
 	
 }
 
-void APalAlpaca::HandleWorkerWorking()
+void APalYeti::HandleWorkerWorking()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, HandleWorkerWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
 	if (!TargetResource)
 	{
 		return;
@@ -284,38 +292,38 @@ void APalAlpaca::HandleWorkerWorking()
 	//팰 작업속도
 	if (ATree* tree = Cast<ATree>(TargetResource))
 	{
-		WorkSpeed = *AlpacaInfo.WorkSpeeds.Find("Tree");
+		WorkSpeed = *YetiInfo.WorkSpeeds.Find("Tree");
 	}
 	else if (ARock* rock = Cast<ARock>(TargetResource))
 	{
-		WorkSpeed = *AlpacaInfo.WorkSpeeds.Find("Rock");
+		WorkSpeed = *YetiInfo.WorkSpeeds.Find("Rock");
 	}
 	
 	WorkInterval = 1.f / WorkSpeed;
 	//WorkInterval마다 working 타이머 반복 실행
-	GetWorldTimerManager().SetTimer(WorkTimerHandle, this, &APalAlpaca::PalWorking, WorkInterval, true);
+	GetWorldTimerManager().SetTimer(WorkTimerHandle, this, &APalYeti::PalWorking, WorkInterval, true);
 
 	
 }
 
-void APalAlpaca::HandleWorkerReturn()
+void APalYeti::HandleWorkerReturn()
 {
 }
 
-void APalAlpaca::SetTableData()
+void APalYeti::SetTableData()
 {
 	Super::SetTableData();
 
 	//팰 속도
-	MoveSpeed = AlpacaInfo.MoveSpeed;
+	MoveSpeed = YetiInfo.MoveSpeed;
 	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 	
 }
 
-void APalAlpaca::PalWorking()
+void APalYeti::PalWorking()
 {
 	Super::PalWorking();
-	//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, PalWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
 
 	//자원에 데미지 10씩 주기
 	UGameplayStatics::ApplyDamage(TargetResource, 10.f, GetController(), this, nullptr);
@@ -323,12 +331,16 @@ void APalAlpaca::PalWorking()
 	//데미지 주다가 자원이 비활성화 되면, 자원과 팰 둘다 작업상태 멈춤 Rest상태로 Rest 배열에 자동 추가됨(자원은 재생성될때)
 	if (ATree* tree = Cast<ATree>(TargetResource))
 	{
-		//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] tree->IsActive() : %d, tree->IsBeingWorkedOn() : %d,  WorkerPalName : %s"), tree->IsActive(), tree->IsBeingWorkedOn(), *this->GetName());
+		//UE_LOG(PalLog, Warning, TEXT("[PalYeti, PalWorking] tree->IsActive() : %d, tree->IsBeingWorkedOn() : %d,  WorkerPalName : %s"), tree->IsActive(), tree->IsBeingWorkedOn(), *this->GetName());
 		if (tree && !tree->IsActive())
 		{
 			//자원과 팰 둘다 작업상태 멈춤
 			tree->SetIsBeingWorkedOn(false);
 			this->SetPalIsWorking(false);
+
+			//작업중 애니메이션 취소
+			bIsPlayingWorkAnim = false;
+			YetiAnimInstance->bIsWorking = false;
 
 			//팰 상태 Idle로 초기화
 			this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
@@ -342,12 +354,16 @@ void APalAlpaca::PalWorking()
 	}
 	if (ARock* rock = Cast<ARock>(TargetResource))
 	{
-		//UE_LOG(PalLog, Warning, TEXT("[PalAlpaca, PalWorking] rock->IsActive() : %d, rock->IsBeingWorkedOn() : %d, WorkerPalName : %s"), rock->IsActive(), rock->IsBeingWorkedOn(), *this->GetName());
+		//UE_LOG(PalLog, Warning, TEXT("[PalYeti, PalWorking] rock->IsActive() : %d, rock->IsBeingWorkedOn() : %d, WorkerPalName : %s"), rock->IsActive(), rock->IsBeingWorkedOn(), *this->GetName());
 		if (rock && !rock->IsActive())
 		{
 			//자원과 팰 둘다 작업상태 멈춤
 			rock->SetIsBeingWorkedOn(false);
 			this->SetPalIsWorking(false);
+
+			//작업중 애니메이션 취소
+			bIsPlayingWorkAnim = false;
+			YetiAnimInstance->bIsWorking = false;
 
 			//팰 상태 Idle로 초기화
 			this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
@@ -361,7 +377,7 @@ void APalAlpaca::PalWorking()
 	}
 }
 
-void APalAlpaca::SetPalMode(EPalMode Mode)
+void APalYeti::SetPalMode(EPalMode Mode)
 {
 	Super::SetPalMode(Mode);
 
@@ -391,21 +407,21 @@ void APalAlpaca::SetPalMode(EPalMode Mode)
 	}
 }
 
-void APalAlpaca::SetPalWildState(EPalWildState State)
+void APalYeti::SetPalWildState(EPalWildState State)
 {
 	Super::SetPalWildState(State);
 
 	PalWildState = State;
 }
 
-void APalAlpaca::SetPalBattleState(EPalBattleState State)
+void APalYeti::SetPalBattleState(EPalBattleState State)
 {
 	Super::SetPalBattleState(State);
 
 	PalBattleState = State;
 }
 
-void APalAlpaca::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
+void APalYeti::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
 {
 	Super::SetPalWorkerState(State, TargetActor);
 
@@ -417,12 +433,12 @@ void APalAlpaca::SetPalWorkerState(EPalWorkerState State, AActor* TargetActor)
 	}
 }
 
-bool APalAlpaca::GetPalIsWorking() const
+bool APalYeti::GetPalIsWorking() const
 {
 	return Super::GetPalIsWorking();
 }
 
-void APalAlpaca::SetPalIsWorking(bool IsWorking)
+void APalYeti::SetPalIsWorking(bool IsWorking)
 {
 	Super::SetPalIsWorking(IsWorking);
 

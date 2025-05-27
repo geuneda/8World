@@ -39,7 +39,7 @@ void APWChopWorkPlace::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void APWChopWorkPlace::Reserve(class APalAlpaca* PalWorker)
+void APWChopWorkPlace::Reserve(class APalYeti* PalWorker)
 {
 }
 

@@ -94,7 +94,7 @@ public:
 	
 	//팰 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
-	FPalInfoData AlpacaInfo;
+	FPalInfoData YetiInfo;
 
 	//펠 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
@@ -131,6 +131,9 @@ public:
 	
 	//팰 작업중 여부
 	bool bIsWorking = false;
+
+	//팰 작업 애니메이션 실행 여부
+	bool bIsPlayingWorkAnim = false;
 
 	//팰 운반중 여부
 	bool bIsCarrying = false;

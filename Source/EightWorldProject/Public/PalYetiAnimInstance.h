@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "PalAlpacaAnimInstance.generated.h"
+#include "PalYetiAnimInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class EIGHTWORLDPROJECT_API UPalAlpacaAnimInstance : public UAnimInstance
+class EIGHTWORLDPROJECT_API UPalYetiAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
 public:
-	UPalAlpacaAnimInstance();
+	UPalYetiAnimInstance();
 
 	virtual void NativeInitializeAnimation() override;
 
@@ -23,4 +23,8 @@ public:
 	//팰 이동중인지 여부
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool bIsMove;
+
+	//팰 작업중인지 여부
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool bIsWorking;
 };

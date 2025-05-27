@@ -5,16 +5,16 @@
 #include "CoreMinimal.h"
 #include "Pal.h"
 #include "GameFramework/Character.h"
-#include "PalAlpaca.generated.h"
+#include "PalYeti.generated.h"
 
 UCLASS()
-class EIGHTWORLDPROJECT_API APalAlpaca : public APal
+class EIGHTWORLDPROJECT_API APalYeti : public APal
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	APalAlpaca();
+	APalYeti();
 
 protected:
 	// Called when the game starts or when spawned
@@ -33,7 +33,7 @@ public:
 
 	//팰 에니메이션
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	class UPalAlpacaAnimInstance* AlpacaAnimInstance;
+	class UPalYetiAnimInstance* YetiAnimInstance;
 	
 	//SetTableData TimerHandle
 	FTimerHandle TableDataTimerHandle;

@@ -31,7 +31,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual bool IsAvailable() const override {return !bIsReserved;}
 	
-	virtual void Reserve(class APalAlpaca* PalWorker) override;
+	virtual void Reserve(class APalYeti* PalWorker) override;
 	virtual void Release() override;
 	virtual void StartWork() override;
 
