@@ -219,6 +219,7 @@ void APalYeti::HandleBattleAttack()
 void APalYeti::HandleWorkerIdle()
 {
 	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerIdle] WorkerState : Idle"));
+	//순찰 patrol 넣자
 }
 
 void APalYeti::HandleWorkerFindWork()
@@ -244,7 +245,7 @@ void APalYeti::HandleWorkerMovetoTarget()
 	// //this->SetActorLocation(meLoc + dir * MoveSpeed * GetWorld()->GetDeltaSeconds());
 	// AddMovementInput(dir);
 
-	//Navigation Move To 
+	//AIController Move To 
 	APWAIController* MyAIController = Cast<APWAIController>(GetController());
 	if (MyAIController)
 	{
@@ -308,6 +309,8 @@ void APalYeti::HandleWorkerWorking()
 
 void APalYeti::HandleWorkerReturn()
 {
+	//Idle 상태로 변경
+	this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
 }
 
 void APalYeti::SetTableData()
@@ -342,8 +345,8 @@ void APalYeti::PalWorking()
 			bIsPlayingWorkAnim = false;
 			YetiAnimInstance->bIsWorking = false;
 
-			//팰 상태 Idle로 초기화
-			this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
+			//팰 상태 Return으로 초기화
+			this->SetPalWorkerState(EPalWorkerState::Return, nullptr);
 			
 			//Work 배열에서 제거
 			// 	PalBox->WorkedPalActors.Remove(this);
@@ -365,8 +368,8 @@ void APalYeti::PalWorking()
 			bIsPlayingWorkAnim = false;
 			YetiAnimInstance->bIsWorking = false;
 
-			//팰 상태 Idle로 초기화
-			this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
+			//팰 상태 Return으로 초기화
+			this->SetPalWorkerState(EPalWorkerState::Return, nullptr);
 			
 			//Work 배열에서 제거
 			// 	PalBox->WorkedPalActors.Remove(this);

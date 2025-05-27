@@ -50,7 +50,7 @@ enum class EPalWorkerState : uint8
 UENUM(BlueprintType)
 enum class EPalCarrierState : uint8
 {
-	Idle UMETA(DisplayName = "Idle"),
+	Patrol UMETA(DisplayName = "Patrol"),
 	FindItem UMETA(DisplayName = "FindItem"),
 	MoveToTarget UMETA(DisplayName = "MoveToTarget"),
 	Carrying UMETA(DisplayName = "Carrying"),
@@ -95,6 +95,8 @@ public:
 	//팰 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
 	FPalInfoData YetiInfo;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
+	FPalInfoData ChickenInfo;
 
 	//펠 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")

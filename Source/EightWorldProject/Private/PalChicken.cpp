@@ -3,7 +3,9 @@
 
 #include "PalChicken.h"
 
+#include "NavigationSystem.h"
 #include "PalChickenAnimInstance.h"
+#include "PWAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 APalChicken::APalChicken()
@@ -37,7 +39,7 @@ void APalChicken::BeginPlay()
 	//팰 모드별 상태 초기화
 	SetPalWildState(EPalWildState::Patrol);
 	SetPalBattleState(EPalBattleState::FollowPlayer);
-	SetPalCarrierState(EPalCarrierState::Idle, nullptr);
+	SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
 
 	//팰 운반중 여부
 	bIsCarrying = false;
@@ -49,6 +51,12 @@ void APalChicken::BeginPlay()
 
 	//애니메이션
 	ChickenAnimInstance = Cast<UPalChickenAnimInstance>(GetMesh()->GetAnimInstance());
+	
+	//첫 시작 지점을 기준으로 지정
+	InitLocation = this->GetActorLocation();
+
+	//팰 DataTable Data 초기화
+	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.2f, false);
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -125,7 +133,7 @@ void APalChicken::SwitchCarrierState()
 {
 	switch (PalCarrierState)
 	{
-	case EPalCarrierState::Idle:
+	case EPalCarrierState::Patrol:
 		HandleCarrierIdle();
 		break;
 	case EPalCarrierState::FindItem:
@@ -185,6 +193,36 @@ void APalChicken::HandleBattleAttack()
 
 void APalChicken::HandleCarrierIdle()
 {
+	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
+	//네비게이션 시스템 받아오기
+	UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NaviSystem)
+	{
+		return;
+	}
+
+	//지정해둔 범위 내에 랜덤 위치 받아오기
+	FNavLocation RandomPoint;
+	bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
+	if (bFound)
+	{
+		APWAIController* MyController = Cast<APWAIController>(GetController());
+		if (MyController)
+		{
+			if (!bIsPatroling)
+			{
+				bIsPatroling = true;
+				MyController->MoveToLocation(RandomPoint.Location);
+			}
+		}
+	}
+
+	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기
+	if (FVector::DistXY(this->GetActorLocation(), RandomPoint.Location) < 5.f)
+	{
+		bIsPatroling = false;
+	}
+	
 }
 
 void APalChicken::HandleCarrierFindItem()
@@ -202,6 +240,16 @@ void APalChicken::HandleCarrierCarrying()
 void APalChicken::HandleCarrierReturn()
 {
 }
+
+inline void APalChicken::SetTableData()
+{
+	Super::SetTableData();
+
+	//팰 속도
+	MoveSpeed = ChickenInfo.MoveSpeed;
+	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+}
+
 
 void APalChicken::SetPalMode(EPalMode Mode)
 {

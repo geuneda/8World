@@ -31,6 +31,25 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UPalChickenAnimInstance* ChickenAnimInstance;
 
+	//팰 정찰 범위
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float PatrolRadius = 1000.f;
+	//기준이 되는 위치
+	UPROPERTY(visibleAnywhere)
+	FVector InitLocation;
+
+	//Patrol 반복 타이머
+	FTimerHandle PatrolTimerHandle;
+
+	//patrol 이동 여부
+	bool bIsPatroling = false;
+
+	//SetTableData TimerHandle
+	FTimerHandle TableDataTimerHandle;
+	
+	//팰 데이터 받아오는 함수
+	virtual void SetTableData() override;
+	
 	//팰 모드 Set함수
 	virtual void SetPalMode(EPalMode Mode) override;
 
@@ -42,7 +61,7 @@ public:
 	//팰 운반중 get set
 	virtual bool GetPalIsCarrying() const override;
 	virtual void SetPalIsCarrying(bool IsCarrying) override;
-
+	
 	//팰 모드 스위치 함수
 	void SwitchWildState();
 	void SwitchBattleState();
@@ -69,3 +88,4 @@ public:
 	void HandleCarrierCarrying();
 	void HandleCarrierReturn();
 };
+
