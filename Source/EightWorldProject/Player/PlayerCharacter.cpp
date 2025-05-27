@@ -18,6 +18,7 @@
 #include "Engine/LocalPlayer.h"
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
+#include "EightWorldProject/BuildSystem/BuildComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -72,6 +73,9 @@ APlayerCharacter::APlayerCharacter()
 	// 인벤토리 컴포넌트 생성
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
+	// 빌드 시스템 컴포넌트 생성
+	PlayerBuildComp = CreateDefaultSubobject<UBuildComponent>(TEXT("PlayerBuildComp"));
+
 	ConstructorHelpers::FObjectFinder<UInputAction> attackInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_Attack.IA_Attack'"));
 	if (attackInput.Succeeded())
 	{
@@ -88,6 +92,12 @@ APlayerCharacter::APlayerCharacter()
 	if (inventoryInput.Succeeded())
 	{
 		InventoryAction = inventoryInput.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction> buildModeInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_BuildMode.IA_BuildMode'"));
+	if (buildModeInput.Succeeded())
+	{
+		BuildModeAction = buildModeInput.Object;
 	}
 
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
@@ -137,6 +147,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
 		
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+
+		EnhancedInputComponent->BindAction(BuildModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BuildMode);
 	}
 	else
 	{
@@ -226,6 +238,12 @@ void APlayerCharacter::BeginPlay()
 			InventoryWidget->InitializeInventory(InventoryComponent);
 		}
 	}
+
+	// Build 컴포넌트 카메라 변수 주입
+	if (PlayerBuildComp)
+	{
+		PlayerBuildComp->CameraComp = FollowCamera;
+	}
 }
 
 void APlayerCharacter::MainUIInit()
@@ -276,6 +294,14 @@ void APlayerCharacter::StopSprint(const FInputActionValue& Value)
 		
 		// 마나 소모 타이머 중지
 		GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
+	}
+}
+
+void APlayerCharacter::BuildMode(const FInputActionValue& Value)
+{
+	if (PlayerBuildComp)
+	{
+		PlayerBuildComp->LaunchBuildMode();
 	}
 }
 

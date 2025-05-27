@@ -59,6 +59,10 @@ class APlayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* InventoryAction;
 
+	/** Build Mode Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* BuildModeAction;
+
 public:
 	APlayerCharacter();
 	
@@ -108,6 +112,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerAttackComp")
 	class UPlayerAttackComponent* PlayerAttackComp;
 
+	/** 플레이어 빌드 시스템 컴포넌트 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerBuildComp")
+	class UBuildComponent* PlayerBuildComp;
+
 	/** 아이템 습득 처리 */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void PickupItem(class AResourceItem* Item);
@@ -123,6 +131,9 @@ public:
 
 	/** 달리기 입력 종료 처리 */
 	void StopSprint(const FInputActionValue& Value);
+
+	/** 건축 모드 처리 */
+	void BuildMode(const FInputActionValue& Value);
 
 	/** 달리기 상태 확인 */
 	bool IsSprinting() const { return bIsSprinting; }
