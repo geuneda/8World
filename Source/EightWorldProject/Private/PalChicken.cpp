@@ -6,6 +6,8 @@
 #include "NavigationSystem.h"
 #include "PalChickenAnimInstance.h"
 #include "PWAIController.h"
+#include "Components/SphereComponent.h"
+#include "EightWorldProject/Resources/ResourceItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalChicken, Log, All);
@@ -33,6 +35,12 @@ APalChicken::APalChicken()
 
 	//DataTable RowName 초기화
 	PalDataRowName = TEXT("Chicken");
+
+	//팰 운반용 충돌체 초기화
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SphereComp->SetupAttachment(GetMesh());
+	SphereComp->SetSphereRadius(50.f);
+	SphereComp->SetRelativeLocation(FVector(0, 50.f, 26.f));
 }
 
 void APalChicken::BeginPlay()
@@ -254,8 +262,16 @@ void APalChicken::HandleCarrierFindItem()
 		bIsPatroling = false;
 		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 
-		SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
+		//아이템이 굴러다닐 경우 때문에 1초뒤에 아이템 있는 곳으로 이동하도록 설정
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &APalChicken::SetCarrierMoveToTarget, 1.f, false);
+		//SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
 	}
+}
+
+void APalChicken::SetCarrierMoveToTarget()
+{
+	SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
 }
 
 void APalChicken::HandleCarrierMovetoTarget()
@@ -285,8 +301,9 @@ void APalChicken::HandleCarrierMovetoTarget()
 		}
 	}
 
+	UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierMovetoTarget] CarrierState : MovetoTarget, Distance : %f"), FVector::DistXY(meLoc, targetLoc));
 	//거리가 150보다 작으면 Working State 시작
-	if (FVector::DistXY(meLoc, targetLoc) < 45.f)
+	if (FVector::DistXY(meLoc, targetLoc) < 60.f)
 	{
 		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
@@ -304,6 +321,22 @@ void APalChicken::HandleCarrierMovetoTarget()
 
 void APalChicken::HandleCarrierCarrying()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, CarrierPalName : %s"), *this->GetName());
+	TArray<AActor*> ItemActors;
+	SphereComp->GetOverlappingActors(ItemActors, AResourceItem::StaticClass());
+	for (AActor* item : ItemActors)
+	{
+		//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] Item Name : %s"), *item->GetName());
+		//아이템 상태 - 운반중 변경
+		AResourceItem* itemActor = Cast<AResourceItem>(item);
+		if (itemActor)
+		{
+			itemActor->SetIsMove(true);
+			//운반용 팰에 부착
+			itemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("CarrySocket"));
+			//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, Item Actor : %s Attached To Pal Carrier"), *item->GetName());
+		}
+	}
 }
 
 void APalChicken::HandleCarrierReturn()

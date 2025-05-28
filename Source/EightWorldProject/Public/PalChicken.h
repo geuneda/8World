@@ -49,6 +49,10 @@ public:
 
 	//SetTableData TimerHandle
 	FTimerHandle TableDataTimerHandle;
+
+	//팰이 충돌 체크를 위한 Sphere Collider
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class USphereComponent* SphereComp;
 	
 	//팰 데이터 받아오는 함수
 	virtual void SetTableData() override;
@@ -64,6 +68,9 @@ public:
 	//팰 운반중 get set
 	virtual bool GetPalIsCarrying() const override;
 	virtual void SetPalIsCarrying(bool IsCarrying) override;
+
+	//타이머용 함수, 아이템의 최종위치 이용하기 위한 함수
+	void SetCarrierMoveToTarget();
 	
 	//팰 모드 스위치 함수
 	void SwitchWildState();

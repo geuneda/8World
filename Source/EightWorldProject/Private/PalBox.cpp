@@ -313,10 +313,16 @@ void APalBox::CheckDroppedItems()
 		for (AActor* Item : OverlappingDroppedItems)
 		{
 			//저장되지 않은 아이템들 찾기
-			if (Item && !DroppedItemActors.Contains(Item))
-			{	
-				DroppedItemActors.Add(Item);
-				UE_LOG(PalBoxLog, Warning, TEXT("[CheckDroppedItems]Added Item Actor : %s"), *Item->GetName());
+			// if (Item && !DroppedItemActors.Contains(Item))
+			// {	
+			// 	DroppedItemActors.Add(Item);
+			// 	UE_LOG(PalBoxLog, Warning, TEXT("[CheckDroppedItems]Added Item Actor : %s"), *Item->GetName());
+			// }
+
+			if (Item && !DroppedItemMap.Contains(Item))
+			{
+				DroppedItemMap.Add(Item, false);
+				UE_LOG(PalBoxLog, Warning, TEXT("[CheckDroppedItems]Added ItemMap Actor : %s"), *Item->GetName());
 			}
 		}
 	}
@@ -342,33 +348,59 @@ void APalBox::SearchAllPalCarriers()
 
 void APalBox::CheckRestItems()
 {
-	for (AActor* Actor : DroppedItemActors)
+	// for (AActor* Actor : DroppedItemActors)
+	// {
+	// 	if (Actor)
+	// 	{
+	// 		AResourceItem* item = Cast<AResourceItem>(Actor);
+	// 		if (item)
+	// 		{
+	// 			if (!item->IsBeingCarriedOn())
+	// 			{
+	// 				if (!RestItemActors.Contains(item))
+	// 				{
+	// 					RestItemActors.Add(item);
+	// 					UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, New Added"), *item->GetName(),item->IsBeingCarriedOn());
+	// 				}
+	// 			}
+	// 			else
+	// 			{
+	// 				if (RestItemActors.Contains(item))
+	// 				{
+	// 					RestItemActors.Remove(item);
+	// 					UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, Removed"), *item->GetName(),item->IsBeingCarriedOn());
+	// 				}
+	// 			}
+	// 		}
+	// 		
+	// 	}
+	// }
+	for (const TPair<AActor*, bool>& Pair : DroppedItemMap)
 	{
-		if (Actor)
+		if (Pair.Key && false == Pair.Value)
 		{
-			AResourceItem* item = Cast<AResourceItem>(Actor);
+			AResourceItem* item = Cast<AResourceItem>(Pair.Key);
 			if (item)
 			{
-				if (!item->IsBeingCarriedOn())
+				if (!RestItemMap.Contains(item))
 				{
-					if (!RestItemActors.Contains(item))
-					{
-						RestItemActors.Add(item);
-						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, New Added"), *item->GetName(),item->IsBeingCarriedOn());
-					}
+					RestItemMap.Add(item, Pair.Value);
+					UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, New Added"), *item->GetName(), Pair.Value);
 				}
-				else
+			}
+			else
+			{
+				if (RestItemMap.Contains(item))
 				{
-					if (RestItemActors.Contains(item))
-					{
-						RestItemActors.Remove(item);
-						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, Removed"), *item->GetName(),item->IsBeingCarriedOn());
-					}
+					RestItemMap.Remove(item);
+					UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, New Added"), *item->GetName(), Pair.Value);
 				}
 			}
 			
+			
 		}
 	}
+	
 }
 
 void APalBox::CheckRestCarriers()
@@ -419,15 +451,28 @@ void APalBox::FindNearDroppedItem()
 		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Pal : %s"), *pal->GetName());
 	}
 	//가장 가까운 자원 찾기
-	for (AActor* Actor : RestItemActors)
+	// for (AActor* Actor : RestItemActors)
+	// {
+	// 	if (Actor)
+	// 	{
+	// 		TargetItemLocation = Actor->GetActorLocation();
+	// 		if (dist >= FVector::Dist(PalBoxLocation, TargetItemLocation))
+	// 		{
+	// 			dist = FVector::Dist(PalBoxLocation, TargetItemLocation);
+	// 			NearItemActor = Actor;
+	// 		}
+	// 	}
+	// }
+	for (const TPair<AActor*, bool>& Pair : RestItemMap)
 	{
-		if (Actor)
+		AResourceItem* item = Cast<AResourceItem>(Pair.Key);
+		if (item)
 		{
-			TargetItemLocation = Actor->GetActorLocation();
+			TargetItemLocation = item->GetActorLocation();
 			if (dist >= FVector::Dist(PalBoxLocation, TargetItemLocation))
 			{
 				dist = FVector::Dist(PalBoxLocation, TargetItemLocation);
-				NearItemActor = Actor;
+				NearItemActor = item;
 			}
 		}
 	}
@@ -445,14 +490,24 @@ void APalBox::FindNearDroppedItem()
 			pal->SetPalIsCarrying(true); //운반중인 팰로 변경
 			//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Pal Actor : %s, Pal Actor GetPalIsCarrying : %d, RestCarrierActors Removed"), *pal->GetName(),pal->GetPalIsCarrying());
 		}
-		if (RestItemActors.Contains(NearItemActor))
+		// if (RestItemActors.Contains(NearItemActor))
+		// {
+		// 	RestItemActors.Remove(NearItemActor);
+		// 	//작업당하는 자원으로 변경
+		// 	if (AResourceItem* item = Cast<AResourceItem>(NearItemActor))
+		// 	{
+		// 		item->SetIsBeinngCarriedOn(true);
+		// 		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, RestItemActors Removed"), *item->GetName(),item->IsBeingCarriedOn());
+		// 	}
+		// }
+		if (RestItemMap.Contains(NearItemActor))
 		{
-			RestItemActors.Remove(NearItemActor);
+			RestItemMap.Remove(NearItemActor);
 			//작업당하는 자원으로 변경
 			if (AResourceItem* item = Cast<AResourceItem>(NearItemActor))
 			{
-				item->SetIsBeinngCarriedOn(true);
-				//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Item Actor : %s, Item Actor IsBeingCarriedOn : %d, RestItemActors Removed"), *item->GetName(),item->IsBeingCarriedOn());
+				RestItemMap.Add(item, true);
+				//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, RestItemActors Removed"), *item->GetName(), RestItemMap.Find(item));
 			}
 		}
 		

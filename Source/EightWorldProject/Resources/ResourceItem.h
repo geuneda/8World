@@ -61,7 +61,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ResourceItem")
 	class USphereComponent* SphereCollider;
 
+public:
+	//운반중 여부
+	bool bIsMove;
+	//운반중 상태 Set
+	void SetIsMove(bool state);
+
 private:
 	// 소멸 타이머
 	float DespawnTimer = 0.0f;
+	
 };

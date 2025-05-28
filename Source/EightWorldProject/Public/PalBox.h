@@ -61,6 +61,8 @@ public:
 	//떨어진 아이템 담는 배열
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TArray<AActor*> DroppedItemActors;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TMap<AActor*, bool> DroppedItemMap;
 	//운반용 팰
 	UPROPERTY(visibleAnywhere, BlueprintReadOnly)
 	TArray<AActor*> DetectedPalCarrierActors;
@@ -80,6 +82,8 @@ public:
 	//운반되지 않은 아이템 담는 배열
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TArray<AActor*> RestItemActors;
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	TMap<AActor*, bool> RestItemMap;
 	//운반중이지 않은 팰 담는 배열
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TArray<AActor*> RestCarrierActors;
