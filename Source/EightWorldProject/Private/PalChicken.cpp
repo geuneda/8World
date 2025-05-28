@@ -211,7 +211,7 @@ void APalChicken::HandleBattleAttack()
 
 void APalChicken::HandleCarrierPatrol()
 {
-	//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Started"));
+	UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Started"));
 	
 	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
 	//네비게이션 시스템 받아오기
@@ -288,8 +288,6 @@ void APalChicken::HandleCarrierMovetoTarget()
 
 	//Target 자원으로 이동하기
 	FVector meLoc = this->GetActorLocation();
-	FVector targetLoc = TargetItem->GetActorLocation();
-	
 	//AIController Move To 
 	if (MyAIController)
 	{
@@ -298,7 +296,7 @@ void APalChicken::HandleCarrierMovetoTarget()
 			if (TargetItem)
 			{
 				//이동 및 이동 애니메이션 실행
-				MyAIController->MoveToLocation(targetLoc);
+				MyAIController->MoveToLocation(TargetItem->GetActorLocation());
 				bIsMoveToTarget = true;
 				ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 				//이동 속도 변경
@@ -310,20 +308,34 @@ void APalChicken::HandleCarrierMovetoTarget()
 
 	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierMovetoTarget] CarrierState : MovetoTarget, Distance : %f"), FVector::DistXY(meLoc, targetLoc));
 	//거리가 60보다 작으면 Carring State 시작
-	if (FVector::DistXY(meLoc, targetLoc) < 60.f)
+	if (!TargetItem->IsActorBeingDestroyed())
 	{
+		if (FVector::DistXY(meLoc, TargetItem->GetActorLocation()) < 60.f)
+		{
+			//이동중 애니메이션 취소
+			bIsMoveToTarget = false;
+			ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+
+			//이동 정지 및 작업 상태 시작
+			MyAIController->StopMovement();
+			SetPalCarrierState(EPalCarrierState::Carrying, TargetItem);
+		
+			//작업중 애니메이션 시작
+			//bIsPlayingWorkAnim = true;
+			//ChickenAnimInstance->bIsWorking = bIsPlayingWorkAnim;
+		}
+	}
+	else // TargetItem Destroyed by Player
+	{
+		MyAIController->StopMovement();
+		
 		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
 		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 
-		//이동 정지 및 작업 상태 시작
-		MyAIController->StopMovement();
-		SetPalCarrierState(EPalCarrierState::Carrying, TargetItem);
-		
-		//작업중 애니메이션 시작
-		//bIsPlayingWorkAnim = true;
-		//ChickenAnimInstance->bIsWorking = bIsPlayingWorkAnim;
+		SetPalCarrierState(EPalCarrierState::Return, nullptr);
 	}
+	
 }
 
 void APalChicken::HandleCarrierCarrying()
@@ -363,6 +375,20 @@ void APalChicken::HandleCarrierCarrying()
 			}
 		}
 	}
+	
+	// if (TargetItem->IsActorBeingDestroyed()) // 플레이어의 의해서 아이템이 사라진 경우
+	// {
+	// 	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, TargetItem IsActorBeingDestroyed"));
+	// 	//다시 처음으로 상태 변경
+	// 	MyAIController->StopMovement();
+	// 	
+	// 	//이동중 애니메이션 취소
+	// 	bIsMoveToTarget = false;
+	// 	ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+	// 	
+	// 	SetPalCarrierState(EPalCarrierState::Return, nullptr);
+	// }
+	
 	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, Distance : %f"), FVector::DistXY(meLoc, CommonStorageBox->GetActorLocation()));
 	//거리가 100 미만일때, 움직임을 멈추고 공용 창고 앞에서 운반 아이템 파괴(인벤토리 추가 기능 나중)
 	if (FVector::DistXY(meLoc, CommonStorageBox->GetActorLocation()) < 100.f)
@@ -396,7 +422,7 @@ void APalChicken::CarriedItemDestroy()
 
 void APalChicken::HandleCarrierReturn()
 {
-	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierReturn] CarrierState : Return, CarrierPalName : %s"), *this->GetName());
+	UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierReturn] CarrierState : Return, CarrierPalName : %s"), *this->GetName());
 	//carrying 상태 비활성화, 쉬고 있는 팰에 저장
 	this->SetPalIsCarrying(false);
 	SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
