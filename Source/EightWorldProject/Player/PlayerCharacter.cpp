@@ -18,6 +18,7 @@
 #include "Engine/LocalPlayer.h"
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
+#include "EightWorldProject/BuildSystem/BuildComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -72,6 +73,9 @@ APlayerCharacter::APlayerCharacter()
 	// 인벤토리 컴포넌트 생성
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
+	// 빌드 시스템 컴포넌트 생성
+	PlayerBuildComp = CreateDefaultSubobject<UBuildComponent>(TEXT("PlayerBuildComp"));
+
 	ConstructorHelpers::FObjectFinder<UInputAction> attackInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_Attack.IA_Attack'"));
 	if (attackInput.Succeeded())
 	{
@@ -88,6 +92,24 @@ APlayerCharacter::APlayerCharacter()
 	if (inventoryInput.Succeeded())
 	{
 		InventoryAction = inventoryInput.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction> buildModeInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_BuildMode.IA_BuildMode'"));
+	if (buildModeInput.Succeeded())
+	{
+		BuildModeAction = buildModeInput.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction> wheelDownInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelDown.IA_WheelDown'"));
+	if (wheelDownInput.Succeeded())
+	{
+		MouseWheelDownAction = wheelDownInput.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction> wheelUpInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelUp.IA_WheelUp'"));
+	if (wheelUpInput.Succeeded())
+	{
+		MouseWheelUpAction = wheelUpInput.Object;
 	}
 
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
@@ -137,6 +159,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
 		
 		EnhancedInputComponent->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+
+		EnhancedInputComponent->BindAction(BuildModeAction, ETriggerEvent::Started, this, &APlayerCharacter::BuildMode);
+
+		EnhancedInputComponent->BindAction(MouseWheelDownAction, ETriggerEvent::Started, this, &APlayerCharacter::MouseWheelDown);
+		EnhancedInputComponent->BindAction(MouseWheelUpAction, ETriggerEvent::Started, this, &APlayerCharacter::MouseWheelUp);
 	}
 	else
 	{
@@ -147,6 +174,14 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // 공격 입력 처리
 void APlayerCharacter::Attack(const FInputActionValue& Value)
 {
+	if (PlayerBuildComp->bIsBuildMode && PlayerBuildComp->bCanBuild)
+	{
+		PlayerBuildComp->SpawnBuild();
+		
+		return;
+	}
+	
+	
 	if (PlayerAttackComp && !IsInventoryOpen())
 	{
 		PlayerAttackComp->StartAttack();
@@ -210,6 +245,25 @@ void APlayerCharacter::MyJump(const FInputActionValue& Value)
 	anim->PlayJumpMontage();
 }
 
+void APlayerCharacter::MouseWheelDown(const FInputActionValue& Value)
+{
+	if (PlayerBuildComp->bIsBuildMode)
+	{
+		PlayerBuildComp->BuildID = FMath::Clamp(PlayerBuildComp->BuildID+1, 0, PlayerBuildComp->BuildData.Num() - 1);
+
+		PlayerBuildComp->ChangeMesh();
+	}
+}
+
+void APlayerCharacter::MouseWheelUp(const FInputActionValue& Value)
+{
+	if (PlayerBuildComp->bIsBuildMode)
+	{
+		PlayerBuildComp->BuildID = FMath::Clamp(PlayerBuildComp->BuildID-1, 0, PlayerBuildComp->BuildData.Num() - 1);
+
+		PlayerBuildComp->ChangeMesh();
+	}
+}
 void APlayerCharacter::BeginPlay()
 {
 	// 컴포넌트보다 먼저 UI 생성
@@ -225,6 +279,12 @@ void APlayerCharacter::BeginPlay()
 		{
 			InventoryWidget->InitializeInventory(InventoryComponent);
 		}
+	}
+
+	// Build 컴포넌트 카메라 변수 주입
+	if (PlayerBuildComp)
+	{
+		PlayerBuildComp->CameraComp = FollowCamera;
 	}
 }
 
@@ -276,6 +336,14 @@ void APlayerCharacter::StopSprint(const FInputActionValue& Value)
 		
 		// 마나 소모 타이머 중지
 		GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
+	}
+}
+
+void APlayerCharacter::BuildMode(const FInputActionValue& Value)
+{
+	if (PlayerBuildComp)
+	{
+		PlayerBuildComp->LaunchBuildMode();
 	}
 }
 
