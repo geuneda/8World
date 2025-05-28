@@ -593,12 +593,21 @@ void APalBox::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Rest Resource Actor : %s"), *OtherActor->GetName());
 	}
 	//만약 작업중이었던 자원이면 배열에서도 제거
+	if (OtherActor && WorkedResourceActors.Contains(OtherActor))
 	{
-		if (OtherActor && WorkedResourceActors.Contains(OtherActor))
-		{
-			WorkedResourceActors.Remove(OtherActor);
-			UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked Resource Actor : %s"), *OtherActor->GetName());
-		}
+		WorkedResourceActors.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked Resource Actor : %s"), *OtherActor->GetName());
+	}
+	//만약 아이템이면 배열에서 제거
+	if (OtherActor && DroppedItemMap.Contains(OtherActor))
+	{
+		DroppedItemMap.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked DroppedItem Actor : %s"), *OtherActor->GetName());
+	}
+	if (OtherActor && RestItemMap.Contains(OtherActor))
+	{
+		RestItemMap.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked RestItem Actor : %s"), *OtherActor->GetName());
 	}
 	
 	//팰이 사라지면 배열에서 제거

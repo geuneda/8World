@@ -3,12 +3,14 @@
 
 #include "PalChicken.h"
 
+#include "CommonStorageBox.h"
 #include "NavigationSystem.h"
 #include "PalChickenAnimInstance.h"
 #include "PWAIController.h"
 #include "Components/SphereComponent.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalChicken, Log, All);
 DEFINE_LOG_CATEGORY(PalChicken);
@@ -68,6 +70,11 @@ void APalChicken::BeginPlay()
 	
 	//팰 DataTable Data 초기화
 	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.1f, false);
+
+	//공용 저장 박스
+	CommonStorageBox = Cast<ACommonStorageBox>(UGameplayStatics::GetActorOfClass(GetWorld(), ACommonStorageBox::StaticClass()));
+
+	MyAIController = Cast<APWAIController>(GetController());
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -232,6 +239,7 @@ void APalChicken::HandleCarrierPatrol()
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
 			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+			this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
@@ -264,7 +272,7 @@ void APalChicken::HandleCarrierFindItem()
 
 		//아이템이 굴러다닐 경우 때문에 1초뒤에 아이템 있는 곳으로 이동하도록 설정
 		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &APalChicken::SetCarrierMoveToTarget, 1.f, false);
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &APalChicken::SetCarrierMoveToTarget, 1.5f, false);
 		//SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
 	}
 }
@@ -283,7 +291,6 @@ void APalChicken::HandleCarrierMovetoTarget()
 	FVector targetLoc = TargetItem->GetActorLocation();
 	
 	//AIController Move To 
-	APWAIController* MyAIController = Cast<APWAIController>(GetController());
 	if (MyAIController)
 	{
 		if (!bIsMoveToTarget)
@@ -301,8 +308,8 @@ void APalChicken::HandleCarrierMovetoTarget()
 		}
 	}
 
-	UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierMovetoTarget] CarrierState : MovetoTarget, Distance : %f"), FVector::DistXY(meLoc, targetLoc));
-	//거리가 150보다 작으면 Working State 시작
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierMovetoTarget] CarrierState : MovetoTarget, Distance : %f"), FVector::DistXY(meLoc, targetLoc));
+	//거리가 60보다 작으면 Carring State 시작
 	if (FVector::DistXY(meLoc, targetLoc) < 60.f)
 	{
 		//이동중 애니메이션 취소
@@ -322,25 +329,77 @@ void APalChicken::HandleCarrierMovetoTarget()
 void APalChicken::HandleCarrierCarrying()
 {
 	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, CarrierPalName : %s"), *this->GetName());
+	FVector meLoc = this->GetActorLocation();
 	TArray<AActor*> ItemActors;
 	SphereComp->GetOverlappingActors(ItemActors, AResourceItem::StaticClass());
-	for (AActor* item : ItemActors)
+	if (ItemActors.Num() > 0)
 	{
-		//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] Item Name : %s"), *item->GetName());
-		//아이템 상태 - 운반중 변경
-		AResourceItem* itemActor = Cast<AResourceItem>(item);
-		if (itemActor)
+		for (AActor* item : ItemActors)
 		{
-			itemActor->SetIsMove(true);
-			//운반용 팰에 부착
-			itemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("CarrySocket"));
-			//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, Item Actor : %s Attached To Pal Carrier"), *item->GetName());
+			//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] Item Name : %s"), *item->GetName());
+			//아이템 상태 - 운반중 변경
+			AResourceItem* itemActor = Cast<AResourceItem>(item);
+			if (itemActor && itemActor == Cast<AResourceItem>(TargetItem)) // 범위안에 들어온 아이템들 중에 타겟 아이템과 같다면
+			{
+				itemActor->SetIsMove(true);
+				//운반용 팰에 부착
+				itemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("CarrySocket"));
+				//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, Item Actor : %s Attached To Pal Carrier"), *item->GetName());
+				break;
+			}
 		}
+		if (CommonStorageBox)
+		{
+			//공용 저장 박스로 이동하기
+			if (MyAIController)
+			{
+				if (!bIsMoveToTarget)
+				{
+					//이동 및 이동 애니메이션 실행
+					MyAIController->MoveToLocation(CommonStorageBox->GetActorLocation());
+					bIsMoveToTarget = true;
+					ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+				}
+			}
+		}
+	}
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, Distance : %f"), FVector::DistXY(meLoc, CommonStorageBox->GetActorLocation()));
+	//거리가 100 미만일때, 움직임을 멈추고 공용 창고 앞에서 운반 아이템 파괴(인벤토리 추가 기능 나중)
+	if (FVector::DistXY(meLoc, CommonStorageBox->GetActorLocation()) < 100.f)
+	{
+		//이동중 애니메이션 취소
+		bIsMoveToTarget = false;
+		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+
+		//이동 정지 및 작업 상태 시작
+		MyAIController->StopMovement();
+		//아이템 파괴 타이머
+		FTimerHandle DestroyTimerHandle;
+		GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &APalChicken::CarriedItemDestroy, 0.5f, false);
+	}
+	
+}
+
+void APalChicken::CarriedItemDestroy()
+{
+	if (TargetItem)
+	{
+		//아이템 물리, 충돌체 등 다시 켜기
+		Cast<AResourceItem>(TargetItem)->SetIsMove(false);
+		//아이템 파괴
+		TargetItem->Destroy();
+		
+		//반복을 위한 상태 변화
+		SetPalCarrierState(EPalCarrierState::Return, nullptr);
 	}
 }
 
 void APalChicken::HandleCarrierReturn()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierReturn] CarrierState : Return, CarrierPalName : %s"), *this->GetName());
+	//carrying 상태 비활성화, 쉬고 있는 팰에 저장
+	this->SetPalIsCarrying(false);
+	SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
 }
 
 inline void APalChicken::SetTableData()
