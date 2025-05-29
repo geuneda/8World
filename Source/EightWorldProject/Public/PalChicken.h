@@ -92,6 +92,7 @@ public:
 	void HandleWildDetectPlayer();
 	void HandleWildChase();
 	void HandleWildAttack();
+	void HandleWildEscape();
 	void HandleWildReturn();
 
 	//팰 Battle 모드 함수

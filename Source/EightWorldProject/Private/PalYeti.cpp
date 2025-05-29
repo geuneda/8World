@@ -137,6 +137,9 @@ void APalYeti::SwitchWildState()
 		case EPalWildState::Attack:
 			HandleWildAttack();
 			break;
+		case EPalWildState::Escape:
+			HandleWildEscape();
+			break;
 		case EPalWildState::Return:
 			HandleWildReturn();
 			break;
@@ -202,6 +205,10 @@ void APalYeti::HandleWildChase()
 }
 
 void APalYeti::HandleWildAttack()
+{
+}
+
+void APalYeti::HandleWildEscape()
 {
 }
 

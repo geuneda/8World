@@ -25,6 +25,7 @@ enum class EPalWildState : uint8
 	DetectPlayer UMETA(DisplayName = "DetectPlayer"),
 	Chase UMETA(DisplayName = "Chase"),
 	Attack UMETA(DisplaName = "Attack"),
+	Escape UMETA(DisplayName = "Escape"),
 	Return UMETA(DisplayName = "Return"),
 };
 

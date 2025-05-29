@@ -132,6 +132,9 @@ void APalChicken::SwitchWildState()
 	case EPalWildState::Attack:
 		HandleWildAttack();
 		break;
+	case EPalWildState::Escape:
+		HandleWildEscape();
+		break;
 	case EPalWildState::Return:
 		HandleWildReturn();
 		break;
@@ -196,6 +199,10 @@ void APalChicken::HandleWildChase()
 }
 
 void APalChicken::HandleWildAttack()
+{
+}
+
+void APalChicken::HandleWildEscape()
 {
 }
 
