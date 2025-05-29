@@ -123,7 +123,6 @@ void UPlayerAnimInstance::PlayJumpMontage()
 	bIsInAir = true;
 	
 	Montage_Play(JumpMontage, 1.0f);
-	PlayerCharacter->PlayerStatComp->SetRestState(false);
 }
 
 void UPlayerAnimInstance::AnimNotify_AttackTiming()
