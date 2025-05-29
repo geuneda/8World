@@ -24,22 +24,6 @@ APal::APal()
 void APal::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	//DataTable 로딩
-	if (PalDataTable)
-	{
-		FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Yeti"));
-		if (InfoData)
-		{
-			YetiInfo = *InfoData;
-		}
-		FPalInfoData* InfoData2 = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Chicken"));
-		if (InfoData2)
-		{
-			ChickenInfo = *InfoData2;
-		}
-	}
-	
 }
 
 // Called every frame
