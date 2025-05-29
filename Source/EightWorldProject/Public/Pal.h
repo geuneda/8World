@@ -93,9 +93,9 @@ public:
 	EPalCarrierState PalCarrierState;
 	
 	//팰 데이터
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pal")
 	FPalInfoData YetiInfo;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pal")
 	FPalInfoData ChickenInfo;
 
 	//펠 ID

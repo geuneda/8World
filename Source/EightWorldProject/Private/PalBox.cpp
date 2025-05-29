@@ -375,31 +375,33 @@ void APalBox::CheckRestItems()
 	// 		
 	// 	}
 	// }
-	for (const TPair<AActor*, bool>& Pair : DroppedItemMap)
+	if (DroppedItemMap.Num() > 0)
 	{
-		if (Pair.Key && false == Pair.Value)
+		for (const TPair<AActor*, bool>& Pair : DroppedItemMap)
 		{
 			AResourceItem* item = Cast<AResourceItem>(Pair.Key);
-			if (item)
+			if (Pair.Key && false == Pair.Value)
 			{
-				if (!RestItemMap.Contains(item))
+				if (item)
 				{
-					RestItemMap.Add(item, Pair.Value);
-					UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, New Added"), *item->GetName(), Pair.Value);
+					if (!RestItemMap.Contains(item))
+					{
+						RestItemMap.Add(item, Pair.Value);
+						UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, New Added"), *item->GetName(), Pair.Value);
+					}
 				}
 			}
-			else
-			{
-				if (RestItemMap.Contains(item))
-				{
-					RestItemMap.Remove(item);
-					UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, New Added"), *item->GetName(), Pair.Value);
-				}
-			}
-			
-			
+			// else if (Pair.Key && true == Pair.Value)
+			// {
+			// 	if (RestItemMap.Contains(item))
+			// 	{
+			// 		RestItemMap.Remove(item);
+			// 		UE_LOG(PalBoxLog, Warning, TEXT("[CheckRestItems] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, New Added"), *item->GetName(), Pair.Value);
+			// 	}
+			// }
 		}
 	}
+	
 	
 }
 
@@ -463,19 +465,23 @@ void APalBox::FindNearDroppedItem()
 	// 		}
 	// 	}
 	// }
-	for (const TPair<AActor*, bool>& Pair : RestItemMap)
+	if (RestItemMap.Num() > 0)
 	{
-		AResourceItem* item = Cast<AResourceItem>(Pair.Key);
-		if (item)
+		for (const TPair<AActor*, bool>& Pair : RestItemMap)
 		{
-			TargetItemLocation = item->GetActorLocation();
-			if (dist >= FVector::Dist(PalBoxLocation, TargetItemLocation))
+			AResourceItem* item = Cast<AResourceItem>(Pair.Key);
+			if (item)
 			{
-				dist = FVector::Dist(PalBoxLocation, TargetItemLocation);
-				NearItemActor = item;
+				TargetItemLocation = item->GetActorLocation();
+				if (dist >= FVector::Dist(PalBoxLocation, TargetItemLocation))
+				{
+					dist = FVector::Dist(PalBoxLocation, TargetItemLocation);
+					NearItemActor = item;
+				}
 			}
 		}
 	}
+	
 	if (NearItemActor)
 	{
 		//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] Actor : %s"), *NearItemActor->GetName());
@@ -502,11 +508,11 @@ void APalBox::FindNearDroppedItem()
 		// }
 		if (RestItemMap.Contains(NearItemActor))
 		{
-			RestItemMap.Remove(NearItemActor);
 			//작업당하는 자원으로 변경
 			if (AResourceItem* item = Cast<AResourceItem>(NearItemActor))
 			{
-				RestItemMap.Add(item, true);
+				DroppedItemMap.Add(item, true);
+				RestItemMap.Remove(item);
 				//UE_LOG(PalBoxLog, Warning, TEXT("[FindNearDroppedItem] ItemMap Actor : %s, ItemMap Actor Pair Value : %d, RestItemActors Removed"), *item->GetName(), RestItemMap.Find(item));
 			}
 		}
