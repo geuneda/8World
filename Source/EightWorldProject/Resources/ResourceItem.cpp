@@ -74,6 +74,8 @@ void AResourceItem::Initialize()
 // 아이템 습득
 void AResourceItem::Pickup(AActor* Collector)
 {
+	if (bIsMove) return;
+	
 	// 플레이어 캐릭터인지 확인
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(Collector);
 	if (PlayerCharacter)
@@ -82,6 +84,24 @@ void AResourceItem::Pickup(AActor* Collector)
 		PlayerCharacter->PickupItem(this);
 		
 		UE_LOG(LogTemp, Display, TEXT("아이템 획득 시도 : %s 수량 : %d"), *ResourceID.ToString(), Quantity);
+	}
+}
+
+void AResourceItem::SetIsMove(bool state)
+{
+	bIsMove = state;
+
+	if (bIsMove)
+	{
+		Mesh->SetSimulatePhysics(false);
+		Mesh->SetEnableGravity(false);
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	else
+	{
+		Mesh->SetSimulatePhysics(true);
+		Mesh->SetEnableGravity(true);
+		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
 }
 
@@ -94,3 +114,4 @@ void AResourceItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAc
 		Pickup(OtherActor);
 	}
 }
+

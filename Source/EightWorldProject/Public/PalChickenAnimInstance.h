@@ -13,5 +13,11 @@ UCLASS()
 class EIGHTWORLDPROJECT_API UPalChickenAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
-	
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsPatroling;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsMoving;
 };

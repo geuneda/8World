@@ -33,7 +33,7 @@ public:
 
 	//팰 정찰 범위
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float PatrolRadius = 1000.f;
+	float PatrolRadius = 200.f;
 	//기준이 되는 위치
 	UPROPERTY(visibleAnywhere)
 	FVector InitLocation;
@@ -44,12 +44,35 @@ public:
 	//patrol 이동 여부
 	bool bIsPatroling = false;
 
+	//현재 타겟 위치
+	FVector CurrentPatrolTargetLocation;
+
 	//SetTableData TimerHandle
 	FTimerHandle TableDataTimerHandle;
+
+	//팰이 충돌 체크를 위한 Sphere Collider
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class USphereComponent* SphereComp;
+	//공용 저장 박스
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class ACommonStorageBox* CommonStorageBox;
+	//AIController
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class APWAIController* MyAIController;
 	
 	//팰 데이터 받아오는 함수
 	virtual void SetTableData() override;
-	
+
+	//팰 운반중 get set
+	virtual bool GetPalIsCarrying() const override;
+	virtual void SetPalIsCarrying(bool IsCarrying) override;
+
+	//타이머용 함수, 아이템의 최종위치 이용하기 위한 함수
+	void SetCarrierMoveToTarget();
+
+	//타이머용 함수, 아이템 일정 시간 뒤에 삭제 함수
+	void CarriedItemDestroy();
+		
 	//팰 모드 Set함수
 	virtual void SetPalMode(EPalMode Mode) override;
 
@@ -57,10 +80,6 @@ public:
 	virtual void SetPalWildState(EPalWildState State) override;
 	virtual void SetPalBattleState(EPalBattleState State) override;
 	virtual void SetPalCarrierState(EPalCarrierState State, AActor* TargetActor) override;
-
-	//팰 운반중 get set
-	virtual bool GetPalIsCarrying() const override;
-	virtual void SetPalIsCarrying(bool IsCarrying) override;
 	
 	//팰 모드 스위치 함수
 	void SwitchWildState();
@@ -82,7 +101,7 @@ public:
 	void HandleBattleAttack();
 
 	//팰 Carrier 모드 함수
-	void HandleCarrierIdle();
+	void HandleCarrierPatrol();
 	void HandleCarrierFindItem();
 	void HandleCarrierMovetoTarget();
 	void HandleCarrierCarrying();
