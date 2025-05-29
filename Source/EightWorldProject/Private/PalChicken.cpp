@@ -49,6 +49,16 @@ void APalChicken::BeginPlay()
 {
 	Super::BeginPlay();
 
+	//DataTable 로딩
+	if (PalDataTable)
+	{
+		FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Chicken"));
+		if (InfoData)
+		{
+			ChickenInfo = *InfoData;
+		}
+	}
+	
 	//팰 Carrier모드 시작 (임시)
 	SetPalMode(EPalMode::Carrier);
 
@@ -211,7 +221,7 @@ void APalChicken::HandleBattleAttack()
 
 void APalChicken::HandleCarrierPatrol()
 {
-	UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Started"));
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Started"));
 	
 	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
 	//네비게이션 시스템 받아오기
@@ -308,6 +318,7 @@ void APalChicken::HandleCarrierMovetoTarget()
 
 	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierMovetoTarget] CarrierState : MovetoTarget, Distance : %f"), FVector::DistXY(meLoc, targetLoc));
 	//거리가 60보다 작으면 Carring State 시작
+	AResourceItem* item = Cast<AResourceItem>(TargetItem);
 	if (!TargetItem->IsActorBeingDestroyed())
 	{
 		if (FVector::DistXY(meLoc, TargetItem->GetActorLocation()) < 60.f)
@@ -325,7 +336,7 @@ void APalChicken::HandleCarrierMovetoTarget()
 			//ChickenAnimInstance->bIsWorking = bIsPlayingWorkAnim;
 		}
 	}
-	else // TargetItem Destroyed by Player
+	else if (TargetItem->IsActorBeingDestroyed()) // TargetItem Destroyed by Player
 	{
 		MyAIController->StopMovement();
 		
@@ -422,7 +433,7 @@ void APalChicken::CarriedItemDestroy()
 
 void APalChicken::HandleCarrierReturn()
 {
-	UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierReturn] CarrierState : Return, CarrierPalName : %s"), *this->GetName());
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierReturn] CarrierState : Return, CarrierPalName : %s"), *this->GetName());
 	//carrying 상태 비활성화, 쉬고 있는 팰에 저장
 	this->SetPalIsCarrying(false);
 	SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
