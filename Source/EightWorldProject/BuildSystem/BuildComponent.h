@@ -46,12 +46,13 @@ public:
 	bool bIsBuildMode = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
 	bool bCanBuild = false;
-
+	// 빌드 대상 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
 	int32 BuildID = 0;
+	// 빌드 위치
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
 	FTransform BuildTransform;
-
+	// Owner
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
 	class APlayerCharacter* PlayerCharacter;
 
@@ -77,6 +78,8 @@ public:
 
 	void SpawnBuild();
 
+	void DetectBuildBoxes();
+
 
 public: // ---------------------머티리얼----------------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
@@ -89,5 +92,10 @@ public: // ---------------------머티리얼----------------------------
 public: // ---------------------메시 종류 --------------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BuildMesh")
 	class UStaticMesh* Foundation;
+
+
+public: // ---------------------스냅 시스템---------------------
+	class AActor* HitActor;
+	class UBoxComponent* HitComp;	
 	
 };

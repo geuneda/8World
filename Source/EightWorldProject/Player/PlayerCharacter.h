@@ -85,6 +85,10 @@ protected:
 			
 
 protected:
+
+	/** 빌드 상태 */
+	bool bIsBuilding = false;
+	
 	/** 달리기 상태 */
 	bool bIsSprinting;
 

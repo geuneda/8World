@@ -30,7 +30,7 @@ APlayerCharacter::APlayerCharacter()
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Player"));
-		
+	
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -174,9 +174,17 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // 공격 입력 처리
 void APlayerCharacter::Attack(const FInputActionValue& Value)
 {
-	if (PlayerBuildComp->bIsBuildMode && PlayerBuildComp->bCanBuild)
+	if (PlayerBuildComp->bIsBuildMode && PlayerBuildComp->bCanBuild  && !bIsBuilding)
 	{
+		bIsBuilding = true;
+		
 		PlayerBuildComp->SpawnBuild();
+
+		FTimerHandle BuildTimerHandle;
+		GetWorldTimerManager().SetTimer(BuildTimerHandle, [&]()
+		{
+			bIsBuilding = false;
+		}, 1.0f, false);
 		
 		return;
 	}

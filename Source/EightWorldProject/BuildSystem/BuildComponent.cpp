@@ -1,8 +1,9 @@
 #include "BuildComponent.h"
 
 #include "Camera/CameraComponent.h"
+#include "Components/BoxComponent.h"
+#include "EightWorldProject/Interface/BuildInterface.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
-#include "Kismet/GameplayStatics.h"
 
 UBuildComponent::UBuildComponent()
 {
@@ -106,10 +107,19 @@ void UBuildComponent::BuildCycle()
 
 	if (bHit)
 	{
+		// 충돌 위치 저장
 		BuildTransform.SetLocation(hitResult.ImpactPoint);
+
+		// 충돌 Actor, Component 저장
+		HitActor = hitResult.GetActor();
+		HitComp = Cast<UBoxComponent>(hitResult.GetComponent());
 		
 		if (BuildGhostMeshComp)
 		{
+			// 스냅 가능한지 여부
+			DetectBuildBoxes();
+			
+			// Build Ghost Mesh Color 변경
 			GiveBuildColor(true);
 
 			BuildDelay();
@@ -193,5 +203,27 @@ void UBuildComponent::ChangeMesh()
 void UBuildComponent::SpawnBuild()
 {
 	GetWorld()->SpawnActor<AActor>(BuildData[BuildID].Actor, BuildTransform);
+}
+
+void UBuildComponent::DetectBuildBoxes()
+{
+	
+	if (IBuildInterface* BuildInterface = Cast<IBuildInterface>(HitActor))
+	{
+		TArray<UBoxComponent*> Boxes;
+		Boxes.Empty();
+		Boxes = BuildInterface->ReturnBoxes();
+
+		for (UBoxComponent* Box : Boxes)
+		{
+			if (Box == HitComp)
+			{
+				// 감지 되었을때
+				BuildTransform = HitComp->GetComponentTransform();
+				break;
+			}
+		}
+	}
+	
 }
 
