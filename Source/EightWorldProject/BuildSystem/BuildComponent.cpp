@@ -157,7 +157,7 @@ void UBuildComponent::ClearBuildGhostMesh()
 
 	if (IsValid(BuildGhostMeshComp))
 	{
-		K2_DestroyComponent(BuildGhostMeshComp);
+		BuildGhostMeshComp->DestroyComponent();
 	}
 }
 
@@ -183,6 +183,7 @@ void UBuildComponent::LaunchBuildMode()
 	else
 	{
 		bIsBuildMode = true;
+		SpawnBuildGhost();
 		BuildCycle();
 	}
 }
