@@ -27,4 +27,8 @@ public:
 	//팰 작업중인지 여부
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool bIsWorking;
+
+	//팰 순찰중인지 여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsPatroling;
 };

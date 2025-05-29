@@ -150,6 +150,13 @@ public:
 
 	//작업 간격
 	float WorkInterval = 0.0f;
+
+	//플레이어 소유여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsPlayerOwned = false;
+
+	//플레이어
+	class APlayerCharacter* player;
 	
 	//팰 작업중 get set
 	virtual bool GetPalIsWorking() const { return bIsWorking; }

@@ -3,17 +3,19 @@
 
 #include "PalYeti.h"
 
+#include "NavigationSystem.h"
 #include "PalYetiAnimInstance.h"
 #include "PalBox.h"
 #include "PalWorkComponent.h"
 #include "PWAIController.h"
+#include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/Resources/Rock.h"
 #include "EightWorldProject/Resources/Tree.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(PalLog, Log, All);
-DEFINE_LOG_CATEGORY(PalLog);
+DECLARE_LOG_CATEGORY_EXTERN(PalYeti, Log, All);
+DEFINE_LOG_CATEGORY(PalYeti);
 
 // Sets default values
 APalYeti::APalYeti()
@@ -57,6 +59,9 @@ void APalYeti::BeginPlay()
 			YetiInfo = *InfoData;
 		}
 	}
+
+	//플레이어 소유 여부 (임시)
+	bIsPlayerOwned = true;
 	
 	//팰 Worker모드 시작 (임시)
 	SetPalMode(EPalMode::Worker);
@@ -83,7 +88,7 @@ void APalYeti::BeginPlay()
 	this->GetCharacterMovement()->bOrientRotationToMovement = true;
 	
 	//팰 DataTable Data 초기화
-	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalYeti::SetTableData, 0.2f, false);
+	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalYeti::SetTableData, 0.1f, false);
 
 	//애니메이션
 	YetiAnimInstance = Cast<UPalYetiAnimInstance>(GetMesh()->GetAnimInstance());
@@ -189,7 +194,57 @@ void APalYeti::SwitchWorkerState()
 
 void APalYeti::HandleWildPatrol()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWildPatrol] WildState : Patrol"));
+	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildPatrol] WildState : Patrol Started"));
+	
+	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
+	//네비게이션 시스템 받아오기
+	UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NaviSystem)
+	{
+		return;
+	}
+
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	if (!MyController)
+	{
+		return;
+	}
+	if (!bIsPatroling)
+	{
+		//지정해둔 범위 내에 랜덤 위치 받아오기
+		FNavLocation RandomPoint;
+		//첫 시작 지점을 기준으로 지정
+		InitLocation = this->GetActorLocation();
+		bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
+		if (bFound)
+		{
+			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
+			CurrentPatrolTargetLocation = RandomPoint.Location;
+			bIsPatroling = true;
+			YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+			this->GetCharacterMovement()->MaxWalkSpeed = 20.f;
+			MyController->MoveToLocation(CurrentPatrolTargetLocation);
+			
+			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
+			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
+		}
+	}
+	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
+	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
+	if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
+	{
+		//애니메이션 변경 및 다음 목표 위치로 이동하도록
+		bIsPatroling = false;
+		YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol Reached TargetLocation"));
+	}
+
+	//UE_LOG(PalYeti, Warning, TEXT("[HandleWildPatrol] Player Distance = %f"), FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()));
+	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectRadius)
+	{
+		//DetectPlayer 상태 변경
+		SetPalWildState(EPalWildState::DetectPlayer);
+	}
 }
 
 void APalYeti::HandleWildPlayerHitToPal()
@@ -198,6 +253,10 @@ void APalYeti::HandleWildPlayerHitToPal()
 
 void APalYeti::HandleWildDetectPlayer()
 {
+	UE_LOG(PalYeti, Warning, TEXT("[HandleWildDetectPlayer] WildState : DetectPlayer"));
+
+	//Escape 상태 변경
+	SetPalWildState(EPalWildState::Chase);
 }
 
 void APalYeti::HandleWildChase()
@@ -235,8 +294,50 @@ void APalYeti::HandleBattleAttack()
 
 void APalYeti::HandleWorkerIdle()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerIdle] WorkerState : Idle"));
-	//순찰 patrol 넣자
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerIdle] WorkerState : Idle Started"));
+	
+	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
+	//네비게이션 시스템 받아오기
+	UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NaviSystem)
+	{
+		return;
+	}
+
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	if (!MyController)
+	{
+		return;
+	}
+	if (!bIsPatroling)
+	{
+		//지정해둔 범위 내에 랜덤 위치 받아오기
+		FNavLocation RandomPoint;
+		//첫 시작 지점을 기준으로 지정
+		InitLocation = this->GetActorLocation();
+		bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
+		if (bFound)
+		{
+			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
+			CurrentPatrolTargetLocation = RandomPoint.Location;
+			bIsPatroling = true;
+			YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+			this->GetCharacterMovement()->MaxWalkSpeed = 20.f;
+			MyController->MoveToLocation(CurrentPatrolTargetLocation);
+			
+			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
+			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol bIsPatroling = %d"), bIsPatroling);
+		}
+	}
+	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
+	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
+	if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
+	{
+		//애니메이션 변경 및 다음 목표 위치로 이동하도록
+		bIsPatroling = false;
+		YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Reached TargetLocation"));
+	}
 }
 
 void APalYeti::HandleWorkerFindWork()
@@ -246,6 +347,8 @@ void APalYeti::HandleWorkerFindWork()
 	//타겟 자원이 있다면
 	if (TargetResource)
 	{
+		bIsPatroling = false;
+		YetiAnimInstance->bIsPatroling = this->bIsPatroling;
 		SetPalWorkerState(EPalWorkerState::MoveToTarget, TargetResource);
 	}
 }
@@ -270,6 +373,7 @@ void APalYeti::HandleWorkerMovetoTarget()
 		{
 			if (TargetResource)
 			{
+				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 				MyAIController->MoveToLocation(targetLoc);
 				bIsMoveToTarget = true;
 				YetiAnimInstance->bIsMove = bIsMoveToTarget;

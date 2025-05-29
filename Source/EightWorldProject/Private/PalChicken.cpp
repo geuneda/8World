@@ -8,6 +8,7 @@
 #include "PalChickenAnimInstance.h"
 #include "PWAIController.h"
 #include "Components/SphereComponent.h"
+#include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -58,6 +59,9 @@ void APalChicken::BeginPlay()
 			ChickenInfo = *InfoData;
 		}
 	}
+
+	//플레이어 소유 여부 (임시)
+	bIsPlayerOwned = true;
 	
 	//팰 Carrier모드 시작 (임시)
 	SetPalMode(EPalMode::Carrier);
@@ -184,6 +188,57 @@ void APalChicken::SwitchCarrierState()
 
 void APalChicken::HandleWildPatrol()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol Started"));
+	
+	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
+	//네비게이션 시스템 받아오기
+	UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NaviSystem)
+	{
+		return;
+	}
+
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	if (!MyController)
+	{
+		return;
+	}
+	if (!bIsPatroling)
+	{
+		//지정해둔 범위 내에 랜덤 위치 받아오기
+		FNavLocation RandomPoint;
+		//첫 시작 지점을 기준으로 지정
+		InitLocation = this->GetActorLocation();
+		bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
+		if (bFound)
+		{
+			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
+			CurrentPatrolTargetLocation = RandomPoint.Location;
+			bIsPatroling = true;
+			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+			this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+			MyController->MoveToLocation(CurrentPatrolTargetLocation);
+			
+			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
+			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
+		}
+	}
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
+	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
+	if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
+	{
+		//애니메이션 변경 및 다음 목표 위치로 이동하도록
+		bIsPatroling = false;
+		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+		//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol Reached TargetLocation"));
+	}
+
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Player Distance = %f"), FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()));
+	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectRadius)
+	{
+		//DetectPlayer 상태 변경
+		SetPalWildState(EPalWildState::DetectPlayer);
+	}
 }
 
 void APalChicken::HandleWildPlayerHitToPal()
@@ -192,6 +247,10 @@ void APalChicken::HandleWildPlayerHitToPal()
 
 void APalChicken::HandleWildDetectPlayer()
 {
+	UE_LOG(PalChicken, Warning, TEXT("[HandleWildDetectPlayer] WildState : DetectPlayer"));
+
+	//Escape 상태 변경
+	SetPalWildState(EPalWildState::Escape);
 }
 
 void APalChicken::HandleWildChase()

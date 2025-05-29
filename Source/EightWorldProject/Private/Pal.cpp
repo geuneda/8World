@@ -3,6 +3,7 @@
 
 #include "Pal.h"
 
+#include "EightWorldProject/Player/PlayerCharacter.h"
 
 
 // Sets default values
@@ -24,6 +25,9 @@ APal::APal()
 void APal::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//플레이어 찾기
+	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
 
 // Called every frame

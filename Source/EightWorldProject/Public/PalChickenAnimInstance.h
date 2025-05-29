@@ -15,9 +15,11 @@ class EIGHTWORLDPROJECT_API UPalChickenAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
+	//팰 순찰중인지 여부
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsPatroling;
 
+	//팰 이동중인지 여부
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsMoving;
 };
