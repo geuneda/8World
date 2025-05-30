@@ -85,6 +85,8 @@ void UBuildComponent::GiveBuildColor(bool bIsGreen)
 		else
 		{
 			BuildGhostMeshComp->SetMaterial(i, RedMaterial);
+
+			// TODO :: 인벤토리에 아이템 부족한것 표시
 		}
 	}
 
@@ -208,7 +210,6 @@ void UBuildComponent::SpawnBuild()
 
 void UBuildComponent::DetectBuildBoxes()
 {
-	
 	if (IBuildInterface* BuildInterface = Cast<IBuildInterface>(HitActor))
 	{
 		TArray<UBoxComponent*> Boxes;
