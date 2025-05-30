@@ -45,7 +45,10 @@ public:
 	float PatrolRadius = 200.f;
 	//플레이어 감지 범위
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float PlayerDetectRadius = 500.f;
+	float PlayerDetectDistance = 1000.f;
+	//팰 공격 범위
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float AttackDistance = 600.f;
 	
 	//기준이 되는 위치
 	UPROPERTY(visibleAnywhere)

@@ -18,7 +18,7 @@ APWAIController::APWAIController()
 void APWAIController::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	//BT 시작
 	if (PalBehaviorTree != nullptr)
 	{

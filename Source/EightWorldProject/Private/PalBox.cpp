@@ -4,6 +4,8 @@
 #include "PalBox.h"
 
 #include "Pal.h"
+#include "PalChicken.h"
+#include "PalYeti.h"
 #include "PWGameMode.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
@@ -55,24 +57,26 @@ void APalBox::BeginPlay()
 	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &APalBox::OnBeginOverlap);
 	SphereComp->OnComponentEndOverlap.AddDynamic(this, &APalBox::OnEndOverlap);
 
+
 	//시작때 감지된 모든 리소스 액터 담아두기(나무, 돌)
-	GetWorldTimerManager().SetTimer(SearchResourceTimerHandle, this, &APalBox::SearchAllResources, 0.1f, false);
-	//시작때 감지된 모든 팰 Worker 담아두기
-	GetWorldTimerManager().SetTimer(SearchPalTimerHandle, this, &APalBox::SearchAllPalWorkers, 0.1f, false);
+	GetWorldTimerManager().SetTimer(SearchResourceTimerHandle, this, &APalBox::SearchAllResources, 0.2f, false);
+	//시작때 감지된 모든 팰 Worker 담아두기 - 소환됐을때도 체크를 위해 반복
+	GetWorldTimerManager().SetTimer(SearchPalTimerHandle, this, &APalBox::SearchAllPalWorkers, 0.2f, true);
 	//주기적으로 쉬고 있는 자원 체크
 	GetWorldTimerManager().SetTimer(CheckRestResourceTimerHandle, this, &APalBox::CheckRestResources, 0.5f, true);
 	//주기적으로 쉬고 있는 팰 체크
 	GetWorldTimerManager().SetTimer(CheckRestPalTimerHandle, this, &APalBox::CheckRestPals, 0.5f, true);
-
+	
+	//주기적으로 생겨나는 모든 팰을 담아서 모드 분류. 
+	GetWorldTimerManager().SetTimer(AllpalsHandle, this, &APalBox::SearchAndSetPalMode, 0.2f, true);
 	//시작때 감지된 모든 팰 Carrier 담아두기
-	GetWorldTimerManager().SetTimer(SearchCarrierTimerHandle, this, &APalBox::SearchAllPalCarriers, 0.1f, false);
+	GetWorldTimerManager().SetTimer(SearchCarrierTimerHandle, this, &APalBox::SearchAllPalCarriers, 0.2f, false);
 	//주기적으로 떨어진 아이템 체크
 	GetWorldTimerManager().SetTimer(CheckDroppedItemTimerHandle, this, &APalBox::CheckDroppedItems, 0.5f, true);
 	//주기적으로 쉬고 있는 아이템 체크
 	GetWorldTimerManager().SetTimer(CheckRestItemTimerHandle, this, &APalBox::CheckRestItems, 0.5f, true);
 	//주기적으로 쉬고 있는 팰 체크
 	GetWorldTimerManager().SetTimer(CheckRestCarrierTimerHandle, this, &APalBox::CheckRestCarriers, 0.5f, true);
-
 	
 }
 
@@ -83,18 +87,55 @@ void APalBox::Tick(float DeltaTime)
 	
 }
 
+void APalBox::SearchAndSetPalMode()
+{
+	TArray<AActor*> AllPals;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APal::StaticClass(), AllPals);
+	for (AActor* actor : AllPals)
+	{
+		if (actor && !AllPalsInMap.Contains(actor) && actor->GetWorld()->IsPlayInEditor())
+		{
+			APal* pal = Cast<APal>(actor);
+			if (pal)
+			{
+				AllPalsInMap.Add(pal);
+				UE_LOG(PalBoxLog, Warning, TEXT("[SearchAndSetPalMode]Added Pal Actor : %s"), *pal->GetName());
+
+				//PalBox Sphere 범위안에 있으면 작업 상태 부여
+				if (FVector::DistXY(this->GetActorLocation(), pal->GetActorLocation()) < SphereComp->GetScaledSphereRadius())
+				{
+					if (auto yp = Cast<APalYeti>(pal))
+					{
+						yp->SetPalMode(EPalMode::Worker);
+						yp->bIsPlayerOwned = true;
+					}
+					else if (auto cp = Cast<APalChicken>(pal))
+					{
+						cp->SetPalMode(EPalMode::Carrier);
+						cp->bIsPlayerOwned = true;
+					}
+				}
+				//PalBox Sphere 범위 밖이면 wild 상태 부여
+				else
+				{
+					pal->SetPalMode(EPalMode::Wild);
+					pal->bIsPlayerOwned = false;
+				}
+			}
+		}
+	}
+	
+}
+
 void APalBox::SearchAllResources()
 {
-	// 기존 배열 초기화
-	DetectedResourceActors.Empty();
-
 	// 구체적인 타입으로 바로 검색 (Tree)
 	TArray<AActor*> OverlappingTrees;
 	SphereComp->GetOverlappingActors(OverlappingTrees, ATree::StaticClass());
 	for (AActor* Actor : OverlappingTrees)
 	{
 		ATree* Tree = Cast<ATree>(Actor);
-		if (Tree)
+		if (Tree && !DetectedResourceActors.Contains(Tree))
 		{
 			DetectedResourceActors.Add(Tree);
 			UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllResources] Added Tree Actor: %s, IsBeingWorkedOn: %d"), 
@@ -108,7 +149,7 @@ void APalBox::SearchAllResources()
 	for (AActor* Actor : OverlappingRocks)
 	{
 		ARock* Rock = Cast<ARock>(Actor);
-		if (Rock)
+		if (Rock && !DetectedResourceActors.Contains(Rock))
 		{
 			DetectedResourceActors.Add(Rock);
 			UE_LOG(PalBoxLog, Warning, TEXT("[SearchAllResources] Added Rock Actor: %s, IsBeingWorkedOn: %d"), 
@@ -610,12 +651,20 @@ void APalBox::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		DroppedItemMap.Remove(OtherActor);
 		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked DroppedItem Actor : %s"), *OtherActor->GetName());
 	}
+	//만약 운반당하지 않은 아이템이면 배열에서 제거
 	if (OtherActor && RestItemMap.Contains(OtherActor))
 	{
 		RestItemMap.Remove(OtherActor);
 		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked RestItem Actor : %s"), *OtherActor->GetName());
 	}
+
 	
+	//팰이 사라지면 전체 팰 배열에서 제거
+	if (OtherActor && AllPalsInMap.Contains(OtherActor))
+	{
+		AllPalsInMap.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed AllPalsInMap Actor : %s"), *OtherActor->GetName());
+	}
 	//팰이 사라지면 배열에서 제거
 	if (OtherActor && DetectedPalWorkerActors.Contains(OtherActor))
 	{
@@ -633,5 +682,17 @@ void APalBox::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	{
 		WorkedPalActors.Remove(OtherActor);
 		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Worked Pal Actor : %s"), *OtherActor->GetName());
+	}
+	//만약 운반중이던 팰이면 배열에서도 제거
+	if (OtherActor && DetectedPalCarrierActors.Contains(OtherActor))
+	{
+		DetectedPalCarrierActors.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Carrier Pal Actor : %s"), *OtherActor->GetName());
+	}
+	//만약 쉬고있던 운반팰이면 배열에서도 제거
+	if (OtherActor && RestCarrierActors.Contains(OtherActor))
+	{
+		RestCarrierActors.Remove(OtherActor);
+		UE_LOG(PalBoxLog, Warning, TEXT("[OnEndOverlap]Removed Rest Carrier Pal Actor : %s"), *OtherActor->GetName());
 	}
 }

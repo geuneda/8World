@@ -138,8 +138,13 @@ public:
 	//팰 작업 애니메이션 실행 여부
 	bool bIsPlayingWorkAnim = false;
 
+	//팰 공격 애니메이션 실행 여부
+	bool bIsPlayingAttackAnim = false;
+	
 	//팰 운반중 여부
 	bool bIsCarrying = false;
+
+
 
 	//작업할 자원
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

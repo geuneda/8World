@@ -240,7 +240,7 @@ void APalYeti::HandleWildPatrol()
 	}
 
 	//UE_LOG(PalYeti, Warning, TEXT("[HandleWildPatrol] Player Distance = %f"), FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()));
-	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectRadius)
+	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectDistance)
 	{
 		//DetectPlayer 상태 변경
 		SetPalWildState(EPalWildState::DetectPlayer);
@@ -261,10 +261,77 @@ void APalYeti::HandleWildDetectPlayer()
 
 void APalYeti::HandleWildChase()
 {
+	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWildChase] WorkerState : Chase, Pal Name : %s"), *this->GetName());
+
+	//Target 플레이어로 이동하기
+	FVector meLoc = this->GetActorLocation();
+	FVector playerLoc = player->GetActorLocation();
+	
+	//AIController Move To 
+	APWAIController* MyAIController = Cast<APWAIController>(GetController());
+	if (MyAIController)
+	{
+		//if (!bIsMoveToTarget)
+		//{
+			if (player)
+			{
+				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+				MyAIController->MoveToLocation(playerLoc);
+				bIsPatroling = false;
+				YetiAnimInstance->bIsPatroling = bIsPatroling;
+				bIsMoveToTarget = true;
+				YetiAnimInstance->bIsMove = bIsMoveToTarget;
+			}
+		//}
+	}
+
+	//플레이어와 거리가 감지 범위보다 멀어지면
+	if (FVector::DistXY(meLoc, playerLoc) > PlayerDetectDistance)
+	{
+		//이동중 애니메이션 취소
+		bIsMoveToTarget = false;
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+		//patrol 상태로 변경
+		SetPalWildState(EPalWildState::Patrol);
+	}
+	
+	//거리가 150보다 작으면 Attack State 시작
+	if (FVector::DistXY(meLoc, playerLoc) < AttackDistance)
+	{
+		//이동중 애니메이션 취소
+		bIsMoveToTarget = false;
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	
+		//이동 정지 및 공격 상태 시작
+		MyAIController->StopMovement();
+		SetPalWildState(EPalWildState::Attack);
+		
+	}
+	
 }
 
 void APalYeti::HandleWildAttack()
 {
+	//플레이어 방향으로 회전하기
+	
+	
+	//공격 애니메이션 시작
+	if (!bIsPlayingAttackAnim)
+	{
+		bIsPlayingAttackAnim = true;
+		YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+	}
+
+	//공격 범위 넘어가면 다시 chase 상태 전환
+	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) > AttackDistance)
+	{
+		if (bIsPlayingAttackAnim)
+		{
+			bIsPlayingAttackAnim = false;
+			YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+		}
+		SetPalWildState(EPalWildState::Chase);
+	}
 }
 
 void APalYeti::HandleWildEscape()

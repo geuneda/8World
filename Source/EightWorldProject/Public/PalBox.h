@@ -34,6 +34,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class USphereComponent* SphereComp;
 
+	//TimerHandle 맵에 있는 모든 팰 저장
+	FTimerHandle AllpalsHandle;
+	
 	//TimerHandle 자원, 작업용 팰
 	FTimerHandle SearchResourceTimerHandle;
 	FTimerHandle SearchPalTimerHandle;
@@ -92,6 +95,10 @@ public:
 	TArray<AActor*> RestCarrierActors;
 
 
+	//맵에 있는 모든 팰 받아와서 모드 정해주는 함수
+	UFUNCTION()
+	void SearchAndSetPalMode();
+	
 	//초기 Resource 찾아 저장하는 함수
 	UFUNCTION()
 	void SearchAllResources();

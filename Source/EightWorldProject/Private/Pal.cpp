@@ -3,6 +3,7 @@
 
 #include "Pal.h"
 
+#include "PWAIController.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 
 
@@ -18,14 +19,17 @@ APal::APal()
 	{
 		PalDataTable = tempDataTable.Object;
 	}
-	
+
+	//스폰 되었을 때도 자동으로 AIController 붙이기
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	AIControllerClass = APWAIController::StaticClass();
 }
 
 // Called when the game starts or when spawned
 void APal::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	//플레이어 찾기
 	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
