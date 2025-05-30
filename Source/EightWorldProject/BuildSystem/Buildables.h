@@ -21,4 +21,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Buildables")
 	TSubclassOf<AActor> Actor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Buildables")
+	int32 TreeCost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Buildables")
+	int32 RockCost;
 };

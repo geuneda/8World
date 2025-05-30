@@ -22,7 +22,13 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	class UImage* Crosshair;
 
+	UPROPERTY(meta=(BindWidget))
+	class UBuildModeUI* BuildModeUI;
+
 
 public:
 	void SetCrosshair(bool bIsVisible);
+
+	UFUNCTION(BlueprintCallable)
+	void SetBuildModeUIVisible(bool bVisible);
 };

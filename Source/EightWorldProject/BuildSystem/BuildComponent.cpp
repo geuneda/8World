@@ -4,6 +4,8 @@
 #include "Components/BoxComponent.h"
 #include "EightWorldProject/Interface/BuildInterface.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
+#include "EightWorldProject/UI/BuildModeUI.h"
+#include "EightWorldProject/UI/MainUI.h"
 
 UBuildComponent::UBuildComponent()
 {
@@ -107,11 +109,33 @@ void UBuildComponent::BuildCycle()
 	
 	bool bHit = GetWorld()->LineTraceSingleByChannel(hitResult, start, end, BuildData[BuildID].TraceChannel, Params);
 
+	// 인벤토리 자원 체크
+	int32 TreeNeed = BuildData[BuildID].TreeCost;
+	int32 RockNeed = BuildData[BuildID].RockCost;
+	int32 TreeHave = 0;
+	int32 RockHave = 0;
+	bool bEnough = true;
+
+	if (PlayerCharacter && PlayerCharacter->InventoryComponent)
+	{
+		TreeHave = PlayerCharacter->InventoryComponent->GetItemQuantity(TEXT("Tree"));
+		RockHave = PlayerCharacter->InventoryComponent->GetItemQuantity(TEXT("Rock"));
+		bEnough = (TreeHave >= TreeNeed) && (RockHave >= RockNeed);
+	}
+
+	// 빌드 고스트 색상
+	GiveBuildColor(bEnough);
+
+	// UI 갱신
+	if (PlayerCharacter && PlayerCharacter->MainUI && PlayerCharacter->MainUI->BuildModeUI)
+	{
+		PlayerCharacter->MainUI->BuildModeUI->SetBuildCost(TreeHave, TreeNeed, RockHave, RockNeed, bEnough);
+	}
+
 	if (bHit)
 	{
 		// 충돌 위치 저장
 		BuildTransform.SetLocation(hitResult.ImpactPoint);
-
 		// 충돌 Actor, Component 저장
 		HitActor = hitResult.GetActor();
 		HitComp = Cast<UBoxComponent>(hitResult.GetComponent());
@@ -120,16 +144,11 @@ void UBuildComponent::BuildCycle()
 		{
 			// 스냅 가능한지 여부
 			DetectBuildBoxes();
-			
-			// Build Ghost Mesh Color 변경
-			GiveBuildColor(true);
-
 			BuildDelay();
 		}
 		else
 		{
 			SpawnBuildGhost();
-
 			BuildDelay();
 		}
 	}
@@ -139,14 +158,11 @@ void UBuildComponent::BuildCycle()
 
 		if (BuildGhostMeshComp)
 		{
-			GiveBuildColor(false);
-
 			BuildDelay();
 		}
 		else
 		{
 			SpawnBuildGhost();
-
 			BuildDelay();
 		}
 	}
@@ -185,6 +201,10 @@ void UBuildComponent::LaunchBuildMode()
 	else
 	{
 		bIsBuildMode = true;
+		if (PlayerCharacter && PlayerCharacter->MainUI)
+		{
+			PlayerCharacter->MainUI->SetBuildModeUIVisible(true);
+		}
 		SpawnBuildGhost();
 		BuildCycle();
 	}
@@ -192,6 +212,10 @@ void UBuildComponent::LaunchBuildMode()
 
 void UBuildComponent::StopBuildMode()
 {
+	if (PlayerCharacter && PlayerCharacter->MainUI)
+	{
+		PlayerCharacter->MainUI->SetBuildModeUIVisible(false);
+	}
 	ClearBuildGhostMesh();
 }
 
