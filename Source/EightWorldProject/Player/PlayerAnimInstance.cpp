@@ -29,7 +29,12 @@ UPlayerAnimInstance::UPlayerAnimInstance()
 	{
 		JumpMontage = JumpMontageObj.Object;
 	}
-	
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> PalSphereMontageObj(TEXT("/Script/Engine.AnimMontage'/Game/Resources/Player/AM_PalSphere.AM_PalSphere'"));
+	if (PalSphereMontageObj.Succeeded())
+	{
+		PalSphereMontage = PalSphereMontageObj.Object;
+	}
 }
 
 void UPlayerAnimInstance::NativeInitializeAnimation()
@@ -96,20 +101,27 @@ void UPlayerAnimInstance::StopAttackMontage()
 {
 	// 공격 몽타주가 유효한지 확인
 	if (!AttackMontage)
-	{
 		return;
-	}
-	
+
 	// 현재 재생 중인 몽타주 중지
 	Montage_Stop(0.25f, AttackMontage);
 	PlayerCharacter->PlayerStatComp->SetRestState(true);
+	
 }
 
 // 공격 애니메이션 재생 중인지 확인
 bool UPlayerAnimInstance::IsAttacking() const
 {
-	// 현재 몽타주가 재생 중인지 확인
 	return Montage_IsPlaying(AttackMontage);
+}
+
+// 팰스피어 애니메이션 재생
+void UPlayerAnimInstance::PlayPalSphereMontage()
+{
+	if (PalSphereMontage)
+	{
+		Montage_Play(PalSphereMontage, 1.0f);
+	}
 }
 
 void UPlayerAnimInstance::PlayJumpMontage()
@@ -137,4 +149,20 @@ void UPlayerAnimInstance::AnimNotify_AttackTiming()
 		return;
 	}
 	PlayerCharacter->PlayerAttackComp->OnAttackTiming();
+}
+
+void UPlayerAnimInstance::AnimNotify_Throw()
+{
+	if (!PlayerCharacter)
+	{
+		return;
+	}
+	
+	if (!PlayerCharacter->PalSphereComp)
+	{
+		return;
+	}
+	
+	// 팰스피어 컴포넌트에서 팰스피어 던지기 실행
+	PlayerCharacter->PalSphereComp->ThrowPalSphere();
 }
