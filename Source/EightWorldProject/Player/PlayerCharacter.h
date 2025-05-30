@@ -74,6 +74,10 @@ class APlayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PalSphereAction;
 
+	/** Zoom In/Out */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ZoomInAction;
+
 public:
 	APlayerCharacter();
 	
@@ -161,6 +165,12 @@ public:
 	/** 팰스피어 액션 처리 */
 	void ThrowPalSphere(const FInputActionValue& Value);
 
+	/** 줌 인 액션 처리 */
+	void ZoomIn(const FInputActionValue& Value);
+
+	/** 줌 아웃 액션 처리 */
+	void ZoomOut(const FInputActionValue& Value);
+
 	/** 달리기 상태 확인 */
 	bool IsSprinting() const { return bIsSprinting; }
 
@@ -199,6 +209,23 @@ public: // ---------------------------UI-------------------------------------
 	
 	// 인벤토리 상태 변수
 	bool bIsInventoryOpen = false;
+
+	// 줌 관련 변수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float DefaultArmLength = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float ZoomedArmLength = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	float ZoomSpeed = 7.0f;
+
+	bool bIsZooming = false;
+
+	// 카메라 줌 업데이트 함수
+	void UpdateCameraZoom(float DeltaTime);
+
+	virtual void Tick(float DeltaTime) override;
 
 	// 인벤토리 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")

@@ -52,11 +52,14 @@ APlayerCharacter::APlayerCharacter()
 	
 	// 달리기 상태 초기화
 	bIsSprinting = false;
+	
+	// 줌 상태 초기화
+	bIsZooming = false;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 200.0f; // The camera follows at this distance behind the character
+	CameraBoom->TargetArmLength = DefaultArmLength; // The camera follows at this distance behind the character
 	CameraBoom->SocketOffset = FVector(0.0f, 60.0f, 60.0f);
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
@@ -115,6 +118,12 @@ APlayerCharacter::APlayerCharacter()
 	{
 		PalSphereAction = palSphereInput.Object;
 	}
+	
+	ConstructorHelpers::FObjectFinder<UInputAction> zoomInInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_ZoomIn.IA_ZoomIn'"));
+	if (zoomInInput.Succeeded())
+	{
+		ZoomInAction = zoomInInput.Object;
+	}
 
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
 	if (mainUIWidget.Succeeded())
@@ -171,6 +180,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		
 		// 팰스피어 액션 바인딩
 		EnhancedInputComponent->BindAction(PalSphereAction, ETriggerEvent::Started, this, &APlayerCharacter::ThrowPalSphere);
+		
+		// 줌 인/아웃 입력 바인딩
+		EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Started, this, &APlayerCharacter::ZoomIn);
+		EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Completed, this, &APlayerCharacter::ZoomOut);
 	}
 	else
 	{
@@ -312,6 +325,9 @@ void APlayerCharacter::MainUIInit()
 
 	MainUI = Cast<UMainUI>(CreateWidget<UMainUI>(GetWorld(), MainUIWidget));
 	MainUI->AddToViewport();
+	
+	// 초기에 크로스헤어 숨기기
+	MainUI->SetCrosshair(false);
 }
 
 // 달리기 입력 처리
@@ -487,4 +503,60 @@ void APlayerCharacter::ToggleInventory()
 			}
 		}
 	}
+}
+
+void APlayerCharacter::ZoomIn(const FInputActionValue& Value)
+{
+	// 인벤토리가 열려있거나 빌드 모드일 경우 실행하지 않음
+	if (IsInventoryOpen() || (PlayerBuildComp && PlayerBuildComp->bIsBuildMode))
+	{
+		return;
+	}
+
+	bIsZooming = true;
+
+	// 크로스헤어 표시
+	if (MainUI)
+	{
+		MainUI->SetCrosshair(true);
+	}
+}
+
+void APlayerCharacter::ZoomOut(const FInputActionValue& Value)
+{
+	bIsZooming = false;
+
+	// 크로스헤어 숨김
+	if (MainUI)
+	{
+		MainUI->SetCrosshair(false);
+	}
+}
+
+void APlayerCharacter::UpdateCameraZoom(float DeltaTime)
+{
+	if (!CameraBoom)
+	{
+		return;
+	}
+
+	// 현재 카메라 붐 길이
+	float CurrentArmLength = CameraBoom->TargetArmLength;
+	
+	// 타겟 길이 설정
+	float TargetArmLength = bIsZooming ? ZoomedArmLength : DefaultArmLength;
+	
+	// 부드러운 줌 인/아웃을 위한 Lerp 적용
+	float NewArmLength = FMath::FInterpTo(CurrentArmLength, TargetArmLength, DeltaTime, ZoomSpeed);
+	
+	// 카메라 붐 길이 업데이트
+	CameraBoom->TargetArmLength = NewArmLength;
+}
+
+void APlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	// 카메라 줌 업데이트
+	UpdateCameraZoom(DeltaTime);
 }

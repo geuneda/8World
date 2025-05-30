@@ -18,4 +18,11 @@ public:
 	
 	UPROPERTY(meta=(BindWidget))
 	class UMPUI* MPUI;
+
+	UPROPERTY(meta=(BindWidget))
+	class UImage* Crosshair;
+
+
+public:
+	void SetCrosshair(bool bIsVisible);
 };
