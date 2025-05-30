@@ -85,6 +85,12 @@ void APal::SetPalCarrierState(EPalCarrierState State, AActor* TargetActor)
 {
 }
 
+void APal::CaptureByPlayer()
+{
+	//팰 파괴
+	this->Destroy();
+}
+
 void APal::UpdateFSM(float DeltaTime)
 {
 }

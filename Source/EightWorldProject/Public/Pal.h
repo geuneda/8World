@@ -183,6 +183,8 @@ public:
 	virtual void SetPalWorkerState(EPalWorkerState State, AActor* TargetActor);
 	virtual void SetPalCarrierState(EPalCarrierState State, AActor* TargetActor);
 	
+	//팰이 잡혔을때 함수
+	void CaptureByPlayer();
 	
 	//현재 상태 업데이트
 	virtual void UpdateFSM(float DeltaTime);
