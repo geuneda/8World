@@ -8,6 +8,7 @@
 #include "InputActionValue.h"
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
+#include "PalSphereComponent.h"
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -69,6 +70,10 @@ class APlayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MouseWheelDownAction;
 
+	/** Pal Sphere */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* PalSphereAction;
+
 public:
 	APlayerCharacter();
 	
@@ -126,6 +131,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerBuildComp")
 	class UBuildComponent* PlayerBuildComp;
 
+	/** 플레이어 팰스피어 컴포넌트 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PalSphereComp")
+	class UPalSphereComponent* PalSphereComp;
+
 	/** 아이템 습득 처리 */
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void PickupItem(class AResourceItem* Item);
@@ -148,6 +157,9 @@ public:
 	/** 마우스 휠 업/다운 처리 */
 	void MouseWheelDown(const FInputActionValue& Value);
 	void MouseWheelUp(const FInputActionValue& Value);
+
+	/** 팰스피어 액션 처리 */
+	void ThrowPalSphere(const FInputActionValue& Value);
 
 	/** 달리기 상태 확인 */
 	bool IsSprinting() const { return bIsSprinting; }

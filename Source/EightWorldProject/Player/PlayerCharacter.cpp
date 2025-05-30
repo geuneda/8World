@@ -77,6 +77,9 @@ APlayerCharacter::APlayerCharacter()
 	// 빌드 시스템 컴포넌트 생성
 	PlayerBuildComp = CreateDefaultSubobject<UBuildComponent>(TEXT("PlayerBuildComp"));
 
+	// 팰스피어 컴포넌트 생성
+	PalSphereComp = CreateDefaultSubobject<UPalSphereComponent>(TEXT("PalSphereComp"));
+
 	ConstructorHelpers::FObjectFinder<UInputAction> attackInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_Attack.IA_Attack'"));
 	if (attackInput.Succeeded())
 	{
@@ -101,16 +104,16 @@ APlayerCharacter::APlayerCharacter()
 		BuildModeAction = buildModeInput.Object;
 	}
 
-	ConstructorHelpers::FObjectFinder<UInputAction> wheelDownInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelDown.IA_WheelDown'"));
-	if (wheelDownInput.Succeeded())
+	ConstructorHelpers::FObjectFinder<UInputAction> mouseWheelDownInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_MouseWheelDown.IA_MouseWheelDown'"));
+	if (mouseWheelDownInput.Succeeded())
 	{
-		MouseWheelDownAction = wheelDownInput.Object;
+		MouseWheelDownAction = mouseWheelDownInput.Object;
 	}
 
-	ConstructorHelpers::FObjectFinder<UInputAction> wheelUpInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelUp.IA_WheelUp'"));
-	if (wheelUpInput.Succeeded())
+	ConstructorHelpers::FObjectFinder<UInputAction> palSphereInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_PalSphere.IA_PalSphere'"));
+	if (palSphereInput.Succeeded())
 	{
-		MouseWheelUpAction = wheelUpInput.Object;
+		PalSphereAction = palSphereInput.Object;
 	}
 
 	ConstructorHelpers::FClassFinder<UMainUI> mainUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MainUI.WBP_MainUI_C'"));
@@ -165,6 +168,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		EnhancedInputComponent->BindAction(MouseWheelDownAction, ETriggerEvent::Started, this, &APlayerCharacter::MouseWheelDown);
 		EnhancedInputComponent->BindAction(MouseWheelUpAction, ETriggerEvent::Started, this, &APlayerCharacter::MouseWheelUp);
+		
+		// 팰스피어 액션 바인딩
+		EnhancedInputComponent->BindAction(PalSphereAction, ETriggerEvent::Started, this, &APlayerCharacter::ThrowPalSphere);
 	}
 	else
 	{
@@ -414,6 +420,29 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 	{
 		// 인벤토리에 추가 실패시 에러 로그 출력
 		UE_LOG(LogTemplateCharacter, Error, TEXT("인벤토리에 추가 실패"));
+	}
+}
+
+void APlayerCharacter::ThrowPalSphere(const FInputActionValue& Value)
+{
+	// 인벤토리가 열려있거나 빌드 모드일 경우 실행하지 않음
+	if (IsInventoryOpen() || PlayerBuildComp->bIsBuildMode)
+	{
+		return;
+	}
+
+	// 애니메이션 인스턴스 가져오기
+	UPlayerAnimInstance* AnimInstance = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	if (AnimInstance)
+	{
+		// 팰스피어 애니메이션 재생
+		AnimInstance->PlayPalSphereMontage();
+		
+		// 휴식 상태 해제
+		if (PlayerStatComp)
+		{
+			PlayerStatComp->SetRestState(false);
+		}
 	}
 }
 
