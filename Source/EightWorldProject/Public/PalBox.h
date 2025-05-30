@@ -51,7 +51,10 @@ public:
 	//TimerHandle 쉬고있는 운반용 팰 체크
 	FTimerHandle CheckRestCarrierTimerHandle;
 
-	
+
+	//전체 맵의 팰을 담는 배열(팰 모드 구분하기 위함 wild, Worker(Carrier))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<AActor*> AllPalsInMap;
 	
 	//감지된 Actors 담기 자원, 작업용 팰
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
