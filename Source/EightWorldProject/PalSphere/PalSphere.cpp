@@ -2,8 +2,7 @@
 
 #include "PalSphere.h"
 #include "Components/SphereComponent.h"
-#include "Particles/ParticleSystem.h"
-#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
 #include "EightWorldProject/Public/Pal.h"
 
 // Sets default values
@@ -76,7 +75,7 @@ void APalSphere::OnSphereHit(UPrimitiveComponent* HitComponent, AActor* OtherAct
 		// 포획 이펙트 재생
 		if (CaptureEffect)
 		{
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CaptureEffect, GetActorLocation(), GetActorRotation());
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), CaptureEffect, GetActorLocation(), GetActorRotation());
 		}
 
 		// 팰스피어 파괴

@@ -61,7 +61,7 @@ public:
 
 	// 팰 스피어 캡처 이펙트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
-	class UParticleSystem* CaptureEffect;
+	class UNiagaraSystem* CaptureEffect;
 
 	// 팰 스피어 자동 파괴 시간(초)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
