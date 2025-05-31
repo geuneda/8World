@@ -38,8 +38,14 @@ public:
 	//SetTableData TimerHandle
 	FTimerHandle TableDataTimerHandle;
 	//Work TimerHandle
-	FTimerHandle WorkTimerHandle; 
+	FTimerHandle WorkTimerHandle;
 
+	//Escape TimerHandle
+	FTimerHandle EscapeTimerHandle;
+
+	//RagDoll TimerHandle
+	//FTimerHandle RagDollTimerHandle;
+	
 	//팰 정찰 범위
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float PatrolRadius = 200.f;
@@ -59,6 +65,9 @@ public:
 
 	//현재 타겟 위치
 	FVector CurrentPatrolTargetLocation;
+
+	//impulse
+	FVector LaunchImpulse = FVector::ZeroVector;
 	
 	//팰 데이터 받아오는 함수
 	virtual void SetTableData() override;
@@ -78,9 +87,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Pal")
 	virtual bool GetPalIsWorking() const override;
 	virtual void SetPalIsWorking(bool IsWorking) override;
+
+	//팰 스피어 포획 당할때 호출되는 함수
+	virtual void CaptureByPlayer() override;
+
+	//팰이 도망가는 함수
+	void UpdateEscapeLocation();
+
+	//Impulse 관련 함수
+	//void StopRagDollPhysics();
 	
 	//팰 모드 스위치 함수
-	void SwitchWildState();
+	void SwitchWildState(float deltaTime);
 	void SwitchBattleState();
 	void SwitchWorkerState();
 	
@@ -89,15 +107,16 @@ public:
 	void HandleWildPlayerHitToPal();
 	void HandleWildDetectPlayer();
 	void HandleWildChase();
-	void HandleWildAttack();
+	void HandleWildAttack(float deltaTime);
 	void HandleWildEscape();
-	void HandleWildReturn();
+	void HandleWildDie();
 
 	//팰 Battle 모드 함수
 	void HandleBattleFollowPlayer();
 	void HandleBattleDetectTarget();
 	void HandleBattleChase();
 	void HandleBattleAttack();
+	void HandleBattleDie();
 
 	//팰 Worker 모드 함수
 	void HandleWorkerIdle();
@@ -105,5 +124,7 @@ public:
 	void HandleWorkerMovetoTarget();
 	void HandleWorkerWorking();
 	void HandleWorkerReturn();
-	
+
+	//피격 데미지
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 };

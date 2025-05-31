@@ -5,8 +5,10 @@
 
 #include "CommonStorageBox.h"
 #include "NavigationSystem.h"
+#include "PalBox.h"
 #include "PalChickenAnimInstance.h"
 #include "PWAIController.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
@@ -89,6 +91,11 @@ void APalChicken::BeginPlay()
 	CommonStorageBox = Cast<ACommonStorageBox>(UGameplayStatics::GetActorOfClass(GetWorld(), ACommonStorageBox::StaticClass()));
 
 	MyAIController = Cast<APWAIController>(GetController());
+
+	//팰 박스
+	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
+
+	IntervalDamage = 10.f;
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -139,8 +146,8 @@ void APalChicken::SwitchWildState()
 	case EPalWildState::Escape:
 		HandleWildEscape();
 		break;
-	case EPalWildState::Return:
-		HandleWildReturn();
+	case EPalWildState::Die:
+		HandleWildDie();
 		break;
 	}
 }
@@ -160,6 +167,9 @@ void APalChicken::SwitchBattleState()
 		break;
 	case EPalBattleState::Attack:
 		HandleBattleAttack();
+		break;
+	case EPalBattleState::Die:
+		HandleBattleDie();
 		break;
 	}
 }
@@ -216,7 +226,7 @@ void APalChicken::HandleWildPatrol()
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
 			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
-			this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
@@ -243,11 +253,29 @@ void APalChicken::HandleWildPatrol()
 
 void APalChicken::HandleWildPlayerHitToPal()
 {
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleWildPlayerHitToPal] pal Name : %s,  WildState : PlayerHitToPal Started"), *this->GetName());
+
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	//공격 중인 애니메이션 취소
+	if (bIsMoveToTarget)
+	{
+		bIsMoveToTarget = false;
+		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+	}
+	//데미지 10씩 받을 때마다 데미지 애니메이션 실행
+	if (!this->bIsDamaged)
+	{
+		this->bIsDamaged = true;
+		ChickenAnimInstance->bIsDamaged = this->bIsDamaged;
+	}
+
+	MyController->StopMovement();
+	GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
 }
 
 void APalChicken::HandleWildDetectPlayer()
 {
-	UE_LOG(PalChicken, Warning, TEXT("[HandleWildDetectPlayer] WildState : DetectPlayer"));
+	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildDetectPlayer] WildState : DetectPlayer"));
 
 	//Escape 상태 변경
 	SetPalWildState(EPalWildState::Escape);
@@ -263,10 +291,147 @@ void APalChicken::HandleWildAttack()
 
 void APalChicken::HandleWildEscape()
 {
+	//실행중인 타이머 체크
+	if (GetWorldTimerManager().IsTimerActive(EscapeTimerHandle))
+	{
+		return;
+	}
+	
+	//patrol 애니메이션 취소
+	if (bIsPatroling)
+	{
+		bIsPatroling = false;
+		ChickenAnimInstance->bIsPatroling = bIsPatroling;
+	}
+	//이동 애니메이션 실행
+	if (!bIsMoveToTarget)
+	{
+		bIsMoveToTarget = true;
+		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+	}
+	
+	//도망 함수 타이머
+	GetWorldTimerManager().SetTimer(EscapeTimerHandle, this, &APalChicken::UpdateEscapeLocation, 0.2f, true);
 }
 
-void APalChicken::HandleWildReturn()
+void APalChicken::UpdateEscapeLocation()
 {
+	FVector playerLoc = player->GetActorLocation();
+	FVector meLoc = this->GetActorLocation();
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+
+	//플레이어 반대방향
+	FVector RunDir = (meLoc - playerLoc).GetSafeNormal();
+	
+	//플레이어가 쫓아오고 있을 때 약간 좌/우로 틀기
+	float RandomAngle = FMath::FRandRange(-45.0f, 45.0f);
+	FVector TargetDir = RunDir.RotateAngleAxis(RandomAngle, FVector::UpVector);
+	FRotator NewRotator = FMath::RInterpTo(RunDir.Rotation(), TargetDir.Rotation(), GetWorld()->GetDeltaSeconds(), 1.f);
+	RunDir = NewRotator.Vector();
+	
+	//목표 도망 위치
+	FVector TargetLoc = meLoc + RunDir * 700.f;
+
+	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	FNavLocation NavLoc;
+	//목표 위치로 이동
+	if (NavSystem && NavSystem->GetRandomPointInNavigableRadius(TargetLoc, 300.f, NavLoc))
+	{
+		this->GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		MyController->MoveToLocation(NavLoc.Location);
+	}
+	//플레이어 감지 범위를 넘어서면 patrol 상태 전환
+	if (FVector::DistXY(playerLoc, meLoc) > PlayerDetectDistance && CurHP > 0)
+	{
+		GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
+		if(bIsMoveToTarget)
+		{
+			bIsMoveToTarget = false;
+			ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+		}
+		SetPalWildState(EPalWildState::Patrol);
+	}
+	if (CurHP <= 0)
+	{
+		SetPalWildState(EPalWildState::Die);
+	}
+}
+
+void APalChicken::HandleWildDie()
+{
+	//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleWildDie] WorkerState : Die, Pal Name : %s"), *this->GetName());
+	GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	if (MyController)
+	{
+		MyController->StopMovement();
+	}
+	if(bIsMoveToTarget)
+	{
+		bIsMoveToTarget = false;
+		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+	}
+
+	//RagDoll
+	//애니메이션 중지
+	GetMesh()->bPauseAnims = true;
+	GetMesh()->bNoSkeletonUpdate = true;
+
+	//물리 시뮬레이션 활성화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+	GetMesh()->bBlendPhysics = true;
+
+	//캡슐 콜라이더 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	//컨트롤러 제거
+	DetachFromControllerPendingDestroy();
+	
+	// //튕겨나가는 힘 추가
+	if (LaunchImpulse == FVector::ZeroVector)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Launch Impulse"));
+		LaunchImpulse = GetActorForwardVector() * 250.f + FVector(0, 0, 500.f);
+		GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse, NAME_None, true);
+	}
+		
+}
+
+float APalChicken::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	//작업, 운반 팰은 데미지 0
+	if (this->bIsWorkerMode || this->bIsCarrierMode)
+	{
+		return 0.0f;
+	}
+	
+	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	//팰 체력 감소
+	CurHP = FMath::Clamp(CurHP - damage, 0, MaxHP);
+	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, CurHP = %f"), *this->GetName(), CurHP);
+	
+	//데미지 받았을 때 상태 전환
+	if (this->bIsWildMode)
+	{
+		//데미지 IntervalDamage(10)씩 받을때마다 PlayerHitToPal로 변환
+		if (LastHP - CurHP >= IntervalDamage)
+		{
+			LastHP = CurHP;
+			SetPalWildState(EPalWildState::PlayerHitToPal);
+		}
+		//체력이 없으면 사망 상태 전환
+		if (CurHP <= 0)
+		{
+			SetPalWildState(EPalWildState::Die);
+		}
+
+	}
+	
+	return damage;
 }
 
 void APalChicken::HandleBattleFollowPlayer()
@@ -282,6 +447,10 @@ void APalChicken::HandleBattleChase()
 }
 
 void APalChicken::HandleBattleAttack()
+{
+}
+
+void APalChicken::HandleBattleDie()
 {
 }
 
@@ -315,7 +484,7 @@ void APalChicken::HandleCarrierPatrol()
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
 			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
-			this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
@@ -512,6 +681,17 @@ inline void APalChicken::SetTableData()
 	//팰 속도
 	MoveSpeed = ChickenInfo.MoveSpeed;
 	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+
+	//팰 순찰속도
+	PatrolSpeed = ChickenInfo.PatrolSpeed;
+	
+	//팰 도망속도
+	RunSpeed = ChickenInfo.RunSpeed;
+	
+	//팰 체력
+	MaxHP = ChickenInfo.HP;
+	CurHP = MaxHP;
+	LastHP = MaxHP;
 }
 
 
@@ -581,4 +761,16 @@ void APalChicken::SetPalIsCarrying(bool IsCarrying)
 	Super::SetPalIsCarrying(IsCarrying);
 
 	bIsCarrying = IsCarrying;
+}
+
+void APalChicken::CaptureByPlayer()
+{
+	//팰이 사라지면 전체 팰 배열에서 제거
+	if (palBox->AllPalsInMap.Contains(this))
+	{
+		palBox->AllPalsInMap.Remove(this);
+		UE_LOG(PalChicken, Warning, TEXT("[CaptureByPlayer]Removed AllPalsInMap Actor : %s"), *this->GetName());
+	}
+	
+	Super::CaptureByPlayer();
 }

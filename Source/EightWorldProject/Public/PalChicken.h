@@ -45,6 +45,9 @@ public:
 	//Patrol 반복 타이머
 	FTimerHandle PatrolTimerHandle;
 
+	//Escape TimerHandle
+	FTimerHandle EscapeTimerHandle;
+
 	//patrol 이동 여부
 	bool bIsPatroling = false;
 
@@ -57,12 +60,17 @@ public:
 	//팰이 충돌 체크를 위한 Sphere Collider
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class USphereComponent* SphereComp;
-	//공용 저장 박스
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	class ACommonStorageBox* CommonStorageBox;
+
 	//AIController
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class APWAIController* MyAIController;
+
+	//플레이어 감지 범위
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float PlayerDetectDistance = 1500.f;
+
+	//impulse
+	FVector LaunchImpulse = FVector::ZeroVector;
 	
 	//팰 데이터 받아오는 함수
 	virtual void SetTableData() override;
@@ -71,11 +79,17 @@ public:
 	virtual bool GetPalIsCarrying() const override;
 	virtual void SetPalIsCarrying(bool IsCarrying) override;
 
+	//팰 스피어 포획 당할때 호출되는 함수
+	virtual void CaptureByPlayer() override;
+	
 	//타이머용 함수, 아이템의 최종위치 이용하기 위한 함수
 	void SetCarrierMoveToTarget();
 
 	//타이머용 함수, 아이템 일정 시간 뒤에 삭제 함수
 	void CarriedItemDestroy();
+
+	//팰이 도망가는 함수
+	void UpdateEscapeLocation();
 		
 	//팰 모드 Set함수
 	virtual void SetPalMode(EPalMode Mode) override;
@@ -97,13 +111,14 @@ public:
 	void HandleWildChase();
 	void HandleWildAttack();
 	void HandleWildEscape();
-	void HandleWildReturn();
+	void HandleWildDie();
 
 	//팰 Battle 모드 함수
 	void HandleBattleFollowPlayer();
 	void HandleBattleDetectTarget();
 	void HandleBattleChase();
 	void HandleBattleAttack();
+	void HandleBattleDie();
 
 	//팰 Carrier 모드 함수
 	void HandleCarrierPatrol();
@@ -111,5 +126,8 @@ public:
 	void HandleCarrierMovetoTarget();
 	void HandleCarrierCarrying();
 	void HandleCarrierReturn();
+
+	//피격 데미지
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 };
 

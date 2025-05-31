@@ -35,4 +35,16 @@ public:
 	//팰 공격중인지 여부
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsAttacking;
+
+	//팰 데미지 여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsDamaged;
+
+	//소유자
+	UPROPERTY()
+	class APalYeti* yeti;
+	
+	//Damage 애니메이션 Notify
+	UFUNCTION()
+	void AnimNotify_DamageEnd();
 };

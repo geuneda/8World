@@ -8,6 +8,7 @@
 #include "PalBox.h"
 #include "PalWorkComponent.h"
 #include "PWAIController.h"
+#include "Components/CapsuleComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/Resources/Rock.h"
 #include "EightWorldProject/Resources/Tree.h"
@@ -43,6 +44,7 @@ APalYeti::APalYeti()
 	{
 		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
 	}
+	
 }
 
 // Called when the game starts or when spawned
@@ -92,6 +94,11 @@ void APalYeti::BeginPlay()
 
 	//애니메이션
 	YetiAnimInstance = Cast<UPalYetiAnimInstance>(GetMesh()->GetAnimInstance());
+
+	//팰 박스
+	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
+
+	IntervalDamage = 30.f;
 }
 
 // Called every frame
@@ -103,7 +110,7 @@ void APalYeti::Tick(float DeltaTime)
 	switch (PalMode)
 	{
 		case EPalMode::Wild:
-			SwitchWildState();
+			SwitchWildState(DeltaTime);
 			break;
 		case EPalMode::Battle:
 			SwitchBattleState();
@@ -123,7 +130,7 @@ void APalYeti::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
-void APalYeti::SwitchWildState()
+void APalYeti::SwitchWildState(float deltaTime)
 {
 	switch (PalWildState)
 	{
@@ -140,13 +147,13 @@ void APalYeti::SwitchWildState()
 			HandleWildChase();
 			break;
 		case EPalWildState::Attack:
-			HandleWildAttack();
+			HandleWildAttack(deltaTime);
 			break;
 		case EPalWildState::Escape:
 			HandleWildEscape();
 			break;
-		case EPalWildState::Return:
-			HandleWildReturn();
+		case EPalWildState::Die:
+			HandleWildDie();
 			break;
 	}
 }
@@ -166,6 +173,9 @@ void APalYeti::SwitchBattleState()
 			break;
 		case EPalBattleState::Attack:
 			HandleBattleAttack();
+			break;
+		case EPalBattleState::Die:
+			HandleBattleDie();
 			break;
 	}
 }
@@ -222,7 +232,7 @@ void APalYeti::HandleWildPatrol()
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
 			YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-			this->GetCharacterMovement()->MaxWalkSpeed = 20.f;
+			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
@@ -240,20 +250,40 @@ void APalYeti::HandleWildPatrol()
 	}
 
 	//UE_LOG(PalYeti, Warning, TEXT("[HandleWildPatrol] Player Distance = %f"), FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()));
-	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectDistance)
+	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectDistance && CurHP > 30)
 	{
 		//DetectPlayer 상태 변경
 		SetPalWildState(EPalWildState::DetectPlayer);
+	}
+	//체력이 낮은데 플레이어가 다가오면 다시 도망
+	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < AttackDistance && CurHP <= 30 && CurHP > 0)
+	{
+		SetPalWildState(EPalWildState::Escape);
 	}
 }
 
 void APalYeti::HandleWildPlayerHitToPal()
 {
+	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildPlayerHitToPal] pal Name : %s WildState : PlayerHitToPal Started"), *this->GetName());
+
+	//공격 중인 애니메이션 취소
+	if (bIsPlayingAttackAnim)
+	{
+		bIsPlayingAttackAnim = false;
+		YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+	}
+	//데미지 30씩 받을 때마다 데미지 애니메이션 실행
+	if (!this->bIsDamaged)
+	{
+		this->bIsDamaged = true;
+		YetiAnimInstance->bIsDamaged = this->bIsDamaged;
+	}
+	
 }
 
 void APalYeti::HandleWildDetectPlayer()
 {
-	UE_LOG(PalYeti, Warning, TEXT("[HandleWildDetectPlayer] WildState : DetectPlayer"));
+	//UE_LOG(PalYeti, Warning, TEXT("[HandleWildDetectPlayer] WildState : DetectPlayer"));
 
 	//Escape 상태 변경
 	SetPalWildState(EPalWildState::Chase);
@@ -261,7 +291,7 @@ void APalYeti::HandleWildDetectPlayer()
 
 void APalYeti::HandleWildChase()
 {
-	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWildChase] WorkerState : Chase, Pal Name : %s"), *this->GetName());
+	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildChase] WorkerState : Chase, Pal Name : %s"), *this->GetName());
 
 	//Target 플레이어로 이동하기
 	FVector meLoc = this->GetActorLocation();
@@ -307,13 +337,12 @@ void APalYeti::HandleWildChase()
 		SetPalWildState(EPalWildState::Attack);
 		
 	}
-	
 }
 
-void APalYeti::HandleWildAttack()
+void APalYeti::HandleWildAttack(float deltaTime)
 {
-	//플레이어 방향으로 회전하기
-	
+	if (!player)
+		return;
 	
 	//공격 애니메이션 시작
 	if (!bIsPlayingAttackAnim)
@@ -332,19 +361,208 @@ void APalYeti::HandleWildAttack()
 		}
 		SetPalWildState(EPalWildState::Chase);
 	}
+
+	//플레이어 방향으로 회전하기
+	FVector Direction = player->GetActorLocation() - this->GetActorLocation();
+	Direction.Z = 0.0f;
+	FRotator playerRotation = Direction.Rotation();
+	FRotator currentRotation = this->GetActorRotation();
+
+	FRotator newRotation = FMath::RInterpTo(currentRotation, playerRotation, deltaTime, 5.f);
+	SetActorRotation(newRotation);
 }
 
 void APalYeti::HandleWildEscape()
 {
+	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildEscape] WorkerState : Escape, Pal Name : %s"), *this->GetName());
+
+	//실행중인 타이머 체크
+	if (GetWorldTimerManager().IsTimerActive(EscapeTimerHandle))
+	{
+		return;
+	}
+	
+	//공격 애니메이션 취소
+	if (bIsPlayingAttackAnim)
+	{
+		bIsPlayingAttackAnim = false;
+		YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+	}
+	//patrol 애니메이션 취소
+	if (bIsPatroling)
+	{
+		bIsPatroling = false;
+		YetiAnimInstance->bIsPatroling = bIsPatroling;
+	}
+	//이동 애니메이션 실행
+	if (!bIsMoveToTarget)
+	{
+		bIsMoveToTarget = true;
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	}
+	
+	//도망 함수 타이머
+	GetWorldTimerManager().SetTimer(EscapeTimerHandle, this, &APalYeti::UpdateEscapeLocation, 0.2f, true);
 }
 
-void APalYeti::HandleWildReturn()
+void APalYeti::UpdateEscapeLocation()
 {
+	FVector playerLoc = player->GetActorLocation();
+	FVector meLoc = this->GetActorLocation();
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+
+	//플레이어 반대방향
+	FVector RunDir = (meLoc - playerLoc).GetSafeNormal();
+	
+	//플레이어가 쫓아오고 있을 때 약간 좌/우로 틀기
+	float RandomAngle = FMath::FRandRange(-45.0f, 45.0f);
+	FVector TargetDir = RunDir.RotateAngleAxis(RandomAngle, FVector::UpVector);
+	FRotator NewRotator = FMath::RInterpTo(RunDir.Rotation(), TargetDir.Rotation(), GetWorld()->GetDeltaSeconds(), 1.f);
+	RunDir = NewRotator.Vector();
+	
+	//목표 도망 위치
+	FVector TargetLoc = meLoc + RunDir * 700.f;
+
+	UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	FNavLocation NavLoc;
+	//목표 위치로 이동
+	if (NavSystem && NavSystem->GetRandomPointInNavigableRadius(TargetLoc, 300.f, NavLoc))
+	{
+		this->GetCharacterMovement()->MaxWalkSpeed = RunSpeed;
+		MyController->MoveToLocation(NavLoc.Location);
+	}
+	//플레이어 감지 범위를 넘어서면 patrol 상태 전환
+	if (FVector::DistXY(playerLoc, meLoc) > PlayerDetectDistance && CurHP > 0)
+	{
+		GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
+		if(bIsMoveToTarget)
+		{
+			bIsMoveToTarget = false;
+			YetiAnimInstance->bIsMove = bIsMoveToTarget;
+		}
+		SetPalWildState(EPalWildState::Patrol);
+	}
+	if (CurHP <= 0)
+	{
+		SetPalWildState(EPalWildState::Die);
+	}
+}
+
+void APalYeti::HandleWildDie()
+{
+	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildDie] WorkerState : Die, Pal Name : %s"), *this->GetName());
+	GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
+	APWAIController* MyController = Cast<APWAIController>(GetController());
+	if (MyController)
+	{
+		MyController->StopMovement();
+	}
+	if(bIsMoveToTarget)
+	{
+		bIsMoveToTarget = false;
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	}
+
+	//RagDoll
+	//애니메이션 중지
+	GetMesh()->bPauseAnims = true;
+	GetMesh()->bNoSkeletonUpdate = true;
+
+	//물리 시뮬레이션 활성화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->WakeAllRigidBodies();
+	GetMesh()->bBlendPhysics = true;
+
+	//캡슐 콜라이더 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	//컨트롤러 제거
+	DetachFromControllerPendingDestroy();
+	
+	// //튕겨나가는 힘 추가
+	if (LaunchImpulse == FVector::ZeroVector)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Launch Impulse"));
+		LaunchImpulse = GetActorForwardVector() * 250.f + FVector(0, 0, 500.f);
+		GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse, NAME_None, true);
+	}
+
+	
+	// FVector ImpulseDir = FVector::ForwardVector;
+	// if (player)
+	// {
+	// 	ImpulseDir = (this->GetActorLocation() - player->GetActorLocation()).GetSafeNormal();
+	// 	ImpulseDir += FVector(0,0, 0.6f);
+	// 	ImpulseDir.Normalize();
+	// }
+	//
+	// FVector LaunchImpulse = ImpulseDir * 500.f;
+	//
+	// GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse);
+	//
+	// GetWorldTimerManager().SetTimer(RagDollTimerHandle, this, &APalYeti::StopRagDollPhysics, 1.f, false);
+	
+}
+
+// void APalYeti::StopRagDollPhysics()
+// {
+// 	// 물리 멈춤
+// 	GetMesh()->SetSimulatePhysics(false);
+// 	GetMesh()->SetAllBodiesSimulatePhysics(false);
+// 	GetMesh()->bBlendPhysics = false;
+// }
+
+float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	//작업, 운반 팰은 데미지 0
+	if (this->bIsWorkerMode || this->bIsCarrierMode)
+	{
+		return 0.0f;
+	}
+	
+	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	//팰 체력 감소
+	CurHP = FMath::Clamp(CurHP - damage, 0, MaxHP);
+	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, CurHP = %f"), *this->GetName(), CurHP);
+	
+	//데미지 받았을 때 상태 전환
+	if (this->bIsWildMode)
+	{
+		//일정 체력 이하로 떨어지면 Escape 상태로 변경
+		if (CurHP < 30 && CurHP > 0)
+		{
+			SetPalWildState(EPalWildState::Escape);
+		}
+		//데미지 IntervalDamage(30)씩 받을때마다 PlayerHitToPal로 변환
+		if (LastHP - CurHP >= IntervalDamage)
+		{
+			LastHP = CurHP;
+			SetPalWildState(EPalWildState::PlayerHitToPal);
+		}
+		//체력이 없으면 사망 상태 전환
+		if (CurHP <= 0)
+		{
+			SetPalWildState(EPalWildState::Die);
+		}
+
+	}
+	
+	return damage;
 }
 
 void APalYeti::HandleBattleFollowPlayer()
 {
 	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleBattleFollowPlayer] BattleState : FollowPlayer"));
+	GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
+	//이동 애니메이션 취소
+	if (!bIsMoveToTarget)
+	{
+		bIsMoveToTarget = true;
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	}
 }
 
 void APalYeti::HandleBattleDetectTarget()
@@ -356,6 +574,10 @@ void APalYeti::HandleBattleChase()
 }
 
 void APalYeti::HandleBattleAttack()
+{
+}
+
+void APalYeti::HandleBattleDie()
 {
 }
 
@@ -497,6 +719,11 @@ void APalYeti::HandleWorkerWorking()
 
 void APalYeti::HandleWorkerReturn()
 {
+	//Work Timer 돌고 있으면 클리어
+	if (GetWorldTimerManager().IsTimerActive(WorkTimerHandle))
+	{
+		GetWorldTimerManager().ClearTimer(WorkTimerHandle);
+	}
 	//Idle 상태로 변경
 	this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
 }
@@ -508,6 +735,17 @@ void APalYeti::SetTableData()
 	//팰 속도
 	MoveSpeed = YetiInfo.MoveSpeed;
 	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+
+	//팰 순찰속도
+	PatrolSpeed = YetiInfo.PatrolSpeed;
+	
+	//팰 도망속도
+	RunSpeed = YetiInfo.RunSpeed;
+	
+	//팰 체력
+	MaxHP = YetiInfo.HP;
+	CurHP = MaxHP;
+	LastHP = MaxHP;
 	
 }
 
@@ -634,4 +872,16 @@ void APalYeti::SetPalIsWorking(bool IsWorking)
 	Super::SetPalIsWorking(IsWorking);
 
 	bIsWorking = IsWorking;
+}
+
+void APalYeti::CaptureByPlayer()
+{
+	//팰이 사라지면 전체 팰 배열에서 제거
+	if (palBox->AllPalsInMap.Contains(this))
+	{
+		palBox->AllPalsInMap.Remove(this);
+		UE_LOG(PalYeti, Warning, TEXT("[CaptureByPlayer]Removed AllPalsInMap Actor : %s"), *this->GetName());
+	}
+	
+	Super::CaptureByPlayer();
 }

@@ -26,7 +26,7 @@ enum class EPalWildState : uint8
 	Chase UMETA(DisplayName = "Chase"),
 	Attack UMETA(DisplaName = "Attack"),
 	Escape UMETA(DisplayName = "Escape"),
-	Return UMETA(DisplayName = "Return"),
+	Die UMETA(DisplayName = "Die")
 };
 
 UENUM(BlueprintType)
@@ -36,6 +36,7 @@ enum class EPalBattleState : uint8
 	DetectTarget UMETA(DisplayName = "DetectTarget"),
 	Chase UMETA(DisplayName = "Chase"),
 	Attack UMETA(DisPlayName = "Attack"),
+	Die UMETA(DisplayName = "Die")
 };
 
 UENUM(BlueprintType)
@@ -113,12 +114,19 @@ public:
 	//팰 일종류
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName WorkType;
-	//팰 일속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float WorkSpeed;
 	// 팰 이동속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MoveSpeed;
+	//팰 순찰속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float PatrolSpeed;
+	//팰 도망속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float RunSpeed;
+	//팰 일속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float WorkSpeed;
+
 	//팰 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UAnimMontage* WorkMontage;
@@ -162,6 +170,26 @@ public:
 
 	//플레이어
 	class APlayerCharacter* player;
+
+	//공용 저장 박스
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class ACommonStorageBox* CommonStorageBox;
+
+	//팰 박스
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class APalBox* palBox;
+
+	//팰 체력
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CurHP;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxHP;
+	float LastHP;
+	//팰 데미지 애니메이션 기준 값
+	float IntervalDamage;
+
+	//팰 데미지 애니메이션 실행여부
+	bool bIsDamaged = false;
 	
 	//팰 작업중 get set
 	virtual bool GetPalIsWorking() const { return bIsWorking; }
@@ -189,7 +217,10 @@ public:
 	virtual void SetPalCarrierState(EPalCarrierState State, AActor* TargetActor);
 	
 	//팰이 잡혔을때 함수
-	void CaptureByPlayer();
+	virtual void CaptureByPlayer();
+
+	//팰이 데미지를 받았을 때
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 	
 	//현재 상태 업데이트
 	virtual void UpdateFSM(float DeltaTime);

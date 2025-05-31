@@ -95,6 +95,12 @@ void APal::CaptureByPlayer()
 	this->Destroy();
 }
 
+float APal::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
 void APal::UpdateFSM(float DeltaTime)
 {
 }
