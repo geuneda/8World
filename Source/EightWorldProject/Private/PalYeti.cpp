@@ -611,7 +611,7 @@ void APalYeti::HandleWorkerIdle()
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
 			YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-			this->GetCharacterMovement()->MaxWalkSpeed = 20.f;
+			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
@@ -774,11 +774,6 @@ void APalYeti::PalWorking()
 			//팰 상태 Return으로 초기화
 			this->SetPalWorkerState(EPalWorkerState::Return, nullptr);
 			
-			//Work 배열에서 제거
-			// 	PalBox->WorkedPalActors.Remove(this);
-			// 	UE_LOG(PalLog, Warning, TEXT("[PalWorking] Worked Pal : %s WorkedResourceActors Removed"), *this->GetName());
-			// }
-
 		}
 	}
 	if (ARock* rock = Cast<ARock>(TargetResource))
@@ -796,11 +791,6 @@ void APalYeti::PalWorking()
 
 			//팰 상태 Return으로 초기화
 			this->SetPalWorkerState(EPalWorkerState::Return, nullptr);
-			
-			//Work 배열에서 제거
-			// 	PalBox->WorkedPalActors.Remove(this);
-			// 	UE_LOG(PalLog, Warning, TEXT("[PalWorking] Worked Pal : %s WorkedResourceActors Removed"), *this->GetName());
-			// }
 			
 		}
 	}

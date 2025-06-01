@@ -99,7 +99,7 @@ void APalBox::SearchAndSetPalMode()
 			if (pal)
 			{
 				AllPalsInMap.Add(pal);
-				UE_LOG(PalBoxLog, Warning, TEXT("[SearchAndSetPalMode]Added Pal Actor : %s"), *pal->GetName());
+				//UE_LOG(PalBoxLog, Warning, TEXT("[SearchAndSetPalMode]Added Pal Actor : %s"), *pal->GetName());
 
 				//PalBox Sphere 범위안에 있으면 작업 상태 부여
 				if (FVector::DistXY(this->GetActorLocation(), pal->GetActorLocation()) < SphereComp->GetScaledSphereRadius())

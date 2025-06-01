@@ -41,12 +41,5 @@ struct FPalInfoData : public FTableRowBase
 	//팰 작업별 속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FName, float> WorkSpeeds;
-
-	//팰 작업별 수확량
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FName, float> WorkAmounts;
-
-	//팰 작업별 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FName, UAnimMontage*> WorkMontages;
+	
 };
