@@ -29,6 +29,11 @@ APal::APal()
 void APal::BeginPlay()
 {
 	Super::BeginPlay();
+
+
+	//플레이어 찾기
+	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	
 }
 
 // Called every frame
