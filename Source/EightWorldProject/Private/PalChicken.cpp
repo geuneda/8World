@@ -96,9 +96,6 @@ void APalChicken::BeginPlay()
 	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
 
 	IntervalDamage = 10.f;
-
-	//플레이어 찾기
-	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -202,6 +199,12 @@ void APalChicken::SwitchCarrierState()
 void APalChicken::HandleWildPatrol()
 {
 	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol Started"));
+
+	if (!player)
+	{
+		//플레이어 찾기
+		player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	}
 	
 	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
 	//네비게이션 시스템 받아오기
@@ -319,6 +322,12 @@ void APalChicken::HandleWildEscape()
 
 void APalChicken::UpdateEscapeLocation()
 {
+	if (!player)
+	{
+		//플레이어 찾기
+		player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	}
+	
 	FVector playerLoc = player->GetActorLocation();
 	FVector meLoc = this->GetActorLocation();
 	APWAIController* MyController = Cast<APWAIController>(GetController());

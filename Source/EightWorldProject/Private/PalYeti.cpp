@@ -100,8 +100,6 @@ void APalYeti::BeginPlay()
 
 	IntervalDamage = 30.f;
 
-	//플레이어 찾기
-	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
 
 // Called every frame
@@ -208,6 +206,12 @@ void APalYeti::SwitchWorkerState()
 void APalYeti::HandleWildPatrol()
 {
 	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildPatrol] WildState : Patrol Started"));
+
+	if (!player)
+	{
+		//플레이어 찾기
+		player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	}
 	
 	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
 	//네비게이션 시스템 받아오기
@@ -296,6 +300,12 @@ void APalYeti::HandleWildChase()
 {
 	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildChase] WorkerState : Chase, Pal Name : %s"), *this->GetName());
 
+	if (!player)
+	{
+		//플레이어 찾기
+		player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	}
+	
 	//Target 플레이어로 이동하기
 	FVector meLoc = this->GetActorLocation();
 	FVector playerLoc = player->GetActorLocation();
@@ -345,7 +355,10 @@ void APalYeti::HandleWildChase()
 void APalYeti::HandleWildAttack(float deltaTime)
 {
 	if (!player)
-		return;
+	{
+		//플레이어 찾기
+		player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	}
 	
 	//공격 애니메이션 시작
 	if (!bIsPlayingAttackAnim)
@@ -410,6 +423,12 @@ void APalYeti::HandleWildEscape()
 
 void APalYeti::UpdateEscapeLocation()
 {
+	if (!player)
+	{
+		//플레이어 찾기
+		player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	}
+	
 	FVector playerLoc = player->GetActorLocation();
 	FVector meLoc = this->GetActorLocation();
 	APWAIController* MyController = Cast<APWAIController>(GetController());
