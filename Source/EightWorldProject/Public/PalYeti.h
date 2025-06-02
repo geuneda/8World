@@ -27,7 +27,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//팰 메시
+	
+	//팰 Work 컴포넌트
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UPalWorkComponent* PalworkComp;
 

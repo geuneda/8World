@@ -32,7 +32,7 @@ APalYeti::APalYeti()
 		GetMesh()->SetRelativeScale3D(FVector(0.4f));
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-90.f), FRotator(0,-90,0));
 	}
-
+	
 	PalworkComp = CreateDefaultSubobject<UPalWorkComponent>(TEXT("PalWorkComp"));
 
 	//DataTable RowName 초기화
@@ -462,18 +462,11 @@ void APalYeti::HandleWildDie()
 		bIsMoveToTarget = false;
 		YetiAnimInstance->bIsMove = bIsMoveToTarget;
 	}
-
+	
 	//RagDoll
-	//애니메이션 중지
-	GetMesh()->bPauseAnims = true;
-	GetMesh()->bNoSkeletonUpdate = true;
-
 	//물리 시뮬레이션 활성화
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetMesh()->SetSimulatePhysics(true);
-	GetMesh()->WakeAllRigidBodies();
-	GetMesh()->bBlendPhysics = true;
 
 	//캡슐 콜라이더 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
