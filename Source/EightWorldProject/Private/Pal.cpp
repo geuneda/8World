@@ -5,6 +5,7 @@
 
 #include "PWAIController.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -31,9 +32,17 @@ void APal::BeginPlay()
 	Super::BeginPlay();
 
 
-	//플레이어 찾기
-	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
+	FTimerHandle DelayHandle;
+
+	GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &APal::SerachDelayPlayer, 0.2f, false);
+
 	
+}
+
+void APal::SerachDelayPlayer()
+{
+	//플레이어 찾기
+	player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 }
 
 // Called every frame

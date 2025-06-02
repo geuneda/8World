@@ -169,6 +169,7 @@ public:
 	bool bIsPlayerOwned = false;
 
 	//플레이어
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class APlayerCharacter* player;
 
 	//공용 저장 박스
@@ -190,6 +191,9 @@ public:
 
 	//팰 데미지 애니메이션 실행여부
 	bool bIsDamaged = false;
+
+	//플레이어 찾기 딜레이 함수
+	void SerachDelayPlayer();
 	
 	//팰 작업중 get set
 	virtual bool GetPalIsWorking() const { return bIsWorking; }
