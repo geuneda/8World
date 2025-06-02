@@ -107,7 +107,7 @@ APlayerCharacter::APlayerCharacter()
 		BuildModeAction = buildModeInput.Object;
 	}
 
-	ConstructorHelpers::FObjectFinder<UInputAction> mouseWheelDownInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_MouseWheelDown.IA_MouseWheelDown'"));
+	ConstructorHelpers::FObjectFinder<UInputAction> mouseWheelDownInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_WheelDown.IA_WheelDown'"));
 	if (mouseWheelDownInput.Succeeded())
 	{
 		MouseWheelDownAction = mouseWheelDownInput.Object;
