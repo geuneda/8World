@@ -99,6 +99,9 @@ void APalYeti::BeginPlay()
 	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
 
 	IntervalDamage = 30.f;
+
+	//플레이어 찾기
+	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
 
 // Called every frame

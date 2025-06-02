@@ -96,6 +96,9 @@ void APalChicken::BeginPlay()
 	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
 
 	IntervalDamage = 10.f;
+
+	//플레이어 찾기
+	player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetCharacter());
 }
 
 void APalChicken::Tick(float DeltaTime)
