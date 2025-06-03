@@ -69,7 +69,7 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// 플레이어 스탯 컴포넌트 생성
-	PlayerStatComp = CreateDefaultSubobject<UPlayerStatComp>(TEXT("PlayerStatComp"));
+	//PlayerStatComp = CreateDefaultSubobject<UPlayerStatComp>(TEXT("PlayerStatComp"));
 	
 	// 플레이어 공격 컴포넌트 생성
 	PlayerAttackComp = CreateDefaultSubobject<UPlayerAttackComponent>(TEXT("PlayerAttackComp"));
