@@ -95,9 +95,9 @@ public:
 	EPalCarrierState PalCarrierState;
 	
 	//팰 데이터
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pal")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pal")
 	FPalInfoData YetiInfo;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pal")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pal")
 	FPalInfoData ChickenInfo;
 
 	//펠 ID
@@ -105,7 +105,7 @@ public:
 	FName PalDataRowName;
 
 	//펠 DataTable
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PalData")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "PalData")
 	UDataTable* PalDataTable;
 	
 	//팰 이름
@@ -169,7 +169,7 @@ public:
 	bool bIsPlayerOwned = false;
 
 	//플레이어
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, BlueprintReadOnly)
 	class APlayerCharacter* player;
 
 	//공용 저장 박스
@@ -228,4 +228,8 @@ public:
 	
 	//현재 상태 업데이트
 	virtual void UpdateFSM(float DeltaTime);
+
+
+public: //-------------네트워크-------------------
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

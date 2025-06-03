@@ -52,15 +52,22 @@ void APalChicken::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//DataTable 로딩
-	if (PalDataTable)
+	if (HasAuthority())
 	{
-		FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Chicken"));
-		if (InfoData)
+		//DataTable 로딩
+		if (PalDataTable)
 		{
-			ChickenInfo = *InfoData;
+			FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Chicken"));
+			if (InfoData)
+			{
+				ChickenInfo = *InfoData;
+			}
 		}
+
+		//팰 DataTable Data 초기화
+		GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.1f, false);
 	}
+
 
 	//플레이어 소유 여부 (임시)
 	bIsPlayerOwned = true;
@@ -84,9 +91,6 @@ void APalChicken::BeginPlay()
 	//애니메이션
 	ChickenAnimInstance = Cast<UPalChickenAnimInstance>(GetMesh()->GetAnimInstance());
 	
-	//팰 DataTable Data 초기화
-	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.1f, false);
-
 	//공용 저장 박스
 	CommonStorageBox = Cast<ACommonStorageBox>(UGameplayStatics::GetActorOfClass(GetWorld(), ACommonStorageBox::StaticClass()));
 
@@ -244,10 +248,13 @@ void APalChicken::HandleWildPatrol()
 	}
 
 	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Player Distance = %f"), FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()));
-	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectRadius)
+	if (player)
 	{
-		//DetectPlayer 상태 변경
-		SetPalWildState(EPalWildState::DetectPlayer);
+		if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectRadius)
+		{
+			//DetectPlayer 상태 변경
+			SetPalWildState(EPalWildState::DetectPlayer);
+		}
 	}
 }
 

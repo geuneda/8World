@@ -52,15 +52,19 @@ void APalYeti::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//DataTable 로딩
-	if (PalDataTable)
+	if (HasAuthority())
 	{
-		FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Yeti"));
-		if (InfoData)
+		//DataTable 로딩
+		if (PalDataTable)
 		{
-			YetiInfo = *InfoData;
+			FPalInfoData* InfoData = PalDataTable->FindRow<FPalInfoData>(PalDataRowName, TEXT("Yeti"));
+			if (InfoData)
+			{
+				YetiInfo = *InfoData;
+			}
 		}
 	}
+
 
 	//플레이어 소유 여부 (임시)
 	bIsPlayerOwned = true;
@@ -251,16 +255,20 @@ void APalYeti::HandleWildPatrol()
 	}
 
 	//UE_LOG(PalYeti, Warning, TEXT("[HandleWildPatrol] Player Distance = %f"), FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()));
-	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectDistance && CurHP > 30)
+	if (player)
 	{
-		//DetectPlayer 상태 변경
-		SetPalWildState(EPalWildState::DetectPlayer);
+		if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < PlayerDetectDistance && CurHP > 30)
+		{
+			//DetectPlayer 상태 변경
+			SetPalWildState(EPalWildState::DetectPlayer);
+		}
+		//체력이 낮은데 플레이어가 다가오면 다시 도망
+		if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < AttackDistance && CurHP <= 30 && CurHP > 0)
+		{
+			SetPalWildState(EPalWildState::Escape);
+		}
 	}
-	//체력이 낮은데 플레이어가 다가오면 다시 도망
-	if (FVector::DistXY(this->GetActorLocation(), player->GetActorLocation()) < AttackDistance && CurHP <= 30 && CurHP > 0)
-	{
-		SetPalWildState(EPalWildState::Escape);
-	}
+
 }
 
 void APalYeti::HandleWildPlayerHitToPal()
