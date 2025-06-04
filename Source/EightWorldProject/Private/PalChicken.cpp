@@ -652,7 +652,8 @@ void APalChicken::HandleCarrierCarrying()
 					//이동 및 이동 애니메이션 실행
 					MyAIController->MoveToLocation(CommonStorageBox->GetActorLocation());
 					bIsMoveToTarget = true;
-					ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+					MultiRPC_CarrierMovetoTarget(bIsMoveToTarget);
+					//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 				}
 			}
 		}
@@ -677,7 +678,8 @@ void APalChicken::HandleCarrierCarrying()
 	{
 		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
-		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+		MultiRPC_CarrierMovetoTarget(bIsMoveToTarget);
+		//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 
 		//이동 정지 및 작업 상태 시작
 		MyAIController->StopMovement();
