@@ -138,13 +138,19 @@ public:
 	bool bIsCarrierMode = false;
 
 	//팰 이동중 여부
+	UPROPERTY(ReplicatedUsing = OnRep_MoveToTarget)
 	bool bIsMoveToTarget = false;
+	UFUNCTION()
+	virtual void OnRep_MoveToTarget() {};
 	
 	//팰 작업중 여부
 	bool bIsWorking = false;
 
 	//팰 작업 애니메이션 실행 여부
+	UPROPERTY(ReplicatedUsing = OnRep_WorkAnim)
 	bool bIsPlayingWorkAnim = false;
+	UFUNCTION()
+	virtual void OnRep_WorkAnim() {};
 
 	//팰 공격 애니메이션 실행 여부
 	bool bIsPlayingAttackAnim = false;
@@ -231,5 +237,6 @@ public:
 
 
 public: //-------------네트워크-------------------
+	//변수 동기화 함수
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -115,7 +115,7 @@ void UPlayerAttackComponent::StopAttack()
 	// 공격 버튼 해제 상태로 설정
 	bIsAttackButtonPressed = false;
 
-	//PlayerAnimInstance->StopAttackMontage();
+	PlayerAnimInstance->StopAttackMontage();
 }
 
 // 공격 타이밍 알림 (AnimNotify에서 호출)

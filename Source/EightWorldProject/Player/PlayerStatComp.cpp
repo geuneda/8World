@@ -52,7 +52,10 @@ void UPlayerStatComp::SetMP(float NewMP)
 {
 	MP = FMath::Clamp(NewMP, 0.0f, MaxMP);
 
-	Player->MainUI->MPUI->SetMP(GetMP(), GetMaxMP());
+	if (Player && Player->MainUI && Player->MainUI->MPUI)
+	{
+		Player->MainUI->MPUI->SetMP(GetMP(), GetMaxMP());
+	}
 }
 
 void UPlayerStatComp::RegenMP()

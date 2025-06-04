@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Pal.h"
+#include "PWAIController.h"
 #include "GameFramework/Character.h"
 #include "PalYeti.generated.h"
 
@@ -62,7 +63,10 @@ public:
 	FVector InitLocation;
 	
 	//patrol 이동 여부
+	UPROPERTY(ReplicatedUsing =  OnRep_Patrol)
 	bool bIsPatroling = false;
+	UFUNCTION()
+	void OnRep_Patrol();
 
 	//현재 타겟 위치
 	FVector CurrentPatrolTargetLocation;
@@ -128,4 +132,40 @@ public:
 
 	//피격 데미지
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+public: //--------네트워크 RPC------------
+	//채집 팰 WorkerIdle 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_WorkerIdle();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WorkerIdle(bool isPatrol);
+
+	//채집 팰 FindWork 함수
+	UFUNCTION(server, Reliable)
+	void ServerRPC_WorkerFindWork();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WorkerFindWork(bool isPatrol);
+	
+	//채집 팰 WorkerMovetoTarget 함수
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_WorkerMovetoTarget();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WorkerMovetoTarget(bool isMove, bool isWork);
+	virtual void OnRep_MoveToTarget() override;
+	virtual void OnRep_WorkAnim() override;
+
+	//채집 팰 WorkerWorking 함수
+	UFUNCTION(server, Reliable)
+	void ServerRPC_WorkerWorking();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WorkerWorking();
+
+	//채집 팰 Return 함수
+	UFUNCTION(server, Reliable)
+	void ServerRPC_WorkerReturn();
+
+	//변수 동기화 함수
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };
+
+

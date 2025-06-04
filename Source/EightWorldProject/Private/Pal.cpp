@@ -170,6 +170,7 @@ void APal::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifeti
 
 	DOREPLIFETIME(APal, PalDataTable);
 	DOREPLIFETIME(APal, player);
+	DOREPLIFETIME(APal, bIsMoveToTarget);
+	DOREPLIFETIME(APal, bIsPlayingWorkAnim);
 }
-
 
