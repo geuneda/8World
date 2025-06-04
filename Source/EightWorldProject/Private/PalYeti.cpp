@@ -64,6 +64,9 @@ void APalYeti::BeginPlay()
 				YetiInfo = *InfoData;
 			}
 		}
+
+		//팰 DataTable Data 초기화
+		GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalYeti::SetTableData, 0.1f, false);
 	}
 
 
@@ -94,9 +97,6 @@ void APalYeti::BeginPlay()
 	this->bUseControllerRotationYaw = false;
 	this->GetCharacterMovement()->bOrientRotationToMovement = true;
 	
-	//팰 DataTable Data 초기화
-	GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalYeti::SetTableData, 0.1f, false);
-
 	//애니메이션
 	YetiAnimInstance = Cast<UPalYetiAnimInstance>(GetMesh()->GetAnimInstance());
 
@@ -592,97 +592,52 @@ void APalYeti::HandleWorkerIdle()
 	
 	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
 	//네비게이션 시스템 받아오기
-	// UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
-	// if (!NaviSystem)
-	// {
-	// 	return;
-	// }
-	//
-	// APWAIController* MyController = Cast<APWAIController>(GetController());
-	// if (!MyController)
-	// {
-	// 	return;
-	// }
-	// if (!bIsPatroling)
-	// {
-	// 	//지정해둔 범위 내에 랜덤 위치 받아오기
-	// 	FNavLocation RandomPoint;
-	// 	//첫 시작 지점을 기준으로 지정
-	// 	InitLocation = this->GetActorLocation();
-	// 	bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
-	// 	if (bFound)
-	// 	{
-	// 		//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
-	// 		CurrentPatrolTargetLocation = RandomPoint.Location;
-	// 		bIsPatroling = true;
-	// 		YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-	// 		this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
-	// 		MyController->MoveToLocation(CurrentPatrolTargetLocation);
-	// 		
-	// 		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
-	// 		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol bIsPatroling = %d"), bIsPatroling);
-	// 	}
-	// }
-	// //UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
-	// //목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
-	// if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
-	// {
-	// 	//애니메이션 변경 및 다음 목표 위치로 이동하도록
-	// 	bIsPatroling = false;
-	// 	YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-	// 	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Reached TargetLocation"));
-	// }
+	 UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	 if (!NaviSystem)
+	 {
+	 	return;
+	 }
+	
+	 APWAIController* MyController = Cast<APWAIController>(GetController());
+	 if (!MyController)
+	 {
+	 	return;
+	 }
+	 if (!bIsPatroling)
+	 {
+	 	//지정해둔 범위 내에 랜덤 위치 받아오기
+	 	FNavLocation RandomPoint;
+	 	//첫 시작 지점을 기준으로 지정
+	 	InitLocation = this->GetActorLocation();
+	 	bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
+	 	if (bFound)
+	 	{
+	 		//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
+	 		CurrentPatrolTargetLocation = RandomPoint.Location;
+	 		bIsPatroling = true;
+	 		MultiRPC_WorkerIdle(bIsPatroling);
+	 		//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+	 		this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
+	 		MyController->MoveToLocation(CurrentPatrolTargetLocation);
+	 		
+	 		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
+	 		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol bIsPatroling = %d"), bIsPatroling);
+	 	}
+	 }
+	 //UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
+	 //목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
+	 if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
+	 {
+	 	//애니메이션 변경 및 다음 목표 위치로 이동하도록
+	 	bIsPatroling = false;
+	 	MultiRPC_WorkerIdle(bIsPatroling);
+	 	//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+	 	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Reached TargetLocation"));
+	 }
 
-	ServerRPC_WorkerIdle();
+	//ServerRPC_WorkerIdle();
 }
-//서버에서 WorkerIdle
-void APalYeti::ServerRPC_WorkerIdle_Implementation()
-{
-	//일정 범위 안에서 랜덤하게 이동하면서 순찰하기
-	//네비게이션 시스템 받아오기
-	UNavigationSystemV1* NaviSystem = UNavigationSystemV1::GetCurrent(GetWorld());
-	if (!NaviSystem)
-	{
-		return;
-	}
 
-	APWAIController* MyController = Cast<APWAIController>(GetController());
-	if (!MyController)
-	{
-		return;
-	}
-	if (!bIsPatroling)
-	{
-		//지정해둔 범위 내에 랜덤 위치 받아오기
-		FNavLocation RandomPoint;
-		//첫 시작 지점을 기준으로 지정
-		InitLocation = this->GetActorLocation();
-		bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
-		if (bFound)
-		{
-			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
-			CurrentPatrolTargetLocation = RandomPoint.Location;
-			bIsPatroling = true;
-			MultiRPC_WorkerIdle(bIsPatroling);
-			//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
-			MyController->MoveToLocation(CurrentPatrolTargetLocation);
-			
-			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
-			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol bIsPatroling = %d"), bIsPatroling);
-		}
-	}
-	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
-	//목표 범위안에 들어가면 다시 새로운 지점으로 이동하게 하기 - Log에 40~41쯤 찍히면 타겟에 도착함
-	if(FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation) < 45.f)
-	{
-		//애니메이션 변경 및 다음 목표 위치로 이동하도록
-		bIsPatroling = false;
-		MultiRPC_WorkerIdle(bIsPatroling);
-		//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWorkerIdle] Patrol Reached TargetLocation"));
-	}
-}
 //클라에서 WorkerIdle
 void APalYeti::MultiRPC_WorkerIdle_Implementation(bool isPatrol)
 {
@@ -693,19 +648,6 @@ void APalYeti::HandleWorkerFindWork()
 {
 	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerFindWork] WorkerState : FindWork, WorkerPalName : %s"), *this->GetName());
 
-	// //타겟 자원이 있다면
-	// if (TargetResource)
-	// {
-	// 	bIsPatroling = false;
-	// 	YetiAnimInstance->bIsPatroling = this->bIsPatroling;
-	// 	SetPalWorkerState(EPalWorkerState::MoveToTarget, TargetResource);
-	// }
-	
-	ServerRPC_WorkerFindWork();
-}
-//서버에서 FindWork
-void APalYeti::ServerRPC_WorkerFindWork_Implementation()
-{
 	//타겟 자원이 있다면
 	if (TargetResource)
 	{
@@ -714,7 +656,10 @@ void APalYeti::ServerRPC_WorkerFindWork_Implementation()
 		//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
 		SetPalWorkerState(EPalWorkerState::MoveToTarget, TargetResource);
 	}
+	
+	//ServerRPC_WorkerFindWork();
 }
+
 //클라에서 FindWork
 void APalYeti::MultiRPC_WorkerFindWork_Implementation(bool isPatrol)
 {
@@ -726,93 +671,59 @@ void APalYeti::HandleWorkerMovetoTarget()
 	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, HandleWorkerMovetoTarget] WorkerState : MovetoTarget, WorkerPalName : %s"), *this->GetName());
 
 	//Target 자원으로 이동하기
-	 //FVector meLoc = this->GetActorLocation();
-	 //FVector targetLoc = TargetResource->GetActorLocation();
-	// FVector dir = (targetLoc - meLoc).GetSafeNormal2D();
-	//
-	// //this->SetActorLocation(meLoc + dir * MoveSpeed * GetWorld()->GetDeltaSeconds());
-	// AddMovementInput(dir);
-
-	//AIController Move To 
-	// APWAIController* MyAIController = Cast<APWAIController>(GetController());
-	// if (MyAIController)
-	// {
-	// 	if (!bIsMoveToTarget)
-	// 	{
-	// 		if (TargetResource)
-	// 		{
-	// 			this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
-	// 			MyAIController->MoveToLocation(targetLoc);
-	// 			bIsMoveToTarget = true;
-	// 			YetiAnimInstance->bIsMove = bIsMoveToTarget;
-	// 		}
-	// 	}
-	// }
-
-	//거리가 150보다 작으면 Working State 시작
-	//if (FVector::DistXY(meLoc, targetLoc) < 150.f)
-	//{
-		//이동중 애니메이션 취소
-		//bIsMoveToTarget = false;
-		//YetiAnimInstance->bIsMove = bIsMoveToTarget;
-
-		//이동 정지 및 작업 상태 시작
-		//MyAIController->StopMovement();
-		//SetPalWorkerState(EPalWorkerState::Working, TargetResource);
-		
-		//작업중 애니메이션 시작
-		//bIsPlayingWorkAnim = true;
-		//YetiAnimInstance->bIsWorking = bIsPlayingWorkAnim;
-
-		ServerRPC_WorkerMovetoTarget();
-	//}
+	 FVector meLoc = this->GetActorLocation();
+	 FVector targetLoc = TargetResource->GetActorLocation();
+	 //FVector dir = (targetLoc - meLoc).GetSafeNormal2D();
 	
-}
-
-//서버에서 팰 움직임 정지 및 상태 변환 
-void APalYeti::ServerRPC_WorkerMovetoTarget_Implementation()
-{
-	//Target 자원으로 이동하기
-	FVector meLoc = this->GetActorLocation();
-	FVector targetLoc = TargetResource->GetActorLocation();
-
+	 //this->SetActorLocation(meLoc + dir * MoveSpeed * GetWorld()->GetDeltaSeconds());
+	 //AddMovementInput(dir);
+	
 	//AIController Move To 
-	APWAIController* MyAIController = Cast<APWAIController>(GetController());
-	if (MyAIController)
-	{
-		if (!bIsMoveToTarget)
-		{
-			if (TargetResource)
-			{
-				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
-				MyAIController->MoveToLocation(targetLoc);
-				bIsMoveToTarget = true;
-				bIsPlayingWorkAnim = false;
-				MultiRPC_WorkerMovetoTarget(bIsMoveToTarget, bIsPlayingWorkAnim);
-			}
-		}
-	}
+	 APWAIController* MyAIController = Cast<APWAIController>(GetController());
+	 if (MyAIController)
+	 {
+	 	if (!bIsMoveToTarget)
+	 	{
+	 		if (TargetResource)
+	 		{
+	 			this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+	 			MyAIController->MoveToLocation(targetLoc);
+	 			bIsMoveToTarget = true;
+	 			bIsPlayingWorkAnim = false;
+	 			MultiRPC_WorkerMovetoTarget(bIsMoveToTarget, bIsPlayingWorkAnim);
+	 			//YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	 		}
+	 	}
+	 }
+	
 	//거리가 150보다 작으면 Working State 시작
 	if (FVector::DistXY(meLoc, targetLoc) < 150.f)
 	{
+		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
-
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	
+		//이동 정지 및 작업 상태 시작
 		MyAIController->StopMovement();
 		SetPalWorkerState(EPalWorkerState::Working, TargetResource);
-
-		bIsPlayingWorkAnim = true;
 		
+		//작업중 애니메이션 시작
+		bIsPlayingWorkAnim = true;
 		MultiRPC_WorkerMovetoTarget(bIsMoveToTarget, bIsPlayingWorkAnim);
+		//YetiAnimInstance->bIsWorking = bIsPlayingWorkAnim;
+	
+		//ServerRPC_WorkerMovetoTarget();
 	}
-
+	
 }
+
 //클라에서 팰 움직임 정지 및 상태 변환 
 void APalYeti::MultiRPC_WorkerMovetoTarget_Implementation(bool isMove, bool isWork)
 {
 	YetiAnimInstance->bIsMove = isMove;
 	YetiAnimInstance->bIsWorking = isWork;
-	UE_LOG(PalYeti, Warning, TEXT("Role : %s, [PalYeti, MultiRPC_WorkerMovetoTarget_Implementation]  YetiAnimInstance->bIsMove : %d, YetiName : %s"), *UEnum::GetValueAsString<ENetRole>(GetLocalRole()), isMove, *this->GetName());
-	UE_LOG(PalYeti, Warning, TEXT("[PalYeti, MultiRPC_WorkerMovetoTarget_Implementation]  YetiAnimInstance->bIsWorking : %d, YetiName : %s"), isWork, *this->GetName());
+	//UE_LOG(PalYeti, Warning, TEXT("Role : %s, [PalYeti, MultiRPC_WorkerMovetoTarget_Implementation]  YetiAnimInstance->bIsMove : %d, YetiName : %s"), *UEnum::GetValueAsString<ENetRole>(GetLocalRole()), isMove, *this->GetName());
+	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, MultiRPC_WorkerMovetoTarget_Implementation]  YetiAnimInstance->bIsWorking : %d, YetiName : %s"), isWork, *this->GetName());
 
 }
 
@@ -836,35 +747,6 @@ void APalYeti::OnRep_WorkAnim()
 void APalYeti::HandleWorkerWorking()
 {
 	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWorkerWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
-	// if (!TargetResource)
-	// {
-	// 	return;
-	// }
-	// //이미 타이머가 실행중이면 중복 실행 방지
-	// if (GetWorldTimerManager().IsTimerActive(WorkTimerHandle))
-	// {
-	// 	return;
-	// }
-	// //팰 작업속도
-	// if (ATree* tree = Cast<ATree>(TargetResource))
-	// {
-	// 	WorkSpeed = *YetiInfo.WorkSpeeds.Find("Tree");
-	// }
-	// else if (ARock* rock = Cast<ARock>(TargetResource))
-	// {
-	// 	WorkSpeed = *YetiInfo.WorkSpeeds.Find("Rock");
-	// }
-	//
-	// WorkInterval = 1.f / WorkSpeed;
-	// //WorkInterval마다 working 타이머 반복 실행
-	// GetWorldTimerManager().SetTimer(WorkTimerHandle, this, &APalYeti::PalWorking, WorkInterval, true);
-
-	ServerRPC_WorkerWorking();
-	
-}
-
-void APalYeti::ServerRPC_WorkerWorking_Implementation()
-{
 	if (!TargetResource)
 	{
 		return;
@@ -887,6 +769,9 @@ void APalYeti::ServerRPC_WorkerWorking_Implementation()
 	WorkInterval = 1.f / WorkSpeed;
 	//WorkInterval마다 working 타이머 반복 실행
 	GetWorldTimerManager().SetTimer(WorkTimerHandle, this, &APalYeti::PalWorking, WorkInterval, true);
+
+	//ServerRPC_WorkerWorking();
+	
 }
 
 void APalYeti::MultiRPC_WorkerWorking_Implementation()
@@ -944,19 +829,6 @@ void APalYeti::PalWorking()
 
 void APalYeti::HandleWorkerReturn()
 {
-	// //Work Timer 돌고 있으면 클리어
-	// if (GetWorldTimerManager().IsTimerActive(WorkTimerHandle))
-	// {
-	// 	GetWorldTimerManager().ClearTimer(WorkTimerHandle);
-	// }
-	// //Idle 상태로 변경
-	// this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
-
-	ServerRPC_WorkerReturn();
-}
-//서버에서 WorkderReturn
-void APalYeti::ServerRPC_WorkerReturn_Implementation()
-{
 	//Work Timer 돌고 있으면 클리어
 	if (GetWorldTimerManager().IsTimerActive(WorkTimerHandle))
 	{
@@ -964,6 +836,8 @@ void APalYeti::ServerRPC_WorkerReturn_Implementation()
 	}
 	//Idle 상태로 변경
 	this->SetPalWorkerState(EPalWorkerState::Idle, nullptr);
+
+	//ServerRPC_WorkerReturn();
 }
 
 void APalYeti::SetTableData()

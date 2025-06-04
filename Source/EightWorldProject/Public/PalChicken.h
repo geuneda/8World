@@ -49,7 +49,10 @@ public:
 	FTimerHandle EscapeTimerHandle;
 
 	//patrol 이동 여부
+	UPROPERTY(ReplicatedUsing =  OnRep_Patrol)
 	bool bIsPatroling = false;
+	UFUNCTION()
+	void OnRep_Patrol();
 
 	//현재 타겟 위치
 	FVector CurrentPatrolTargetLocation;
@@ -129,5 +132,26 @@ public:
 
 	//피격 데미지
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+public: //--------네트워크 RPC------------
+	//채집 팰 CarrierPatrol 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_CarrierPatrol(bool isPatrol);
+
+	//채집 팰 FindItem 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_CarrierFindItem(bool isPatrol);
+
+	//채집 팰 CarrierMovetoTarget 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_CarrierMovetoTarget(bool isMove);
+	virtual void OnRep_MoveToTarget() override;
+
+	// //채집 팰 CarrierCarrying 함수
+	// UFUNCTION(NetMulticast, Reliable)
+	// void MultiRPC_CarrierCarrying(AResourceItem* item);
+	
+	//변수 동기화 함수
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };
 

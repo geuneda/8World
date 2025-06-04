@@ -53,30 +53,33 @@ void APalBox::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Overlap 바인딩
-	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &APalBox::OnBeginOverlap);
-	SphereComp->OnComponentEndOverlap.AddDynamic(this, &APalBox::OnEndOverlap);
+	if (HasAuthority())
+	{
+		//Overlap 바인딩
+		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &APalBox::OnBeginOverlap);
+		SphereComp->OnComponentEndOverlap.AddDynamic(this, &APalBox::OnEndOverlap);
 
 
-	//시작때 감지된 모든 리소스 액터 담아두기(나무, 돌)
-	GetWorldTimerManager().SetTimer(SearchResourceTimerHandle, this, &APalBox::SearchAllResources, 0.2f, false);
-	//시작때 감지된 모든 팰 Worker 담아두기 - 소환됐을때도 체크를 위해 반복
-	GetWorldTimerManager().SetTimer(SearchPalTimerHandle, this, &APalBox::SearchAllPalWorkers, 0.2f, true);
-	//주기적으로 쉬고 있는 자원 체크
-	GetWorldTimerManager().SetTimer(CheckRestResourceTimerHandle, this, &APalBox::CheckRestResources, 0.5f, true);
-	//주기적으로 쉬고 있는 팰 체크
-	GetWorldTimerManager().SetTimer(CheckRestPalTimerHandle, this, &APalBox::CheckRestPals, 0.5f, true);
+		//시작때 감지된 모든 리소스 액터 담아두기(나무, 돌)
+		GetWorldTimerManager().SetTimer(SearchResourceTimerHandle, this, &APalBox::SearchAllResources, 0.2f, false);
+		//시작때 감지된 모든 팰 Worker 담아두기 - 소환됐을때도 체크를 위해 반복
+		GetWorldTimerManager().SetTimer(SearchPalTimerHandle, this, &APalBox::SearchAllPalWorkers, 0.2f, true);
+		//주기적으로 쉬고 있는 자원 체크
+		GetWorldTimerManager().SetTimer(CheckRestResourceTimerHandle, this, &APalBox::CheckRestResources, 0.5f, true);
+		//주기적으로 쉬고 있는 팰 체크
+		GetWorldTimerManager().SetTimer(CheckRestPalTimerHandle, this, &APalBox::CheckRestPals, 0.5f, true);
 	
-	//주기적으로 생겨나는 모든 팰을 담아서 모드 분류. 
-	GetWorldTimerManager().SetTimer(AllpalsHandle, this, &APalBox::SearchAndSetPalMode, 0.2f, true);
-	//시작때 감지된 모든 팰 Carrier 담아두기
-	GetWorldTimerManager().SetTimer(SearchCarrierTimerHandle, this, &APalBox::SearchAllPalCarriers, 0.2f, false);
-	//주기적으로 떨어진 아이템 체크
-	GetWorldTimerManager().SetTimer(CheckDroppedItemTimerHandle, this, &APalBox::CheckDroppedItems, 0.5f, true);
-	//주기적으로 쉬고 있는 아이템 체크
-	GetWorldTimerManager().SetTimer(CheckRestItemTimerHandle, this, &APalBox::CheckRestItems, 0.5f, true);
-	//주기적으로 쉬고 있는 팰 체크
-	GetWorldTimerManager().SetTimer(CheckRestCarrierTimerHandle, this, &APalBox::CheckRestCarriers, 0.5f, true);
+		//주기적으로 생겨나는 모든 팰을 담아서 모드 분류. 
+		GetWorldTimerManager().SetTimer(AllpalsHandle, this, &APalBox::SearchAndSetPalMode, 0.2f, true);
+		//시작때 감지된 모든 팰 Carrier 담아두기
+		GetWorldTimerManager().SetTimer(SearchCarrierTimerHandle, this, &APalBox::SearchAllPalCarriers, 0.2f, false);
+		//주기적으로 떨어진 아이템 체크
+		GetWorldTimerManager().SetTimer(CheckDroppedItemTimerHandle, this, &APalBox::CheckDroppedItems, 0.5f, true);
+		//주기적으로 쉬고 있는 아이템 체크
+		GetWorldTimerManager().SetTimer(CheckRestItemTimerHandle, this, &APalBox::CheckRestItems, 0.5f, true);
+		//주기적으로 쉬고 있는 팰 체크
+		GetWorldTimerManager().SetTimer(CheckRestCarrierTimerHandle, this, &APalBox::CheckRestCarriers, 0.5f, true);
+	}
 	
 }
 

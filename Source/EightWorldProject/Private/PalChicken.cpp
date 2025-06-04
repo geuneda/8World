@@ -14,6 +14,7 @@
 #include "EightWorldProject/Resources/ResourceItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalChicken, Log, All);
 DEFINE_LOG_CATEGORY(PalChicken);
@@ -66,6 +67,8 @@ void APalChicken::BeginPlay()
 
 		//팰 DataTable Data 초기화
 		GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.1f, false);
+
+		MyAIController = Cast<APWAIController>(GetController());
 	}
 
 
@@ -93,9 +96,7 @@ void APalChicken::BeginPlay()
 	
 	//공용 저장 박스
 	CommonStorageBox = Cast<ACommonStorageBox>(UGameplayStatics::GetActorOfClass(GetWorld(), ACommonStorageBox::StaticClass()));
-
-	MyAIController = Cast<APWAIController>(GetController());
-
+	
 	//팰 박스
 	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
 
@@ -485,7 +486,8 @@ void APalChicken::HandleCarrierPatrol()
 			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
-			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+			MultiRPC_CarrierPatrol(bIsPatroling);
+			//ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
@@ -499,10 +501,21 @@ void APalChicken::HandleCarrierPatrol()
 	{
 		//애니메이션 변경 및 다음 목표 위치로 이동하도록
 		bIsPatroling = false;
-		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+		MultiRPC_CarrierPatrol(bIsPatroling);
+		//ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 		//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol Reached TargetLocation"));
 	}
 	
+}
+
+void APalChicken::MultiRPC_CarrierPatrol_Implementation(bool isPatrol)
+{
+	ChickenAnimInstance->bIsPatroling = isPatrol;
+}
+
+void APalChicken::OnRep_Patrol()
+{
+	ChickenAnimInstance->bIsPatroling = bIsPatroling;
 }
 
 void APalChicken::HandleCarrierFindItem()
@@ -515,13 +528,19 @@ void APalChicken::HandleCarrierFindItem()
 		MyController->StopMovement();
 		//애니메이션 변경
 		bIsPatroling = false;
-		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+		MultiRPC_CarrierFindItem(bIsPatroling);
+		//ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 
 		//아이템이 굴러다닐 경우 때문에 1초뒤에 아이템 있는 곳으로 이동하도록 설정
 		FTimerHandle TimerHandle;
 		GetWorldTimerManager().SetTimer(TimerHandle, this, &APalChicken::SetCarrierMoveToTarget, 1.5f, false);
 		//SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
 	}
+}
+
+void APalChicken::MultiRPC_CarrierFindItem_Implementation(bool isPatrol)
+{
+	ChickenAnimInstance->bIsPatroling = isPatrol;
 }
 
 void APalChicken::SetCarrierMoveToTarget()
@@ -545,7 +564,8 @@ void APalChicken::HandleCarrierMovetoTarget()
 				//이동 및 이동 애니메이션 실행
 				MyAIController->MoveToLocation(TargetItem->GetActorLocation());
 				bIsMoveToTarget = true;
-				ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+				MultiRPC_CarrierMovetoTarget(bIsMoveToTarget);
+				//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 				//이동 속도 변경
 				WorkSpeed = *ChickenInfo.WorkSpeeds.Find("Item");
 				this->GetCharacterMovement()->MaxWalkSpeed = WorkSpeed;
@@ -562,7 +582,8 @@ void APalChicken::HandleCarrierMovetoTarget()
 		{
 			//이동중 애니메이션 취소
 			bIsMoveToTarget = false;
-			ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+			MultiRPC_CarrierMovetoTarget(bIsMoveToTarget);
+			//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 
 			//이동 정지 및 작업 상태 시작
 			MyAIController->StopMovement();
@@ -579,11 +600,24 @@ void APalChicken::HandleCarrierMovetoTarget()
 		
 		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
-		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+		MultiRPC_CarrierMovetoTarget(bIsMoveToTarget);
+		//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 
 		SetPalCarrierState(EPalCarrierState::Return, nullptr);
 	}
 	
+}
+
+void APalChicken::MultiRPC_CarrierMovetoTarget_Implementation(bool isMove)
+{
+	ChickenAnimInstance->bIsMoving = isMove;
+}
+
+void APalChicken::OnRep_MoveToTarget()
+{
+	Super::OnRep_MoveToTarget();
+
+	ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 }
 
 void APalChicken::HandleCarrierCarrying()
@@ -775,4 +809,11 @@ void APalChicken::CaptureByPlayer()
 	}
 	
 	Super::CaptureByPlayer();
+}
+
+void APalChicken::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APalChicken, bIsPatroling);
 }
