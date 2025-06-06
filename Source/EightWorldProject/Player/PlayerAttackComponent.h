@@ -89,4 +89,8 @@ private:
 	
 	// 공격 애니메이션 종료 후 다음 공격 시작
 	void StartNextAttack();
+
+public: //--------네트워크---------------------
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ApplyDamage(const TArray<AActor*>& targets);
 };

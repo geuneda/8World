@@ -30,6 +30,9 @@ APalChicken::APalChicken()
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-90.f), FRotator(0,-90,0));
+		GetMesh()->SetIsReplicated(true);
+		SetReplicates(true);
+		SetReplicateMovement(true);
 	}
 
 	//Chicken Anim Class
@@ -69,20 +72,20 @@ void APalChicken::BeginPlay()
 		GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalChicken::SetTableData, 0.1f, false);
 
 		MyAIController = Cast<APWAIController>(GetController());
+
+		//팰 Carrier모드 시작 (임시)
+		SetPalMode(EPalMode::Carrier);
+
+		//팰 모드별 상태 초기화
+		SetPalWildState(EPalWildState::Patrol);
+		SetPalBattleState(EPalBattleState::FollowPlayer);
+		SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
 	}
 
 
 	//플레이어 소유 여부 (임시)
 	bIsPlayerOwned = true;
 	
-	//팰 Carrier모드 시작 (임시)
-	SetPalMode(EPalMode::Carrier);
-
-	//팰 모드별 상태 초기화
-	SetPalWildState(EPalWildState::Patrol);
-	SetPalBattleState(EPalBattleState::FollowPlayer);
-	SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
-
 	//팰 운반중 여부
 	bIsCarrying = false;
 
@@ -230,7 +233,8 @@ void APalChicken::HandleWildPatrol()
 			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
-			ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+			MultiRPC_CarrierPatrol(bIsPatroling);
+			//ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
@@ -244,7 +248,8 @@ void APalChicken::HandleWildPatrol()
 	{
 		//애니메이션 변경 및 다음 목표 위치로 이동하도록
 		bIsPatroling = false;
-		ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
+		MultiRPC_CarrierPatrol(bIsPatroling);
+		//ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 		//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol Reached TargetLocation"));
 	}
 
@@ -268,17 +273,38 @@ void APalChicken::HandleWildPlayerHitToPal()
 	if (bIsMoveToTarget)
 	{
 		bIsMoveToTarget = false;
-		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+		//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 	}
 	//데미지 10씩 받을 때마다 데미지 애니메이션 실행
 	if (!this->bIsDamaged)
 	{
 		this->bIsDamaged = true;
-		ChickenAnimInstance->bIsDamaged = this->bIsDamaged;
+		//ChickenAnimInstance->bIsDamaged = this->bIsDamaged;
 	}
-
+	MultiRPC_WildPlayerHitToPal();
+	
 	MyController->StopMovement();
 	GetWorldTimerManager().ClearTimer(EscapeTimerHandle);
+}
+
+void APalChicken::MultiRPC_WildPlayerHitToPal_Implementation()
+{
+	ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+	ChickenAnimInstance->bIsDamaged = this->bIsDamaged;
+}
+
+void APalChicken::OnRep_Damaged()
+{
+	Super::OnRep_Damaged();
+
+	ChickenAnimInstance->bIsDamaged = this->bIsDamaged;
+}
+
+void APalChicken::OnRep_AttackAnim()
+{
+	Super::OnRep_AttackAnim();
+
+	ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 }
 
 void APalChicken::HandleWildDetectPlayer()
@@ -309,17 +335,29 @@ void APalChicken::HandleWildEscape()
 	if (bIsPatroling)
 	{
 		bIsPatroling = false;
-		ChickenAnimInstance->bIsPatroling = bIsPatroling;
+		MultiRPC_WildPatrol();
+		//ChickenAnimInstance->bIsPatroling = bIsPatroling;
 	}
 	//이동 애니메이션 실행
 	if (!bIsMoveToTarget)
 	{
 		bIsMoveToTarget = true;
-		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+		MultiRPC_WildMoveToTarget();
+		//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 	}
 	
 	//도망 함수 타이머
 	GetWorldTimerManager().SetTimer(EscapeTimerHandle, this, &APalChicken::UpdateEscapeLocation, 0.2f, true);
+}
+
+void APalChicken::MultiRPC_WildPatrol_Implementation()
+{
+	ChickenAnimInstance->bIsPatroling = bIsPatroling;
+}
+
+void APalChicken::MultiRPC_WildMoveToTarget_Implementation()
+{
+	ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 }
 
 void APalChicken::UpdateEscapeLocation()
@@ -330,7 +368,7 @@ void APalChicken::UpdateEscapeLocation()
 	APWAIController* MyController = Cast<APWAIController>(GetController());
 
 	//플레이어 반대방향
-	FVector RunDir = (meLoc - playerLoc).GetSafeNormal();
+	FVector RunDir = (meLoc - playerLoc).GetSafeNormal2D();
 	
 	//플레이어가 쫓아오고 있을 때 약간 좌/우로 틀기
 	float RandomAngle = FMath::FRandRange(-45.0f, 45.0f);
@@ -356,7 +394,8 @@ void APalChicken::UpdateEscapeLocation()
 		if(bIsMoveToTarget)
 		{
 			bIsMoveToTarget = false;
-			ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+			MultiRPC_WildMoveToTarget();
+			//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 		}
 		SetPalWildState(EPalWildState::Patrol);
 	}
@@ -378,7 +417,8 @@ void APalChicken::HandleWildDie()
 	if(bIsMoveToTarget)
 	{
 		bIsMoveToTarget = false;
-		ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
+		MultiRPC_WildMoveToTarget();
+		//ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 	}
 
 	//RagDoll
@@ -392,27 +432,42 @@ void APalChicken::HandleWildDie()
 
 	//컨트롤러 제거
 	DetachFromControllerPendingDestroy();
+
+	MultiRPC_WildDie();
 	
-	// //튕겨나가는 힘 추가
-	if (LaunchImpulse == FVector::ZeroVector)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Launch Impulse"));
-		LaunchImpulse = GetActorForwardVector() * 250.f + FVector(0, 0, 500.f);
-		GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse, NAME_None, true);
-	}
+	// // //튕겨나가는 힘 추가
+	// if (LaunchImpulse == FVector::ZeroVector)
+	// {
+	// 	//UE_LOG(LogTemp, Warning, TEXT("Launch Impulse"));
+	// 	LaunchImpulse = GetActorForwardVector() * 250.f + FVector(0, 0, 500.f);
+	// 	GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse, NAME_None, true);
+	// }
 		
 }
 
-float APalChicken::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
+void APalChicken::MultiRPC_WildDie_Implementation()
 {
+	//RagDoll
+	//물리 시뮬레이션 활성화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+	
+	//캡슐 콜라이더 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+float APalChicken::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+                              class AController* EventInstigator, AActor* DamageCauser)
+{
+	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, bIsWorkerMode = %d, bIsCarrierMode = %d"), *this->GetName(), bIsWorkerMode,bIsCarrierMode);
 	//작업, 운반 팰은 데미지 0
 	if (this->bIsWorkerMode || this->bIsCarrierMode)
 	{
 		return 0.0f;
 	}
 	
-	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, damage = %f"), *this->GetName(), damage);
 	//팰 체력 감소
 	CurHP = FMath::Clamp(CurHP - damage, 0, MaxHP);
 	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, CurHP = %f"), *this->GetName(), CurHP);
@@ -507,15 +562,21 @@ void APalChicken::HandleCarrierPatrol()
 	}
 	
 }
-
+//클라에서 애니메이션 적용
 void APalChicken::MultiRPC_CarrierPatrol_Implementation(bool isPatrol)
 {
-	ChickenAnimInstance->bIsPatroling = isPatrol;
+	if (ChickenAnimInstance)
+	{
+		ChickenAnimInstance->bIsPatroling = isPatrol;
+	}
 }
-
+//클라에서 값 변경되면 애니메이션 적용
 void APalChicken::OnRep_Patrol()
 {
-	ChickenAnimInstance->bIsPatroling = bIsPatroling;
+	if (ChickenAnimInstance)
+	{
+		ChickenAnimInstance->bIsPatroling = bIsPatroling;
+	}
 }
 
 void APalChicken::HandleCarrierFindItem()
@@ -537,7 +598,7 @@ void APalChicken::HandleCarrierFindItem()
 		//SetPalCarrierState(EPalCarrierState::MoveToTarget, TargetItem);
 	}
 }
-
+//클라에서 애니메이션 적용
 void APalChicken::MultiRPC_CarrierFindItem_Implementation(bool isPatrol)
 {
 	ChickenAnimInstance->bIsPatroling = isPatrol;
@@ -607,12 +668,12 @@ void APalChicken::HandleCarrierMovetoTarget()
 	}
 	
 }
-
+//클라에서 이동 애니메이션 적용
 void APalChicken::MultiRPC_CarrierMovetoTarget_Implementation(bool isMove)
 {
 	ChickenAnimInstance->bIsMoving = isMove;
 }
-
+//값 바뀌면 바로 애니메이션 적용
 void APalChicken::OnRep_MoveToTarget()
 {
 	Super::OnRep_MoveToTarget();
@@ -635,9 +696,10 @@ void APalChicken::HandleCarrierCarrying()
 			AResourceItem* itemActor = Cast<AResourceItem>(item);
 			if (itemActor && itemActor == Cast<AResourceItem>(TargetItem)) // 범위안에 들어온 아이템들 중에 타겟 아이템과 같다면
 			{
-				itemActor->SetIsMove(true);
+				//itemActor->SetIsMove(true);
 				//운반용 팰에 부착
-				itemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("CarrySocket"));
+				MultiRPC_CarrierCarrying(itemActor);
+				//itemActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("CarrySocket"));
 				//UE_LOG(PalChicken, Warning, TEXT("[PalChicken, HandleCarrierCarrying] CarrierState : Carrying, Item Actor : %s Attached To Pal Carrier"), *item->GetName());
 				break;
 			}
@@ -688,6 +750,20 @@ void APalChicken::HandleCarrierCarrying()
 		GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &APalChicken::CarriedItemDestroy, 0.5f, false);
 	}
 	
+}
+//클라에서 아이템 붙이기
+void APalChicken::MultiRPC_CarrierCarrying_Implementation(AResourceItem* item)
+{
+	if (item)
+	{
+		UE_LOG(PalChicken, Warning, TEXT("[PalChicken, MultiRPC_CarrierCarrying] item = %s"), *item->GetName());
+		item->SetIsMove(true);
+		item->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("CarrySocket"));
+	}
+	else
+	{
+		UE_LOG(PalChicken, Warning, TEXT("[PalChicken, MultiRPC_CarrierCarrying] item = nullptr"));
+	}
 }
 
 void APalChicken::CarriedItemDestroy()

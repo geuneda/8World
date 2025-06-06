@@ -151,6 +151,31 @@ public: //--------네트워크 RPC------------
 	//채집 팰 WorkerWorking 함수
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiRPC_WorkerWorking();
+
+	//야생 팰 WildPlayerHitToPal 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildPlayerHitToPal();
+	virtual void OnRep_Damaged() override;
+	virtual void OnRep_AttackAnim() override;
+
+	//야생 팰 WildChase 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildChasePatrol(); 
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildChaseMoveToTarget();
+
+	//야생 팰 Escape 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildEscapeAttackAnim();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildEscapePatrol();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildEscapeMoveToTarget();
+
+	//야생 팰 Die 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildDie();
+	
 	
 	//변수 동기화 함수
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;

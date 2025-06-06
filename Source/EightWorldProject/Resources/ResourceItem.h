@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Net/UnrealNetwork.h"
 #include "ResourceItem.generated.h"
 
 /**
@@ -63,6 +64,7 @@ public:
 
 public:
 	//운반중 여부
+	UPROPERTY(Replicated)
 	bool bIsMove;
 	//운반중 상태 Set
 	void SetIsMove(bool state);
@@ -70,5 +72,8 @@ public:
 private:
 	// 소멸 타이머
 	float DespawnTimer = 0.0f;
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 };

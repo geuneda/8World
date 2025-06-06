@@ -134,13 +134,20 @@ void UPlayerAttackComponent::OnAttackTiming()
 	TArray<AActor*> Targets = DetectAttackTargets();
 	
 	// 감지된 대상에 데미지 적용
-	ApplyDamageToTargets(Targets);
+	ServerRPC_ApplyDamage(Targets);
+	//ApplyDamageToTargets(Targets);
 	
 	// 공격 이벤트 발생
 	OnAttackExecuted.Broadcast();
 	
 	// 콜라이더 비활성화 (타이밍에만 잡아야 함)
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation(const TArray<AActor*>& targets)
+{
+	// 감지된 대상에 데미지 적용
+	ApplyDamageToTargets(targets);
 }
 
 // 공격 가능 여부 확인

@@ -144,12 +144,29 @@ public: //--------네트워크 RPC------------
 
 	//채집 팰 CarrierMovetoTarget 함수
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiRPC_CarrierMovetoTarget(bool isMove);
+	void MultiRPC_CarrierMovetoTarget(bool isMove); 
 	virtual void OnRep_MoveToTarget() override;
 
-	// //채집 팰 CarrierCarrying 함수
-	// UFUNCTION(NetMulticast, Reliable)
-	// void MultiRPC_CarrierCarrying(AResourceItem* item);
+	 //채집 팰 CarrierCarrying 함수
+	 UFUNCTION(NetMulticast, Reliable)
+	 void MultiRPC_CarrierCarrying(AResourceItem* item); 
+	
+	//야생 팰 WildPlayerHitToPal 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildPlayerHitToPal();
+	virtual void OnRep_Damaged() override;
+	virtual void OnRep_AttackAnim() override;
+
+	//야생 팰 WildPatrol 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildPatrol(); 
+	//야생 팰 WildMoveToTarget 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildMoveToTarget();
+
+	//야생 팰 Die 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_WildDie();
 	
 	//변수 동기화 함수
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;

@@ -88,7 +88,7 @@ void APal::SerachDelayPlayer()
 		}
 		
 		player = ClosestPlayer;
-		UE_LOG(LogTemp, Warning, TEXT("ClosestPlayer : %s"), *player->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("ClosestPlayer : %s"), *player->GetName());
 	}
 }
 
@@ -172,5 +172,11 @@ void APal::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(APal, player);
 	DOREPLIFETIME(APal, bIsMoveToTarget);
 	DOREPLIFETIME(APal, bIsPlayingWorkAnim);
+	DOREPLIFETIME(APal, bIsDamaged);
+	DOREPLIFETIME(APal, bIsPlayingAttackAnim);
+	DOREPLIFETIME(APal, CurHP);
+	DOREPLIFETIME(APal, MaxHP);
+	DOREPLIFETIME(APal, LastHP);
+	DOREPLIFETIME(APal, damage);
 }
 

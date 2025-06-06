@@ -19,7 +19,7 @@ void UPalYetiAnimInstance::NativeInitializeAnimation()
 void UPalYetiAnimInstance::AnimNotify_DamageEnd()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("[AnimNotify_DamageEnd] DamageEnd"));
-
+	
 	//데미지 애니메이션 취소
 	if (this->bIsDamaged)
 	{
@@ -30,6 +30,7 @@ void UPalYetiAnimInstance::AnimNotify_DamageEnd()
 	//hp 30보다 더 클 때
 	if (yeti->CurHP > 30)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("[AnimNotify_DamageEnd] Chase"));
 		//chase 상태 전환
 		yeti->SetPalWildState(EPalWildState::Chase);
 	}

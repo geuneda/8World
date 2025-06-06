@@ -153,7 +153,10 @@ public:
 	virtual void OnRep_WorkAnim() {};
 
 	//팰 공격 애니메이션 실행 여부
+	UPROPERTY(ReplicatedUsing = OnRep_AttackAnim)
 	bool bIsPlayingAttackAnim = false;
+	UFUNCTION()
+	virtual void OnRep_AttackAnim() {};
 	
 	//팰 운반중 여부
 	bool bIsCarrying = false;
@@ -187,17 +190,25 @@ public:
 	class APalBox* palBox;
 
 	//팰 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated)
 	float CurHP;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated)
 	float MaxHP;
+	UPROPERTY(Replicated)
 	float LastHP;
 	//팰 데미지 애니메이션 기준 값
 	float IntervalDamage;
 
 	//팰 데미지 애니메이션 실행여부
+	UPROPERTY(ReplicatedUsing = OnRep_Damaged)
 	bool bIsDamaged = false;
+	UFUNCTION()
+	virtual void OnRep_Damaged() {};
 
+	//팰 데미지
+	UPROPERTY(Replicated)
+	float damage;
+	
 	//플레이어 찾기 딜레이 함수
 	void SerachDelayPlayer();
 	

@@ -27,6 +27,10 @@ AResourceItem::AResourceItem()
 	
 	// 오버랩 이벤트 바인딩
 	SphereCollider->OnComponentBeginOverlap.AddDynamic(this, &AResourceItem::OnOverlapBegin);
+
+	//동기화 준비
+	bReplicates = true;
+	
 }
 
 void AResourceItem::BeginPlay()
@@ -90,15 +94,18 @@ void AResourceItem::Pickup(AActor* Collector)
 void AResourceItem::SetIsMove(bool state)
 {
 	bIsMove = state;
+	//UE_LOG(LogTemp, Warning, TEXT("bIsMove : %d"), bIsMove);
 
 	if (bIsMove)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("아이템 운반 시작 %s"), *this->GetName());
 		Mesh->SetSimulatePhysics(false);
 		Mesh->SetEnableGravity(false);
 		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("아이템 운반 끝 %s"), *this->GetName());
 		Mesh->SetSimulatePhysics(true);
 		Mesh->SetEnableGravity(true);
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -115,3 +122,9 @@ void AResourceItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAc
 	}
 }
 
+void AResourceItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AResourceItem, bIsMove);
+}

@@ -32,6 +32,9 @@ APalYeti::APalYeti()
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeScale3D(FVector(0.4f));
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-90.f), FRotator(0,-90,0));
+		GetMesh()->SetIsReplicated(true);
+		SetReplicates(true);
+		SetReplicateMovement(true);
 	}
 	
 	PalworkComp = CreateDefaultSubobject<UPalWorkComponent>(TEXT("PalWorkComp"));
@@ -67,15 +70,15 @@ void APalYeti::BeginPlay()
 
 		//팰 DataTable Data 초기화
 		GetWorldTimerManager().SetTimer(TableDataTimerHandle, this, &APalYeti::SetTableData, 0.1f, false);
+
+		//팰 Worker모드 시작 (임시)
+		SetPalMode(EPalMode::Worker);
+		//팰 모드별 상태 초기화
+		SetPalWildState(EPalWildState::Patrol);
+		SetPalBattleState(EPalBattleState::FollowPlayer);
+		SetPalWorkerState(EPalWorkerState::Idle, nullptr);
 	}
 
-
-	//플레이어 소유 여부 (임시)
-	bIsPlayerOwned = true;
-	
-	//팰 Worker모드 시작 (임시)
-	SetPalMode(EPalMode::Worker);
-	
 	//팰 현재 모드 출력
 	// const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EPalMode"), true);
 	// if (EnumPtr)
@@ -84,11 +87,9 @@ void APalYeti::BeginPlay()
 	// 	UE_LOG(PalLog, Warning, TEXT("[PalYeti, BeginPlay] EPalMode : %s"), *EnumName);
 	// }
 	
-	//팰 모드별 상태 초기화
-	SetPalWildState(EPalWildState::Patrol);
-	SetPalBattleState(EPalBattleState::FollowPlayer);
-	SetPalWorkerState(EPalWorkerState::Idle, nullptr);
-
+	//플레이어 소유 여부 (임시)
+	bIsPlayerOwned = true;
+	
 	//팰 작업중 여부
 	bIsWorking = false;
 
@@ -237,7 +238,8 @@ void APalYeti::HandleWildPatrol()
 			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
 			CurrentPatrolTargetLocation = RandomPoint.Location;
 			bIsPatroling = true;
-			YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+			MultiRPC_WorkerIdle(bIsPatroling);
+			//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
 			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 			
@@ -251,7 +253,8 @@ void APalYeti::HandleWildPatrol()
 	{
 		//애니메이션 변경 및 다음 목표 위치로 이동하도록
 		bIsPatroling = false;
-		YetiAnimInstance->bIsPatroling = this->bIsPatroling;
+		MultiRPC_WorkerIdle(bIsPatroling);
+		//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
 		//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol Reached TargetLocation"));
 	}
 
@@ -280,15 +283,33 @@ void APalYeti::HandleWildPlayerHitToPal()
 	if (bIsPlayingAttackAnim)
 	{
 		bIsPlayingAttackAnim = false;
-		YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+		//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
 	}
 	//데미지 30씩 받을 때마다 데미지 애니메이션 실행
 	if (!this->bIsDamaged)
 	{
 		this->bIsDamaged = true;
-		YetiAnimInstance->bIsDamaged = this->bIsDamaged;
+		//YetiAnimInstance->bIsDamaged = this->bIsDamaged;
 	}
-	
+	MultiRPC_WildPlayerHitToPal();
+}
+
+void APalYeti::MultiRPC_WildPlayerHitToPal_Implementation()
+{
+	YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+	YetiAnimInstance->bIsDamaged = this->bIsDamaged;
+}
+
+void APalYeti::OnRep_Damaged()
+{
+	Super::OnRep_Damaged();
+	YetiAnimInstance->bIsDamaged = this->bIsDamaged;
+}
+
+void APalYeti::OnRep_AttackAnim()
+{
+	Super::OnRep_AttackAnim();
+	YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
 }
 
 void APalYeti::HandleWildDetectPlayer()
@@ -320,9 +341,11 @@ void APalYeti::HandleWildChase()
 				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 				MyAIController->MoveToLocation(playerLoc);
 				bIsPatroling = false;
-				YetiAnimInstance->bIsPatroling = bIsPatroling;
+				MultiRPC_WildChasePatrol();
+				//YetiAnimInstance->bIsPatroling = bIsPatroling;
 				bIsMoveToTarget = true;
-				YetiAnimInstance->bIsMove = bIsMoveToTarget;
+				MultiRPC_WildChaseMoveToTarget();
+				//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 			}
 		//}
 	}
@@ -332,7 +355,8 @@ void APalYeti::HandleWildChase()
 	{
 		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
-		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+		MultiRPC_WildChaseMoveToTarget();
+		//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 		//patrol 상태로 변경
 		SetPalWildState(EPalWildState::Patrol);
 	}
@@ -342,13 +366,27 @@ void APalYeti::HandleWildChase()
 	{
 		//이동중 애니메이션 취소
 		bIsMoveToTarget = false;
-		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+		MultiRPC_WildChaseMoveToTarget();
+		//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 	
 		//이동 정지 및 공격 상태 시작
-		MyAIController->StopMovement();
+		if (MyAIController)
+		{
+			MyAIController->StopMovement();
+		}
 		SetPalWildState(EPalWildState::Attack);
 		
 	}
+}
+
+void APalYeti::MultiRPC_WildChasePatrol_Implementation()
+{
+	YetiAnimInstance->bIsPatroling = bIsPatroling;
+}
+
+void APalYeti::MultiRPC_WildChaseMoveToTarget_Implementation()
+{
+	YetiAnimInstance->bIsMove = bIsMoveToTarget;
 }
 
 void APalYeti::HandleWildAttack(float deltaTime)
@@ -396,23 +434,41 @@ void APalYeti::HandleWildEscape()
 	if (bIsPlayingAttackAnim)
 	{
 		bIsPlayingAttackAnim = false;
-		YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+		MultiRPC_WildEscapeAttackAnim();
+		//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
 	}
 	//patrol 애니메이션 취소
 	if (bIsPatroling)
 	{
 		bIsPatroling = false;
-		YetiAnimInstance->bIsPatroling = bIsPatroling;
+		MultiRPC_WildEscapePatrol();
+		//YetiAnimInstance->bIsPatroling = bIsPatroling;
 	}
 	//이동 애니메이션 실행
 	if (!bIsMoveToTarget)
 	{
 		bIsMoveToTarget = true;
-		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+		MultiRPC_WildEscapeMoveToTarget();
+		//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 	}
 	
 	//도망 함수 타이머
 	GetWorldTimerManager().SetTimer(EscapeTimerHandle, this, &APalYeti::UpdateEscapeLocation, 0.2f, true);
+}
+
+void APalYeti::MultiRPC_WildEscapeAttackAnim_Implementation()
+{
+	YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+}
+
+void APalYeti::MultiRPC_WildEscapePatrol_Implementation()
+{
+	YetiAnimInstance->bIsPatroling = bIsPatroling;
+}
+
+void APalYeti::MultiRPC_WildEscapeMoveToTarget_Implementation()
+{
+	YetiAnimInstance->bIsMove = bIsMoveToTarget;
 }
 
 void APalYeti::UpdateEscapeLocation()
@@ -450,7 +506,8 @@ void APalYeti::UpdateEscapeLocation()
 		if(bIsMoveToTarget)
 		{
 			bIsMoveToTarget = false;
-			YetiAnimInstance->bIsMove = bIsMoveToTarget;
+			MultiRPC_WildEscapeMoveToTarget();
+			//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 		}
 		SetPalWildState(EPalWildState::Patrol);
 	}
@@ -472,7 +529,8 @@ void APalYeti::HandleWildDie()
 	if(bIsMoveToTarget)
 	{
 		bIsMoveToTarget = false;
-		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+		MultiRPC_WildEscapeMoveToTarget();
+		//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 	}
 	
 	//RagDoll
@@ -485,14 +543,16 @@ void APalYeti::HandleWildDie()
 
 	//컨트롤러 제거
 	DetachFromControllerPendingDestroy();
+
+	MultiRPC_WildDie();
 	
 	// //튕겨나가는 힘 추가
-	if (LaunchImpulse == FVector::ZeroVector)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Launch Impulse"));
-		LaunchImpulse = GetActorForwardVector() * 250.f + FVector(0, 0, 500.f);
-		GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse, NAME_None, true);
-	}
+	// if (LaunchImpulse == FVector::ZeroVector)
+	// {
+	// 	//UE_LOG(LogTemp, Warning, TEXT("Launch Impulse"));
+	// 	LaunchImpulse = GetActorForwardVector() * 250.f + FVector(0, 0, 500.f);
+	// 	GetMesh()->AddImpulseToAllBodiesBelow(LaunchImpulse, NAME_None, true);
+	// }
 
 	
 	// FVector ImpulseDir = FVector::ForwardVector;
@@ -519,16 +579,29 @@ void APalYeti::HandleWildDie()
 // 	GetMesh()->bBlendPhysics = false;
 // }
 
-float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
+void APalYeti::MultiRPC_WildDie_Implementation()
 {
+	//RagDoll
+	//물리 시뮬레이션 활성화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+
+	//캡슐 콜라이더 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+                           class AController* EventInstigator, AActor* DamageCauser)
+{
+	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, bIsWorkerMode = %d, bIsCarrierMode = %d"), *this->GetName(), bIsWorkerMode,bIsCarrierMode);
 	//작업, 운반 팰은 데미지 0
 	if (this->bIsWorkerMode || this->bIsCarrierMode)
 	{
 		return 0.0f;
 	}
 	
-	float damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	damage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, damage = %f"), *this->GetName(), damage);
 	//팰 체력 감소
 	CurHP = FMath::Clamp(CurHP - damage, 0, MaxHP);
 	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, CurHP = %f"), *this->GetName(), CurHP);
@@ -545,6 +618,7 @@ float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& Damage
 		if (LastHP - CurHP >= IntervalDamage)
 		{
 			LastHP = CurHP;
+			UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, PlayerHitToPal"), *this->GetName());
 			SetPalWildState(EPalWildState::PlayerHitToPal);
 		}
 		//체력이 없으면 사망 상태 전환
@@ -641,7 +715,10 @@ void APalYeti::HandleWorkerIdle()
 //클라에서 WorkerIdle
 void APalYeti::MultiRPC_WorkerIdle_Implementation(bool isPatrol)
 {
-	YetiAnimInstance->bIsPatroling = isPatrol;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsPatroling = isPatrol;
+	}
 }
 
 void APalYeti::HandleWorkerFindWork()
@@ -735,7 +812,10 @@ void APalYeti::OnRep_Patrol()
 void APalYeti::OnRep_MoveToTarget()
 {
 	Super::OnRep_MoveToTarget();
-	YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsMove = bIsMoveToTarget;
+	}
 }
 
 void APalYeti::OnRep_WorkAnim()
@@ -946,4 +1026,5 @@ void APalYeti::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APalYeti, bIsPatroling);
+	//DOREPLIFETIME(APalYeti, GetMesh());
 }
