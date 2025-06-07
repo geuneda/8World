@@ -6,12 +6,14 @@
 #include "PlayerCharacter.h"
 #include "EightWorldProject/UI/MainUI.h"
 #include "EightWorldProject/UI/MPUI.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UPlayerStatComp::UPlayerStatComp()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
+	SetIsReplicated(true);
 }
 
 
@@ -67,5 +69,13 @@ void UPlayerStatComp::RegenMP()
 	{
 		SetMP(GetMP() + 10);
 	}
+}
+
+void UPlayerStatComp::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UPlayerStatComp, bIsRest);
+	
 }
 

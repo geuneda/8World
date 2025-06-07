@@ -42,9 +42,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
 	class UStaticMeshComponent* BuildGhostMeshComp;
 	// 상태
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Build")
 	bool bIsBuildMode = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Build")
 	bool bCanBuild = false;
 	// 빌드 대상 ID
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build")
@@ -97,5 +97,8 @@ public: // ---------------------메시 종류 --------------------------
 public: // ---------------------스냅 시스템---------------------
 	class AActor* HitActor;
 	class UBoxComponent* HitComp;	
-	
+
+
+public: //---------------------------네트워크-------------------
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

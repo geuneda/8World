@@ -35,6 +35,7 @@ UPlayerAnimInstance::UPlayerAnimInstance()
 	{
 		PalSphereMontage = PalSphereMontageObj.Object;
 	}
+	
 }
 
 void UPlayerAnimInstance::NativeInitializeAnimation()
@@ -91,7 +92,8 @@ void UPlayerAnimInstance::PlayAttackMontage()
 	// 이미 재생 중인지 확인
 	if (!IsAttacking())
 	{
-		Montage_Play(AttackMontage, 1.0f);
+		PlayerCharacter->MultiRPC_Attack();
+		//Montage_Play(AttackMontage, 1.0f);
 		PlayerCharacter->PlayerStatComp->SetRestState(false);
 	}
 }
@@ -104,9 +106,10 @@ void UPlayerAnimInstance::StopAttackMontage()
 		return;
 
 	// 현재 재생 중인 몽타주 중지
-	Montage_Stop(0.25f, AttackMontage);
+	PlayerCharacter->MultiRPC_StopAttack();
+	//MultiRPC_StopAttackMontage();
+	//Montage_Stop(0.25f, AttackMontage)UEnum::GetValueAsString<ENetRole>(GetLocalRole());
 	PlayerCharacter->PlayerStatComp->SetRestState(true);
-	
 }
 
 // 공격 애니메이션 재생 중인지 확인
@@ -120,7 +123,8 @@ void UPlayerAnimInstance::PlayPalSphereMontage()
 {
 	if (PalSphereMontage)
 	{
-		Montage_Play(PalSphereMontage, 1.0f);
+		//Montage_Play(PalSphereMontage, 1.0f);
+		PlayerCharacter->MultiRPC_Sphere();
 	}
 }
 

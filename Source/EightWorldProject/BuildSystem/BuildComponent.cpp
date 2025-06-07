@@ -6,6 +6,7 @@
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/UI/BuildModeUI.h"
 #include "EightWorldProject/UI/MainUI.h"
+#include "Net/UnrealNetwork.h"
 
 UBuildComponent::UBuildComponent()
 {
@@ -29,6 +30,8 @@ UBuildComponent::UBuildComponent()
 	{
 		Foundation = FoundationObj.Object;
 	}
+
+	SetIsReplicated(true);
 }
 
 
@@ -251,5 +254,14 @@ void UBuildComponent::DetectBuildBoxes()
 		}
 	}
 	
+}
+
+void UBuildComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UBuildComponent, bIsBuildMode);
+	DOREPLIFETIME(UBuildComponent, bCanBuild);
+
 }
 

@@ -130,6 +130,9 @@ APlayerCharacter::APlayerCharacter()
 	{
 		MainUIWidget = mainUIWidget.Class;
 	}
+
+	SetReplicates(true);
+	SetReplicateMovement(true);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -194,6 +197,32 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // 공격 입력 처리
 void APlayerCharacter::Attack(const FInputActionValue& Value)
 {
+	// if (PlayerBuildComp->bIsBuildMode && PlayerBuildComp->bCanBuild  && !bIsBuilding)
+	// {
+	// 	bIsBuilding = true;
+	// 	
+	// 	PlayerBuildComp->SpawnBuild();
+	//
+	// 	FTimerHandle BuildTimerHandle;
+	// 	GetWorldTimerManager().SetTimer(BuildTimerHandle, [&]()
+	// 	{
+	// 		bIsBuilding = false;
+	// 	}, 1.0f, false);
+	// 	
+	// 	return;
+	// }
+	//
+	//
+	// if (PlayerAttackComp && !IsInventoryOpen())
+	// {
+	// 	PlayerAttackComp->StartAttack();
+	// }
+	
+	ServerRPC_Attack();
+}
+
+void APlayerCharacter::ServerRPC_Attack_Implementation()
+{
 	if (PlayerBuildComp->bIsBuildMode && PlayerBuildComp->bCanBuild  && !bIsBuilding)
 	{
 		bIsBuilding = true;
@@ -216,12 +245,46 @@ void APlayerCharacter::Attack(const FInputActionValue& Value)
 	}
 }
 
+void APlayerCharacter::MultiRPC_Attack_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[MultiRPC_Attack] AttackMontage Start"));
+	if (UPlayerAnimInstance* anim = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		if (anim->AttackMontage)
+		{
+			anim->Montage_Play(anim->AttackMontage, 1.0f);
+		}
+	}
+}
+
 // 공격 입력 종료 처리
 void APlayerCharacter::StopAttack(const FInputActionValue& Value)
+{
+	// if (PlayerAttackComp)
+	// {
+	// 	PlayerAttackComp->StopAttack();
+	// }
+
+	ServerRPC_StopAttack();
+}
+
+void APlayerCharacter::ServerRPC_StopAttack_Implementation()
 {
 	if (PlayerAttackComp)
 	{
 		PlayerAttackComp->StopAttack();
+	}
+}
+
+void APlayerCharacter::MultiRPC_StopAttack_Implementation()
+{
+	if (UPlayerAnimInstance* anim = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		if (anim->AttackMontage)
+		{
+			anim->Montage_Stop(0.25f, anim->AttackMontage);
+			UE_LOG(LogTemp, Warning, TEXT("[MultiRPC_StopAttack] AttackMontage Stop"));
+		}
 	}
 }
 
@@ -265,9 +328,26 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 
 void APlayerCharacter::MyJump(const FInputActionValue& Value)
 {
-	bPressedJump = true;
-	JumpKeyHoldTime = 0.0f;
+	 bPressedJump = true;
+	 JumpKeyHoldTime = 0.0f;
 
+	// auto anim = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	//
+	// anim->PlayJumpMontage();
+
+	ServerRPC_Jump();
+}
+
+void APlayerCharacter::ServerRPC_Jump_Implementation()
+{
+	//bPressedJump = true;
+	//JumpKeyHoldTime = 0.0f;
+	
+	MultiRPC_Jump();
+}
+
+void APlayerCharacter::MultiRPC_Jump_Implementation()
+{
 	auto anim = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 
 	anim->PlayJumpMontage();
@@ -333,6 +413,26 @@ void APlayerCharacter::MainUIInit()
 // 달리기 입력 처리
 void APlayerCharacter::Sprint(const FInputActionValue& Value)
 {
+	// // 마나가 충분한지 확인
+	// if (PlayerStatComp && PlayerStatComp->GetMP() > 0)
+	// {
+	// 	bIsSprinting = true;
+	// 	
+	// 	// 달리기 속도로 변경
+	// 	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	// 	
+	// 	// 휴식 상태 해제
+	// 	PlayerStatComp->SetRestState(false);
+	// 	
+	// 	// 마나 소모 타이머 시작
+	// 	GetWorldTimerManager().SetTimer(SprintManaTimerHandle, this, &APlayerCharacter::ConsumeManaForSprint, 1.0f, true, 0.0f);
+	// }
+
+	ServerRPC_Sprint();
+}
+
+void APlayerCharacter::ServerRPC_Sprint_Implementation()
+{
 	// 마나가 충분한지 확인
 	if (PlayerStatComp && PlayerStatComp->GetMP() > 0)
 	{
@@ -343,15 +443,20 @@ void APlayerCharacter::Sprint(const FInputActionValue& Value)
 		
 		// 휴식 상태 해제
 		PlayerStatComp->SetRestState(false);
-		
-		// 마나 소모 타이머 시작
-		GetWorldTimerManager().SetTimer(SprintManaTimerHandle, this, &APlayerCharacter::ConsumeManaForSprint, 1.0f, true, 0.0f);
+
+		if (!GetWorldTimerManager().IsTimerActive(SprintManaTimerHandle))
+		{
+			// 마나 소모 타이머 시작
+			GetWorldTimerManager().SetTimer(SprintManaTimerHandle, this, &APlayerCharacter::ConsumeManaForSprint, 1.0f, true, 0.0f);
+			
+		}
 	}
 }
 
 // 달리기 입력 종료 처리
 void APlayerCharacter::StopSprint(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Warning, TEXT("StopSprint / bIsSprinting : %d"), bIsSprinting);
 	if (bIsSprinting)
 	{
 		bIsSprinting = false;
@@ -368,6 +473,30 @@ void APlayerCharacter::StopSprint(const FInputActionValue& Value)
 		// 마나 소모 타이머 중지
 		GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
 	}
+}
+
+void APlayerCharacter::OnRep_CheckSprint()
+{
+	if (bIsSprinting)
+	{
+		bIsSprinting = false;
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	}
+	else
+	{
+		bIsSprinting = true;
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	}
+}
+
+void APlayerCharacter::OnRep_IsSprinting()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+}
+
+void APlayerCharacter::OnRep_IsWalking()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void APlayerCharacter::BuildMode(const FInputActionValue& Value)
@@ -441,6 +570,31 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 
 void APlayerCharacter::ThrowPalSphere(const FInputActionValue& Value)
 {
+	// // 인벤토리가 열려있거나 빌드 모드일 경우 실행하지 않음
+	// if (IsInventoryOpen() || PlayerBuildComp->bIsBuildMode)
+	// {
+	// 	return;
+	// }
+	//
+	// // 애니메이션 인스턴스 가져오기
+	// UPlayerAnimInstance* AnimInstance = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	// if (AnimInstance)
+	// {
+	// 	// 팰스피어 애니메이션 재생
+	// 	AnimInstance->PlayPalSphereMontage();
+	// 	
+	// 	// 휴식 상태 해제
+	// 	if (PlayerStatComp)
+	// 	{
+	// 		PlayerStatComp->SetRestState(false);
+	// 	}
+	// }
+
+	ServerRPC_Sphere();
+}
+
+void APlayerCharacter::ServerRPC_Sphere_Implementation()
+{
 	// 인벤토리가 열려있거나 빌드 모드일 경우 실행하지 않음
 	if (IsInventoryOpen() || PlayerBuildComp->bIsBuildMode)
 	{
@@ -459,6 +613,15 @@ void APlayerCharacter::ThrowPalSphere(const FInputActionValue& Value)
 		{
 			PlayerStatComp->SetRestState(false);
 		}
+	}
+}
+
+void APlayerCharacter::MultiRPC_Sphere_Implementation()
+{
+	UPlayerAnimInstance* AnimInstance = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	if (AnimInstance->PalSphereMontage)
+	{
+		AnimInstance->Montage_Play(AnimInstance->PalSphereMontage, 1.0f);
 	}
 }
 
@@ -559,4 +722,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 	
 	// 카메라 줌 업데이트
 	UpdateCameraZoom(DeltaTime);
+}
+
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlayerCharacter, bIsBuilding);
+	DOREPLIFETIME(APlayerCharacter, bIsInventoryOpen);
+	DOREPLIFETIME(APlayerCharacter, bIsSprinting);
+	DOREPLIFETIME(APlayerCharacter, SprintSpeed);
+	DOREPLIFETIME(APlayerCharacter, WalkSpeed);
 }

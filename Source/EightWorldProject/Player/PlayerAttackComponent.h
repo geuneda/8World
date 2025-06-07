@@ -82,9 +82,11 @@ private:
 	class UPlayerStatComp* PlayerStatComp;
 	
 	// 공격 중인지 여부
+	UPROPERTY(Replicated)
 	bool bIsAttacking = false;
 	
 	// 공격 버튼을 계속 누르고 있는지 여부
+	UPROPERTY(Replicated)
 	bool bIsAttackButtonPressed = false;
 	
 	// 공격 애니메이션 종료 후 다음 공격 시작
@@ -93,4 +95,6 @@ private:
 public: //--------네트워크---------------------
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ApplyDamage(const TArray<AActor*>& targets);
+
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

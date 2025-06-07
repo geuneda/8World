@@ -9,6 +9,7 @@
 #include "Animation/AnimMontage.h"
 #include "GameFramework/DamageType.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 // 생성자
 UPlayerAttackComponent::UPlayerAttackComponent()
@@ -22,6 +23,8 @@ UPlayerAttackComponent::UPlayerAttackComponent()
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	AttackCollider->SetCollisionObjectType(ECC_Pawn);
 	AttackCollider->SetCollisionResponseToAllChannels(ECR_Overlap);
+
+	SetIsReplicated(true);
 }
 
 // 게임 시작 시 호출
@@ -240,4 +243,12 @@ void UPlayerAttackComponent::ApplyDamageToTargets(const TArray<AActor*>& Targets
 			);
 		}
 	}
+}
+
+void UPlayerAttackComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UPlayerAttackComponent, bIsAttackButtonPressed);
+	DOREPLIFETIME(UPlayerAttackComponent, bIsAttacking);
 }

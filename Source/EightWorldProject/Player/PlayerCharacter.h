@@ -96,16 +96,26 @@ protected:
 protected:
 
 	/** 빌드 상태 */
+	UPROPERTY(Replicated)
 	bool bIsBuilding = false;
 	
 	/** 달리기 상태 */
+	UPROPERTY(ReplicatedUsing = OnRep_CheckSprint)
 	bool bIsSprinting;
-
+	UFUNCTION()
+	void OnRep_CheckSprint();
+	
 	/** 달리기 속도 */
+	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting)
 	float SprintSpeed;
+	UFUNCTION()
+	void OnRep_IsSprinting();
 
 	/** 걷기 속도 */
+	UPROPERTY(ReplicatedUsing = OnRep_IsWalking)
 	float WalkSpeed;
+	UFUNCTION()
+	void OnRep_IsWalking();
 
 	/** 마나 소모 타이머 핸들 */
 	FTimerHandle SprintManaTimerHandle;
@@ -208,6 +218,7 @@ public: // ---------------------------UI-------------------------------------
 	bool IsInventoryOpen() const { return bIsInventoryOpen; }
 	
 	// 인벤토리 상태 변수
+	UPROPERTY(Replicated)
 	bool bIsInventoryOpen = false;
 
 	// 줌 관련 변수
@@ -230,5 +241,38 @@ public: // ---------------------------UI-------------------------------------
 	// 인벤토리 컴포넌트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	class UInventoryComponent* InventoryComponent;
+
+
+public: //------------------네트워크----------------------
+	//플레이어 공격
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Attack();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_Attack();
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_StopAttack();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_StopAttack(); 
+													
+	//플레이어 달리기
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Sprint();
+
+	//플레이어 점프
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Jump();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_Jump();
+
+	//플레이어 스피어
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Sphere();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_Sphere();
+	
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };
+
+
 

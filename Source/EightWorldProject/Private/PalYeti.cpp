@@ -740,7 +740,10 @@ void APalYeti::HandleWorkerFindWork()
 //클라에서 FindWork
 void APalYeti::MultiRPC_WorkerFindWork_Implementation(bool isPatrol)
 {
-	YetiAnimInstance->bIsPatroling = isPatrol;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsPatroling = isPatrol;
+	}
 }
 
 void APalYeti::HandleWorkerMovetoTarget()

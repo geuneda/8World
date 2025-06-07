@@ -39,6 +39,7 @@ protected:
 	float RegenMPTimer;
 	
 	// 휴식중인지 여부
+	UPROPERTY(Replicated)
 	bool bIsRest;
 
 public:	
@@ -74,4 +75,8 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void SetRestState(bool bNewRestState) { bIsRest = bNewRestState; }
+
+
+public:  //---------------네트워크--------------------
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

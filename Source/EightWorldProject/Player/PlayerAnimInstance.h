@@ -52,15 +52,15 @@ public:
 
 public:
 	// 팰스피어 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
 	class UAnimMontage* PalSphereMontage;
 	
 	// 공격 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
 	class UAnimMontage* AttackMontage;
 
 	// 점프 몽타주
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
 	class UAnimMontage* JumpMontage;
 
 	// Movement 속도
@@ -78,4 +78,6 @@ public:
 private:
 	// 소유 플레이어 캐릭터
 	class APlayerCharacter* PlayerCharacter;
+
+public: //--------------------네트워크--------------
 };
