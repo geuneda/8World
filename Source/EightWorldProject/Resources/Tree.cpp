@@ -25,6 +25,8 @@ void ATree::HandleDeactivation()
 	if (ResourceManager)
 	{
 		ResourceManager->DeactivateTree(this);
+		ResourceManager->SetReplicates(true);
+		ResourceManager->SetReplicateMovement(true);
 	}
 }
 

@@ -5,6 +5,7 @@
 #include "ResourceDataManager.h"
 #include "../Public/PWGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 AResourceBase::AResourceBase()
 {
@@ -27,6 +28,8 @@ AResourceBase::AResourceBase()
 	ItemSpawnHealthInterval = 30.0f;
 
 	Mesh->SetCanEverAffectNavigation(false);
+	
+	bReplicates = true;
 }
 
 void AResourceBase::BeginPlay()
@@ -105,6 +108,14 @@ void AResourceBase::Activate()
 	Mesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 	
 	// 메시 표시
+	//Mesh->SetVisibility(true);
+	MultiRPC_Activate();
+}
+
+void AResourceBase::MultiRPC_Activate_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("AResourceBase MultiRPC_Activate"));
+	// 메시 표시
 	Mesh->SetVisibility(true);
 }
 
@@ -116,6 +127,14 @@ void AResourceBase::Deactivate()
 	// 콜리전 비활성화
 	Mesh->SetCollisionProfileName(TEXT("NoCollision"));
 	
+	// 메시 숨김
+	//Mesh->SetVisibility(false);
+	MultiRPC_Deactivate();
+}
+
+void AResourceBase::MultiRPC_Deactivate_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT(" AResourceBase MultiRPC_Deactivate"));
 	// 메시 숨김
 	Mesh->SetVisibility(false);
 }
@@ -157,4 +176,13 @@ AResourceManager* AResourceBase::GetResourceManager()
 void AResourceBase::SetIsBeingWorkedOn(bool bInIsBeingWorkedOn)
 {
 	bIsBeingWorkedOn = bInIsBeingWorkedOn;
+}
+
+void AResourceBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AResourceBase, bIsActive);
+	DOREPLIFETIME(AResourceBase, CurrentHealth);
+	DOREPLIFETIME(AResourceBase, LastItemSpawnHealth);
 }

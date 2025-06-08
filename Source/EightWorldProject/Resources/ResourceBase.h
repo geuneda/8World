@@ -61,7 +61,7 @@ public:
 	class UBoxComponent* Box;
 
 	// 현재 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Resource")
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Resource")
 	float CurrentHealth;
 
 	// 최대 체력
@@ -78,12 +78,14 @@ public:
 
 protected:
 	// 활성화 상태
+	UPROPERTY(Replicated)
 	bool bIsActive = true;
 
 	// 작업 중인지 여부 (팰이 작업 중인지 확인용)
 	bool bIsBeingWorkedOn = false;
 
 	// 마지막 아이템 스폰 체력
+	UPROPERTY(Replicated)
 	float LastItemSpawnHealth;
 	
 	// 리소스 비활성화 처리 가상함수 처리
@@ -99,4 +101,12 @@ protected:
 	
 	// ResourceManager 가져오기
 	class AResourceManager* GetResourceManager();
+
+public: //----------------네트워크---------------------
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_Activate();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_Deactivate();
+	
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

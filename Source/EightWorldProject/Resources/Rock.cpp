@@ -25,6 +25,8 @@ void ARock::HandleDeactivation()
 	if (ResourceManager)
 	{
 		ResourceManager->DeactivateRock(this);
+		ResourceManager->SetReplicates(true);
+		ResourceManager->SetReplicateMovement(true);
 	}
 }
 
