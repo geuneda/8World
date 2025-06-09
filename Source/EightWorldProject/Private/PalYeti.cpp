@@ -381,7 +381,10 @@ void APalYeti::HandleWildChase()
 
 void APalYeti::MultiRPC_WildChasePatrol_Implementation()
 {
-	YetiAnimInstance->bIsPatroling = bIsPatroling;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsPatroling = bIsPatroling;
+	}
 }
 
 void APalYeti::MultiRPC_WildChaseMoveToTarget_Implementation()
@@ -800,8 +803,12 @@ void APalYeti::HandleWorkerMovetoTarget()
 //클라에서 팰 움직임 정지 및 상태 변환 
 void APalYeti::MultiRPC_WorkerMovetoTarget_Implementation(bool isMove, bool isWork)
 {
-	YetiAnimInstance->bIsMove = isMove;
-	YetiAnimInstance->bIsWorking = isWork;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsMove = isMove;
+		YetiAnimInstance->bIsWorking = isWork;
+	}
+
 	//UE_LOG(PalYeti, Warning, TEXT("Role : %s, [PalYeti, MultiRPC_WorkerMovetoTarget_Implementation]  YetiAnimInstance->bIsMove : %d, YetiName : %s"), *UEnum::GetValueAsString<ENetRole>(GetLocalRole()), isMove, *this->GetName());
 	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, MultiRPC_WorkerMovetoTarget_Implementation]  YetiAnimInstance->bIsWorking : %d, YetiName : %s"), isWork, *this->GetName());
 

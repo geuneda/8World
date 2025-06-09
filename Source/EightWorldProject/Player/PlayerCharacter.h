@@ -104,6 +104,9 @@ protected:
 	bool bIsSprinting;
 	UFUNCTION()
 	void OnRep_CheckSprint();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_SprintStop();
 	
 	/** 달리기 속도 */
 	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting)

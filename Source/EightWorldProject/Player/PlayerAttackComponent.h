@@ -94,7 +94,7 @@ private:
 
 public: //--------네트워크---------------------
 	UFUNCTION(Server, Reliable)
-	void ServerRPC_ApplyDamage(const TArray<AActor*>& targets);
+	void ServerRPC_ApplyDamage();
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 };

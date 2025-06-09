@@ -238,7 +238,7 @@ void APlayerCharacter::ServerRPC_Attack_Implementation()
 		return;
 	}
 	
-	
+	UE_LOG(LogTemp, Warning, TEXT("공격!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
 	if (PlayerAttackComp && !IsInventoryOpen())
 	{
 		PlayerAttackComp->StartAttack();
@@ -453,38 +453,45 @@ void APlayerCharacter::ServerRPC_Sprint_Implementation()
 	}
 }
 
+
 // 달리기 입력 종료 처리
 void APlayerCharacter::StopSprint(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("StopSprint / bIsSprinting : %d"), bIsSprinting);
 	if (bIsSprinting)
 	{
-		bIsSprinting = false;
+		ServerRPC_SprintStop();
 		
-		// 걷기 속도로 복귀
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-		
-		// 휴식 상태로 변경
-		if (PlayerStatComp)
-		{
-			PlayerStatComp->SetRestState(true);
-		}
-		
-		// 마나 소모 타이머 중지
-		GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
 	}
+}
+
+void APlayerCharacter::ServerRPC_SprintStop_Implementation()
+{
+	bIsSprinting = false;
+
+	// 걷기 속도로 복귀
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		
+	// 휴식 상태로 변경
+	if (PlayerStatComp)
+	{
+		PlayerStatComp->SetRestState(true);
+	}
+		
+	// 마나 소모 타이머 중지
+	GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
 }
 
 void APlayerCharacter::OnRep_CheckSprint()
 {
 	if (bIsSprinting)
 	{
-		bIsSprinting = false;
+		//bIsSprinting = false;
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	}
 	else
 	{
-		bIsSprinting = true;
+		//bIsSprinting = true;
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 	}
 }

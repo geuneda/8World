@@ -63,6 +63,9 @@ float AResourceBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 	// 체력 감소
 	float PreviousHealth = CurrentHealth;
 	CurrentHealth -= ActualDamage;
+
+	FString NetMode = GetNetMode() == NM_Client ? TEXT("Client") : TEXT("Server");
+	UE_LOG(LogTemp, Warning, TEXT("[%s] Damage: %f, currentHealth: %f"), *NetMode, ActualDamage, CurrentHealth);
 	
 	// ResourceManager에 데미지 알림
 	AResourceManager* ResourceManager = GetResourceManager();

@@ -71,7 +71,7 @@ void UPlayerAttackComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		// 공격 버튼을 계속 누르고 있다면 다음 공격 시작
 		if (bIsAttackButtonPressed)
 		{
-			StartNextAttack();
+			// StartNextAttack();
 		}
 	}
 }
@@ -104,12 +104,15 @@ void UPlayerAttackComponent::StartAttack()
 		PlayerStatComp->SetMP(PlayerStatComp->GetMP() - AttackStaminaCost);
 		PlayerStatComp->SetMP(FMath::Clamp(PlayerStatComp->GetMP(), 0.0f, PlayerStatComp->GetMaxMP()));
 	}
+	PlayerCharacter->MultiRPC_Attack();
+	//Montage_Play(AttackMontage, 1.0f);
+	PlayerCharacter->PlayerStatComp->SetRestState(false);
 	
 	// 애니메이션 인스턴스를 통해 공격 몽타주 재생
-	if (PlayerAnimInstance)
-	{
-		PlayerAnimInstance->PlayAttackMontage();
-	}
+	// if (PlayerAnimInstance)
+	// {
+	// 	PlayerAnimInstance->PlayAttackMontage();
+	// }
 }
 
 // 공격 중지
@@ -130,27 +133,43 @@ void UPlayerAttackComponent::OnAttackTiming()
 		return;
 	}
 	
+	
+	// 공격 대상 감지
+	// TArray<AActor*> Targets = DetectAttackTargets();
+
+	auto player = Cast<APlayerCharacter>(GetOwner());
+	// 감지된 대상에 데미지 적용
+	// if (!GetOwner()->HasAuthority())
+
+	UE_LOG(LogTemp, Warning, TEXT("player : %s, has Controller : %d"), player?TEXT("Valid"):TEXT("Not Valid"), player?player->IsLocallyControlled() : -1);
+	if (player && player->IsLocallyControlled())
+	{
+		// 나한테 PlayerController 가 있어야 한다.
+		ServerRPC_ApplyDamage();
+	}
+	// else
+	// {
+	// 	//ApplyDamageToTargets(Targets);
+	// }
+	
+	// 공격 이벤트 발생
+	// OnAttackExecuted.Broadcast();
+	
+	
+}
+
+void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation()
+{
 	// 콜라이더 활성화
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
-	// 공격 대상 감지
 	TArray<AActor*> Targets = DetectAttackTargets();
-	
+
+	UE_LOG(LogTemp, Warning, TEXT("------------------------------Server RPC ApplyDamage"));
 	// 감지된 대상에 데미지 적용
-	ServerRPC_ApplyDamage(Targets);
-	//ApplyDamageToTargets(Targets);
-	
-	// 공격 이벤트 발생
-	OnAttackExecuted.Broadcast();
-	
+	ApplyDamageToTargets(Targets);
 	// 콜라이더 비활성화 (타이밍에만 잡아야 함)
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-}
-
-void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation(const TArray<AActor*>& targets)
-{
-	// 감지된 대상에 데미지 적용
-	ApplyDamageToTargets(targets);
 }
 
 // 공격 가능 여부 확인
@@ -208,6 +227,7 @@ TArray<AActor*> UPlayerAttackComponent::DetectAttackTargets()
 	
 	// 자기 자신 제외
 	TArray<AActor*> ValidTargets;
+	UE_LOG(LogTemp, Warning, TEXT("Detected =====================> %d"), OverlappingActors.Num());
 	for (AActor* Actor : OverlappingActors)
 	{
 		// 자기 자신 제외
@@ -229,7 +249,13 @@ TArray<AActor*> UPlayerAttackComponent::DetectAttackTargets()
 // 공격 데미지 적용
 void UPlayerAttackComponent::ApplyDamageToTargets(const TArray<AActor*>& Targets)
 {
+	// if (!GetOwner()->HasAuthority())
+	// {
+	// 	return;
+	// }
+	//
 	// 데미지 적용
+	UE_LOG(LogTemp, Warning, TEXT("Targets --------------> %d"), Targets.Num());
 	for (AActor* Target : Targets)
 	{
 		if (Target)

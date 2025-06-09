@@ -153,22 +153,33 @@ AResourceItem* AResourceManager::SpawnResourceItem(FName ResourceID, const FVect
 	{
 		// 돌 아이템 생성
 		Item = World->SpawnActor<ARockItem>(ARockItem::StaticClass(), Location, Rotation);
-		Item->SetReplicates(true);
-		Item->SetReplicateMovement(true);
+		if (Item)
+		{
+			Item->SetReplicates(true);
+			Item->SetReplicateMovement(true);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] 돌 아이템 생성"));
 	}
 	else if (ResourceID == TEXT("Tree"))
 	{
 		// 나무 아이템 생성
 		Item = World->SpawnActor<ATreeItem>(ATreeItem::StaticClass(), Location, Rotation);
-		Item->SetReplicates(true);
-		Item->SetReplicateMovement(true);
+		if (Item)
+		{
+			Item->SetReplicates(true);
+			Item->SetReplicateMovement(true);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] 나무 아이템 생성"));
 	}
 	else
 	{
 		// 기본 아이템 생성
 		Item = World->SpawnActor<AResourceItem>(AResourceItem::StaticClass(), Location, Rotation);
+		if (Item)
+		{
+			Item->SetReplicates(true);
+			Item->SetReplicateMovement(true);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("[ResourceManager] 기본 아이템 생성: %s"), *ResourceID.ToString());
 	}
 	
