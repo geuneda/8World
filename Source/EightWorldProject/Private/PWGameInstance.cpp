@@ -4,6 +4,7 @@
 #include "PWGameInstance.h"
 #include "OnlineSessionSettings.h"
 #include "EightWorldProject/EightWorldProject.h"
+#include "Online/OnlineSessionNames.h"
 
 //게임 시작시 호출
 void UPWGameInstance::Init()
@@ -16,13 +17,17 @@ void UPWGameInstance::Init()
 
 		//세션 이벤트 콜백 등록(델리게이트) - 세션이 정상적으로 만들어지면 추가가 된다.
 		sessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPWGameInstance::OnCreateSessionComplete);
+
+		//세션 검색 이벤트 등록
+		sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPWGameInstance::OnFindSessionsComplete);
 	}
 
 	//세션 생성 (비동기 처리한다. 동기처리하면 값이 위에서 안들어오면 모든게 멈춘다. 연결이 완료되는 것까지 고려해서 지연시간을 두기 / 테스트용)
 	FTimerHandle handle;
 	GetWorld()->GetTimerManager().SetTimer(handle, FTimerDelegate::CreateLambda([&]
 	{
-		CreateMySession(mySessionName, 10);
+		//CreateMySession(mySessionName, 10);
+		FindOtherSessions();
 	}), 2, false);
 }
 
@@ -79,4 +84,68 @@ void UPWGameInstance::CreateMySession(FString roomName, int32 playerCount)
 void UPWGameInstance::OnCreateSessionComplete(FName sessionName, bool bWasSuccessful)
 {
 	PRINTLOG(TEXT("SessionName : %s, bWasSuccessful : %d"), *sessionName.ToString(), bWasSuccessful);
+}
+
+void UPWGameInstance::FindOtherSessions()
+{
+	//찾을 조건들을 설정
+	sessionSearch = MakeShareable(new FOnlineSessionSearch());  //MakeShareable 스마트포인터 참조포인터 사용.
+
+	//1. 존재여부를 검색 가능하게 해 놓은 것만 찾기.
+	sessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	//2. Lan 사용여부
+	sessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == FName("NULL");
+	//3. 최대 검색 세션(방) 수
+	sessionSearch->MaxSearchResults = 10;
+	//4. 세션 검색
+	sessionInterface->FindSessions(0, sessionSearch.ToSharedRef());
+}
+
+void UPWGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	//찾기 실패시 아무것도 하지 말기
+	if (bWasSuccessful == false)
+	{
+		PRINTLOG(TEXT("Session search failed!!!"));
+		return;
+	}
+
+	//세션 검색결과 배열
+	auto results = sessionSearch->SearchResults;
+
+	PRINTLOG(TEXT("Search Result Count : %d"), results.Num());
+
+	for (int i = 0; i <results.Num(); i++)
+	{
+		auto sr = results[i];
+		if (sr.IsValid() == false)
+		{
+			continue;
+		}
+
+		//세션 정보 저장할 구조체
+		FSessionInfo sessionInfo;
+		sessionInfo.index = i;
+		
+		
+		// 방이름
+		//FString roomName;
+		sr.Session.SessionSettings.Get(FName("ROOM_NAME"), sessionInfo.roomName);
+		//FString hostName;
+		sr.Session.SessionSettings.Get(FName("HOST_NAME"), sessionInfo.hostName);
+		//세션주인(머신)이름
+		//FString userName = sr.Session.OwningUserName;
+		//최대 입장가능한 플레이어 수
+		int32 maxPlayerCount = sr.Session.SessionSettings.NumPublicConnections;
+		//현재 입장한 플레이어 수 (최대 - 현재 입장가능한 수)
+		int32 currentPlayerCount = maxPlayerCount - sr.Session.NumOpenPublicConnections;
+
+		sessionInfo.playerCount = FString::Printf(TEXT("(%d/%d)"), currentPlayerCount, maxPlayerCount);
+		
+		//핑정보
+		sessionInfo.pingSpeed = sr.PingInMs; //밀리 sec 단위 / 신호를 보내서 다시 돌아올 때 시간 체크
+
+		PRINTLOG(TEXT("%s"), *sessionInfo.ToString());
+	}
+
 }

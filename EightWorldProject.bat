@@ -1,1 +1,1 @@
-C:\UnrealEngine\UE_5.5\Engine\Binaries\Win64\UnrealEditor.exe C:\Users\user\Documents\GitHub\8World\EightWorldProject.uproject -game -ResX=800 -ResY=600 -WinX=800 -WinY=600 -WINDOWED -log
+C:\Program Files\Epic Games\UE_5.5\Engine\Binaries\Win64\UnrealEditor.exe C:\Users\Minsoo\Documents\GitHub\8World\EightWorldProject.uproject -game -ResX=800 -ResY=600 -WinX=800 -WinY=600 -WINDOWED -log
