@@ -11,4 +11,13 @@ UCLASS()
 class EIGHTWORLDPROJECT_API APWPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	APWPlayerController();
+	
+public: //--------------- Widget---------------
+	UPROPERTY(EditDefaultsOnly, Category = UI)
+	TSubclassOf<class UGoalWidget> goalUIWidget;
+	UPROPERTY()
+	class UGoalWidget* goalWidget;
 };

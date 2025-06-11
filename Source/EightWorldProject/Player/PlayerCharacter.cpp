@@ -9,15 +9,19 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GoalWidget.h"
 #include "PlayerAttackComponent.h"
 #include "PlayerStatComp.h"
 #include "InputActionValue.h"
 #include "PlayerAnimInstance.h"
+#include "PWGameInstance.h"
+#include "PWPlayerController.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
 #include "EightWorldProject/UI/MainUI.h"
 #include "Engine/LocalPlayer.h"
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
+#include "Components/CheckBox.h"
 #include "EightWorldProject/BuildSystem/BuildComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -133,6 +137,7 @@ APlayerCharacter::APlayerCharacter()
 
 	SetReplicates(true);
 	SetReplicateMovement(true);
+	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -394,6 +399,11 @@ void APlayerCharacter::BeginPlay()
 	{
 		PlayerBuildComp->CameraComp = FollowCamera;
 	}
+
+	gi = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
+
+	//미션 완료시 실행되는 델리게이트 바인딩
+	gi->OnMissionComplete.AddDynamic(this, &APlayerCharacter::OnMissionCompleted);
 }
 
 void APlayerCharacter::MainUIInit()
@@ -740,4 +750,25 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME(APlayerCharacter, bIsSprinting);
 	DOREPLIFETIME(APlayerCharacter, SprintSpeed);
 	DOREPLIFETIME(APlayerCharacter, WalkSpeed);
+}
+
+void APlayerCharacter::OnMissionCompleted(int32 itemCount)
+{
+	gi->ItemCount += itemCount;
+	UE_LOG(LogTemp, Warning, TEXT("[OnMissionCompleted] ItemCount : %d"), gi->ItemCount);
+	
+	//미션 완료시 체크 박스 체크
+	if (gi->ItemCount >= 10)
+	{
+		MultiRPC_GoalCheckBox();
+	}
+}
+
+void APlayerCharacter::MultiRPC_GoalCheckBox_Implementation()
+{
+	//모든 클라 호출
+	if (auto pc = Cast<APWPlayerController>(GetWorld()->GetFirstPlayerController()))
+	{
+		pc->goalWidget->quest_checkBox->SetIsChecked(true);
+	}
 }

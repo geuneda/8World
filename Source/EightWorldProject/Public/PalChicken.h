@@ -170,5 +170,10 @@ public: //--------네트워크 RPC------------
 	
 	//변수 동기화 함수
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+public: //-----------게임 인스턴스--------------------
+	//GameInstance
+	UPROPERTY()
+	class UPWGameInstance* gi;
 };
 

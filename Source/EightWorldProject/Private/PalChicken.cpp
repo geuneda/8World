@@ -8,6 +8,7 @@
 #include "PalBox.h"
 #include "PalChickenAnimInstance.h"
 #include "PWAIController.h"
+#include "PWGameInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
@@ -104,6 +105,9 @@ void APalChicken::BeginPlay()
 	palBox = Cast<APalBox>(UGameplayStatics::GetActorOfClass(GetWorld(), APalBox::StaticClass()));
 
 	IntervalDamage = 10.f;
+
+	//GameInstance
+	gi = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -774,6 +778,9 @@ void APalChicken::CarriedItemDestroy()
 		Cast<AResourceItem>(TargetItem)->SetIsMove(false);
 		//아이템 파괴
 		TargetItem->Destroy();
+
+		//미션 아이템 개수 추가
+		gi->OnMissionComplete.Broadcast(1);
 		
 		//반복을 위한 상태 변화
 		SetPalCarrierState(EPalCarrierState::Return, nullptr);

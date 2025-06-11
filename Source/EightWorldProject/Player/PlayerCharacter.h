@@ -275,6 +275,19 @@ public: //------------------네트워크----------------------
 	
 	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+public: //---------------미션----------------------
+	//GameInstance
+	UPROPERTY()
+	class UPWGameInstance* gi;
+
+	//미션 완료 함수
+	UFUNCTION()
+	void OnMissionCompleted(int32 itemCount);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_GoalCheckBox();
+	
 };
 
 
