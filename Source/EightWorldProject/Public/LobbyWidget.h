@@ -30,6 +30,10 @@ public: //-----------바인딩---------------
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* WidgetSwitcher;
 	UPROPERTY(meta = (BindWidget))
+	class UButton* btn_gameStart;
+	UPROPERTY(meta = (BindWidget))
+	class UButton* btn_gameQuit;
+	UPROPERTY(meta = (BindWidget))
 	class UButton* btn_createSession;
 	UPROPERTY(meta = (BindWidget))
 	class UButton* btn_findSession;
@@ -43,6 +47,8 @@ public: //-----------바인딩---------------
 	//세션 슬롯 추가할 스크롤박스
 	UPROPERTY(meta = (BindWidget))
 	class UScrollBox* Scroll_roomList;
+	UPROPERTY(meta = (BindWidget))
+	class UVerticalBox* vertical_roomList;
 	
 	UPROPERTY(EditDefaultsOnly, category = SlotWidget)
 	TSubclassOf<class USessionSlotWidget> sessionInfoWidget;
@@ -67,6 +73,10 @@ public: //-----------바인딩---------------
 	void OnValueChanged(float value);
 
 	//화면 전환 함수
+	UFUNCTION()
+	void SwitchSelectServerPanel();
+	UFUNCTION()
+	void SwitchGameQuit();
 	UFUNCTION()
 	void SwitchCreatePanel();
 	UFUNCTION()

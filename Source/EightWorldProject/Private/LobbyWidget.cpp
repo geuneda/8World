@@ -11,6 +11,8 @@
 #include "Components/WidgetSwitcher.h"
 #include "SessionSlotWidget.h"
 #include "Components/ScrollBox.h"
+#include "Components/VerticalBox.h"
+#include "Kismet/GameplayStatics.h"
 
 void ULobbyWidget::NativeConstruct()
 {
@@ -40,6 +42,11 @@ void ULobbyWidget::NativeConstruct()
 	//방 검색 중일때 호출될 콜백 함수 등록
 	gi->OnSearchState.AddDynamic(this, &ULobbyWidget::OnFindStateEnable);
 
+	//게임 시작 바인딩
+	btn_gameStart->OnClicked.AddDynamic(this, &ULobbyWidget::ULobbyWidget::SwitchSelectServerPanel);
+	//게임 종료 바인딩
+	btn_gameQuit->OnClicked.AddDynamic(this, &ULobbyWidget::ULobbyWidget::SwitchGameQuit);
+
 }
 
 void ULobbyWidget::CreateRoom()
@@ -58,21 +65,36 @@ void ULobbyWidget::OnValueChanged(float value)
 	txt_playerCount->SetText(FText::AsNumber(value));
 }
 
+void ULobbyWidget::SwitchSelectServerPanel()
+{
+	WidgetSwitcher->SetActiveWidgetIndex(1);
+	OnClickedFindSession();
+}
+
+void ULobbyWidget::SwitchGameQuit()
+{
+	//게임 종료
+	if (auto pc = GetWorld()->GetFirstPlayerController())
+	{
+		UKismetSystemLibrary::QuitGame(GetWorld(), pc, EQuitPreference::Quit, true);
+	}
+}
+
 //방목록 검색 화면
 void ULobbyWidget::SwitchCreatePanel()
 {
-	WidgetSwitcher->SetActiveWidgetIndex(1);
+	WidgetSwitcher->SetActiveWidgetIndex(2);
 }
 
 void ULobbyWidget::SwitchFindPanel()
 {
-	WidgetSwitcher->SetActiveWidgetIndex(2);
+	//WidgetSwitcher->SetActiveWidgetIndex(3);
 	OnClickedFindSession();
 }
 
 void ULobbyWidget::BackToMain()
 {
-	WidgetSwitcher->SetActiveWidgetIndex(0);
+	WidgetSwitcher->SetActiveWidgetIndex(1);
 }
 
 void ULobbyWidget::AddSlotWidget(const struct FSessionInfo& sessionInfo)
@@ -81,14 +103,16 @@ void ULobbyWidget::AddSlotWidget(const struct FSessionInfo& sessionInfo)
 	auto slot = CreateWidget<USessionSlotWidget>(this, sessionInfoWidget);
 	slot->Set(sessionInfo);
 
-	Scroll_roomList->AddChild(slot);
+	//Scroll_roomList->AddChild(slot);
+	vertical_roomList->AddChildToVerticalBox(slot);
 
 }
 
 void ULobbyWidget::OnClickedFindSession()
 {
 	//기존 슬롯이 있다면 모두 지운다.
-	Scroll_roomList->ClearChildren();
+	//Scroll_roomList->ClearChildren();
+	vertical_roomList->ClearChildren();
 
 	if (gi)
 	{
