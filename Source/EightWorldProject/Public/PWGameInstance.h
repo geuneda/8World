@@ -20,15 +20,20 @@ struct FSessionInfo
 	UPROPERTY(BlueprintReadOnly)
 	FString playerCount;
 	UPROPERTY(BlueprintReadOnly)
-	int32 pingSpeed;
+	int32 pingSpeed = 0;
 	UPROPERTY(BlueprintReadOnly)
-	int32 index;
+	int32 index = 0;
 
 	inline FString ToString() const
 	{
 		return FString::Printf(TEXT("[%d]%s : %s - %s, %dms"), index, *roomName, *hostName, *playerCount, pingSpeed);
 	}
 };
+
+//검색 완료시 호출되는 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSearchComplete, const FSessionInfo&, sessionInfo);
+//세션 검색 중일때 -> 비활성화 시키고 싶다. ->이때 사용될 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSearchStateSignature, bool, bIsSearching);
 
 
 UCLASS()
@@ -62,4 +67,16 @@ public:
 
 	//방찾기 이벤트 콜백
 	void OnFindSessionsComplete(bool bWasSuccessful);
+
+	//방찾기 완료 콜백을 등록할 델리게이트
+	FSearchComplete OnSearchComplete;
+
+	//방찾기 상태 콜백 델리게이트
+	FSearchStateSignature OnSearchState;
+
+public: //-----------세션(방) 입장 -------------------
+	void JoinSelectedSession(int32 index);
+
+	//방 입장 완료 체크 함수
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 };

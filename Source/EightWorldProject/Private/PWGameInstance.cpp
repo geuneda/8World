@@ -20,15 +20,18 @@ void UPWGameInstance::Init()
 
 		//세션 검색 이벤트 등록
 		sessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPWGameInstance::OnFindSessionsComplete);
+
+		//세션 입장 이벤트 등록
+		sessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UPWGameInstance::OnJoinSessionComplete);
 	}
 
-	//세션 생성 (비동기 처리한다. 동기처리하면 값이 위에서 안들어오면 모든게 멈춘다. 연결이 완료되는 것까지 고려해서 지연시간을 두기 / 테스트용)
-	FTimerHandle handle;
-	GetWorld()->GetTimerManager().SetTimer(handle, FTimerDelegate::CreateLambda([&]
-	{
-		//CreateMySession(mySessionName, 10);
-		FindOtherSessions();
-	}), 2, false);
+	// //세션 생성 (비동기 처리한다. 동기처리하면 값이 위에서 안들어오면 모든게 멈춘다. 연결이 완료되는 것까지 고려해서 지연시간을 두기 / 테스트용)
+	// FTimerHandle handle;
+	// GetWorld()->GetTimerManager().SetTimer(handle, FTimerDelegate::CreateLambda([&]
+	// {
+	// 	//CreateMySession(mySessionName, 10);
+	// 	FindOtherSessions();
+	// }), 2, false);
 }
 
 void UPWGameInstance::CreateMySession(FString roomName, int32 playerCount)
@@ -84,10 +87,24 @@ void UPWGameInstance::CreateMySession(FString roomName, int32 playerCount)
 void UPWGameInstance::OnCreateSessionComplete(FName sessionName, bool bWasSuccessful)
 {
 	PRINTLOG(TEXT("SessionName : %s, bWasSuccessful : %d"), *sessionName.ToString(), bWasSuccessful);
+
+	//방 만드는게 성공하면
+	//->Server Travel (Game Server Open)
+	if (bWasSuccessful)
+	{
+		//listen server로 입장
+		GetWorld()->ServerTravel(TEXT("/Game/PalWorld/Maps/MyGameMap?listen?port=7777"));
+		FString url;
+		sessionInterface->GetResolvedConnectString(sessionName, url);
+		PRINTLOG(TEXT("URL : %s"), *url);
+	}
 }
 
 void UPWGameInstance::FindOtherSessions()
 {
+	//검색 시작 : 이때 화면 비활성화 시켜주기.
+	OnSearchState.Broadcast(true);
+	
 	//찾을 조건들을 설정
 	sessionSearch = MakeShareable(new FOnlineSessionSearch());  //MakeShareable 스마트포인터 참조포인터 사용.
 
@@ -109,6 +126,9 @@ void UPWGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		PRINTLOG(TEXT("Session search failed!!!"));
 		return;
 	}
+
+	//로비 위젯 방검색 비활성화 종료
+	OnSearchState.Broadcast(false);
 
 	//세션 검색결과 배열
 	auto results = sessionSearch->SearchResults;
@@ -146,6 +166,40 @@ void UPWGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 		sessionInfo.pingSpeed = sr.PingInMs; //밀리 sec 단위 / 신호를 보내서 다시 돌아올 때 시간 체크
 
 		PRINTLOG(TEXT("%s"), *sessionInfo.ToString());
+		
+		//델리게이트로 위젯에 알려주기
+		OnSearchComplete.Broadcast(sessionInfo);
 	}
+	
+}
+
+void UPWGameInstance::JoinSelectedSession(int32 index)
+{
+	//검색 결과 목록(배열)중 index 번째 녀석으로 방 입장하기.
+	auto sr = sessionSearch->SearchResults[index];
+	sr.Session.SessionSettings.Get(FName("ROOM_NAME"), mySessionName);
+	sr.Session.SessionSettings.bUseLobbiesIfAvailable = true; // false로 잘못넘어오는 경우가 있는 경우 사용.
+	sessionInterface->JoinSession(0, FName(mySessionName), sr);
+}
+
+void UPWGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (Result == EOnJoinSessionCompleteResult::Success)
+	{
+		//방으로 Client Travel
+		auto pc = GetWorld()->GetFirstPlayerController();
+		FString url;
+		sessionInterface->GetResolvedConnectString(SessionName, url); // steam의 방정보를 받아와서 url로 넘겨줌
+		PRINTLOG(TEXT("Join Session URL : %s"), *url);
+		if (url.IsEmpty() == false)
+		{
+			pc->ClientTravel(url, TRAVEL_Absolute); //맵을 이동할 때 모든 설정을 리셋하고 들어간다.
+		}
+	}
+	else
+	{
+		PRINTLOG(TEXT("JoinSessionComplete Failed : %d"), Result);
+	}
+
 
 }
