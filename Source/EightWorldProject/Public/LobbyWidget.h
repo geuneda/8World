@@ -85,6 +85,8 @@ public: //-----------바인딩---------------
 	//메인으로 돌아가는 함수
 	UFUNCTION()
 	void BackToMain();
+	UFUNCTION()
+	void BackToServerList();
 
 	//슬롯 추가 함수
 	UFUNCTION()

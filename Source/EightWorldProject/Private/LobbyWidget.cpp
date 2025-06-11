@@ -31,7 +31,7 @@ void ULobbyWidget::NativeConstruct()
 
 	//뒤로가기
 	btn_back->OnClicked.AddDynamic(this, &ULobbyWidget::BackToMain);
-	btn_back_1->OnClicked.AddDynamic(this, &ULobbyWidget::BackToMain);
+	btn_back_1->OnClicked.AddDynamic(this, &ULobbyWidget::BackToServerList);
 
 	//세션 찾았을 때 호출될 콜백 함수 등록
 	gi->OnSearchComplete.AddDynamic(this, &ULobbyWidget::AddSlotWidget);
@@ -93,6 +93,11 @@ void ULobbyWidget::SwitchFindPanel()
 }
 
 void ULobbyWidget::BackToMain()
+{
+	WidgetSwitcher->SetActiveWidgetIndex(0);
+}
+
+void ULobbyWidget::BackToServerList()
 {
 	WidgetSwitcher->SetActiveWidgetIndex(1);
 }
