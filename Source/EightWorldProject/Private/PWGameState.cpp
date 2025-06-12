@@ -4,6 +4,7 @@
 #include "PWGameState.h"
 
 #include "GoalWidget.h"
+#include "MissionCompleteWidget.h"
 #include "PWPlayerController.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
@@ -36,8 +37,16 @@ void APWGameState::OnRep_Count()
 				UE_LOG(LogTemp, Warning, TEXT("[%s][OnRep_Count] "), GetNetMode()==NM_Client?TEXT("Client") : TEXT("Server"));
 				pc->goalWidget = Cast<UGoalWidget>(player->GoalUI);
 				pc->goalWidget->OnCheckMissionCompleted(true);
+
+				if (player->missionCompleteUI)
+				{
+					pc->missionCompleteWidget = Cast<UMissionCompleteWidget>(player->missionCompleteUI);
+					pc->missionCompleteWidget->AddToViewport();
+				}
 			}
 		}
+
+
 	}
 }
 

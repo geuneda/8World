@@ -282,6 +282,11 @@ public: //---------얻은 자원--------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	class UGoalWidget* GoalUI;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UMissionCompleteWidget> missionCompleteUIWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UMissionCompleteWidget* missionCompleteUI;
+	
 	UPROPERTY()
 	class UPWGameInstance* GI;
 

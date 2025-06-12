@@ -13,6 +13,7 @@
 #include "PlayerAttackComponent.h"
 #include "PlayerStatComp.h"
 #include "InputActionValue.h"
+#include "MissionCompleteWidget.h"
 #include "PlayerAnimInstance.h"
 #include "PWGameInstance.h"
 #include "PWGameState.h"
@@ -141,6 +142,12 @@ APlayerCharacter::APlayerCharacter()
 	if (goalUIWidget.Succeeded())
 	{
 		GoalUIWiget = goalUIWidget.Class;
+	}
+
+	ConstructorHelpers::FClassFinder<UMissionCompleteWidget> missionWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_MissionComplete.WBP_MissionComplete_C'"));
+	if (missionWidget.Succeeded())
+	{
+		missionCompleteUIWidget = missionWidget.Class;
 	}
 	
 	SetReplicates(true);
@@ -419,6 +426,8 @@ void APlayerCharacter::BeginPlay()
 		{
 			MultiRPC_ItemCount_Implementation(true);
 		}
+
+		missionCompleteUI = Cast<UMissionCompleteWidget>(CreateWidget(GetWorld(), missionCompleteUIWidget));
 	}
 
 	GS = Cast<APWGameState>(GetWorld()->GetGameState());

@@ -20,8 +20,10 @@ public: //--------------UI----------------
 	virtual void BeginPlay() override;
 	
 	UPROPERTY()
-	class UGoalWidget* goalWidget;
+	class APlayerCharacter* myPlayer;
 
 	UPROPERTY()
-	class APlayerCharacter* myPlayer;
+	class UGoalWidget* goalWidget;
+	UPROPERTY()
+	class UMissionCompleteWidget* missionCompleteWidget;
 };
