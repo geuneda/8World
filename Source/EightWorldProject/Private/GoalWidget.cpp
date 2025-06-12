@@ -11,8 +11,8 @@
 void UGoalWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-
-
+	//마우스 클릭 막기
+	quest_checkBox->SetIsEnabled(false);
 }
 
 void UGoalWidget::OnCheckMissionCompleted(bool bIsCompleted)
