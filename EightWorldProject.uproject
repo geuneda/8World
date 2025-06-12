@@ -25,5 +25,6 @@
 			"Name": "OnlineSubsystemSteam",
 			"Enabled": true
 		}
-	]
+	],
+	"EngineAssociation": "5.5"
 }

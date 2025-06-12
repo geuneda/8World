@@ -14,10 +14,14 @@ class EIGHTWORLDPROJECT_API APWPlayerController : public APlayerController
 
 public:
 	APWPlayerController();
+
 	
-public: //--------------- Widget---------------
-	UPROPERTY(EditDefaultsOnly, Category = UI)
-	TSubclassOf<class UGoalWidget> goalUIWidget;
+public: //--------------UI----------------
+	virtual void BeginPlay() override;
+	
 	UPROPERTY()
 	class UGoalWidget* goalWidget;
+
+	UPROPERTY()
+	class APlayerCharacter* myPlayer;
 };

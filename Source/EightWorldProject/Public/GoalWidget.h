@@ -21,5 +21,7 @@ public:
 	//미션 체크 박스
 	UPROPERTY(meta = (BindWidget))
 	class UCheckBox* quest_checkBox;
-	
+
+	//미션 체크 함수
+	void OnCheckMissionCompleted(bool bIsCompleted);
 };

@@ -34,8 +34,7 @@ struct FSessionInfo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSearchComplete, const FSessionInfo&, sessionInfo);
 //세션 검색 중일때 -> 비활성화 시키고 싶다. ->이때 사용될 델리게이트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSearchStateSignature, bool, bIsSearching);
-//미션 완료했을 때 호출되는 델리게이트
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMissionComplete, int32, itemCount);
+
 
 UCLASS()
 class EIGHTWORLDPROJECT_API UPWGameInstance : public UGameInstance
@@ -81,10 +80,6 @@ public: //-----------세션(방) 입장 -------------------
 	//방 입장 완료 체크 함수
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
-public: //--------------미션-------------------
-	FMissionComplete OnMissionComplete;
-	
-	//아이템 획득 개수
-	UPROPERTY()
-	int32 ItemCount = 0;
+public: //--------아이템 획득 수----------------
+	int32 GetItemCount = 0;
 };

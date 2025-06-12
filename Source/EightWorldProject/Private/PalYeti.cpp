@@ -816,7 +816,10 @@ void APalYeti::MultiRPC_WorkerMovetoTarget_Implementation(bool isMove, bool isWo
 
 void APalYeti::OnRep_Patrol()
 {
-	YetiAnimInstance->bIsPatroling = bIsPatroling;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsPatroling = bIsPatroling;
+	}
 }
 
 void APalYeti::OnRep_MoveToTarget()

@@ -15,6 +15,7 @@
 #include "InputActionValue.h"
 #include "PlayerAnimInstance.h"
 #include "PWGameInstance.h"
+#include "PWGameState.h"
 #include "PWPlayerController.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
 #include "EightWorldProject/UI/MainUI.h"
@@ -22,6 +23,7 @@
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
 #include "Components/CheckBox.h"
+#include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/BuildSystem/BuildComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -135,6 +137,12 @@ APlayerCharacter::APlayerCharacter()
 		MainUIWidget = mainUIWidget.Class;
 	}
 
+	ConstructorHelpers::FClassFinder<UGoalWidget> goalUIWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_GoalUI.WBP_GoalUI_C'"));
+	if (goalUIWidget.Succeeded())
+	{
+		GoalUIWiget = goalUIWidget.Class;
+	}
+	
 	SetReplicates(true);
 	SetReplicateMovement(true);
 	
@@ -400,10 +408,22 @@ void APlayerCharacter::BeginPlay()
 		PlayerBuildComp->CameraComp = FollowCamera;
 	}
 
-	gi = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
+	GI = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
+	
+	if (IsLocallyControlled())
+	{
+		GoalUI = Cast<UGoalWidget>(CreateWidget(GetWorld(), GoalUIWiget));
+		GoalUI->AddToViewport();
+		
+		if (GI && GI->GetItemCount >= 10)
+		{
+			MultiRPC_ItemCount_Implementation(true);
+		}
+	}
 
-	//미션 완료시 실행되는 델리게이트 바인딩
-	gi->OnMissionComplete.AddDynamic(this, &APlayerCharacter::OnMissionCompleted);
+	GS = Cast<APWGameState>(GetWorld()->GetGameState());
+
+
 }
 
 void APlayerCharacter::MainUIInit()
@@ -583,6 +603,57 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 		// 인벤토리에 추가 실패시 에러 로그 출력
 		UE_LOG(LogTemplateCharacter, Error, TEXT("인벤토리에 추가 실패"));
 	}
+
+	if (IsLocallyControlled())
+	{
+	// 	MultiRPC_ItemCount(true);
+	// 	FString NetMode = GetNetMode() == NM_Client ? TEXT("Client") : TEXT("Server");
+	// 	UE_LOG(LogTemp, Warning, TEXT("[%s] [PickupItem]"), *NetMode);
+	// }
+	// else
+	// {
+		FString NetMode = GetNetMode() == NM_Client ? TEXT("Client") : TEXT("Server");
+		
+		if (GI)
+		{
+			if (GetNetMode() == NM_Client)
+			{
+				ServerRPC_Count();
+			}
+			else
+			{
+				GI->GetItemCount++;
+				if (GS)
+				{
+					GS->SharedItemCount = GI->GetItemCount;
+					GS->SetSharedItemCount(GS->SharedItemCount);
+				}
+				PRINTLOG(TEXT("[PickupItem] ItemCount: %d"), GI->GetItemCount);
+			}
+			
+			if (GI->GetItemCount >= 10)
+			{
+				ServerRPC_ItemCount(true);
+				
+				UE_LOG(LogTemp, Warning, TEXT("[%s] [PickupItem]"), *NetMode);
+			}
+		}
+		
+	}
+	
+}
+
+void APlayerCharacter::ServerRPC_Count_Implementation()
+{
+	GI->GetItemCount++;
+	if (GS)
+	{
+		GS->SharedItemCount = GI->GetItemCount;
+		GS->SetSharedItemCount(GS->SharedItemCount);
+	}
+	PRINTLOG(TEXT("[PickupItem] ItemCount: %d"), GI->GetItemCount);
+	FString NetMode = GetNetMode() == NM_Client ? TEXT("Client") : TEXT("Server");
+	UE_LOG(LogTemp, Warning, TEXT("[%s] [PickupItem]"), *NetMode);
 }
 
 void APlayerCharacter::ThrowPalSphere(const FInputActionValue& Value)
@@ -752,23 +823,25 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME(APlayerCharacter, WalkSpeed);
 }
 
-void APlayerCharacter::OnMissionCompleted(int32 itemCount)
+void APlayerCharacter::ServerRPC_ItemCount_Implementation(bool bIsCompleted)
 {
-	gi->ItemCount += itemCount;
-	UE_LOG(LogTemp, Warning, TEXT("[OnMissionCompleted] ItemCount : %d"), gi->ItemCount);
-	
-	//미션 완료시 체크 박스 체크
-	if (gi->ItemCount >= 10)
-	{
-		MultiRPC_GoalCheckBox();
-	}
+	UE_LOG(LogTemp, Warning, TEXT("[ServerRPC_ItemCount] 791 bIsCompleted = %d"), bIsCompleted);
+	MultiRPC_ItemCount(bIsCompleted);
 }
 
-void APlayerCharacter::MultiRPC_GoalCheckBox_Implementation()
+void APlayerCharacter::MultiRPC_ItemCount_Implementation(bool bIsCompleted)
 {
-	//모든 클라 호출
-	if (auto pc = Cast<APWPlayerController>(GetWorld()->GetFirstPlayerController()))
+	UE_LOG(LogTemp, Warning, TEXT("[MultiRPC_ItemCount] 797 bIsCompleted = %d"), bIsCompleted);
+	//모든 클라에서 호출된다.
+	auto pc = Cast<APWPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (pc)
 	{
-		pc->goalWidget->quest_checkBox->SetIsChecked(true);
+		auto player = pc->GetPawn<APlayerCharacter>();
+		if (player && player->GoalUI)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[%s][MultiRPC_ItemCount] 802 bIsCompleted = %d"), GetNetMode()==NM_Client?TEXT("Client") : TEXT("Server"), bIsCompleted);
+			pc->goalWidget = Cast<UGoalWidget>(player->GoalUI);
+			pc->goalWidget->OnCheckMissionCompleted(bIsCompleted);
+		}
 	}
 }

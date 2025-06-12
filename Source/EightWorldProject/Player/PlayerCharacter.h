@@ -276,18 +276,25 @@ public: //------------------네트워크----------------------
 	
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-public: //---------------미션----------------------
-	//GameInstance
-	UPROPERTY()
-	class UPWGameInstance* gi;
+public: //---------얻은 자원--------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UGoalWidget> GoalUIWiget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UGoalWidget* GoalUI;
 
-	//미션 완료 함수
-	UFUNCTION()
-	void OnMissionCompleted(int32 itemCount);
+	UPROPERTY()
+	class UPWGameInstance* GI;
+
+	UPROPERTY()
+	class APWGameState* GS;
 	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_Count();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ItemCount(bool bIsCompleted);
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiRPC_GoalCheckBox();
-	
+	void MultiRPC_ItemCount(bool bIsCompleted);
 };
 
 

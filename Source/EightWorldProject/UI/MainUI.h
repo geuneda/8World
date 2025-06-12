@@ -13,7 +13,9 @@ UCLASS()
 class EIGHTWORLDPROJECT_API UMainUI : public UUserWidget
 {
 	GENERATED_BODY()
-
+public:
+	virtual void NativeConstruct() override;
+	
 public:
 	
 	UPROPERTY(meta=(BindWidget))
@@ -31,4 +33,5 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetBuildModeUIVisible(bool bVisible);
+	
 };

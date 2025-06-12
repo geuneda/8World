@@ -4,8 +4,16 @@
 #include "MainUI.h"
 
 #include "BuildModeUI.h"
+#include "GoalWidget.h"
 #include "Components/Image.h"
 #include "Components/Widget.h"
+#include "EightWorldProject/Player/PlayerCharacter.h"
+
+void UMainUI::NativeConstruct()
+{
+	Super::NativeConstruct();
+	
+}
 
 void UMainUI::SetCrosshair(bool bIsVisible)
 {
@@ -19,3 +27,4 @@ void UMainUI::SetBuildModeUIVisible(bool bVisible)
 		BuildModeUI->SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 	}
 }
+

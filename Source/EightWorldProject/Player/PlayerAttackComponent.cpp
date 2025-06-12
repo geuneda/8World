@@ -141,7 +141,7 @@ void UPlayerAttackComponent::OnAttackTiming()
 	// 감지된 대상에 데미지 적용
 	// if (!GetOwner()->HasAuthority())
 
-	UE_LOG(LogTemp, Warning, TEXT("player : %s, has Controller : %d"), player?TEXT("Valid"):TEXT("Not Valid"), player?player->IsLocallyControlled() : -1);
+	//UE_LOG(LogTemp, Warning, TEXT("player : %s, has Controller : %d"), player?TEXT("Valid"):TEXT("Not Valid"), player?player->IsLocallyControlled() : -1);
 	if (player && player->IsLocallyControlled())
 	{
 		// 나한테 PlayerController 가 있어야 한다.
@@ -165,7 +165,7 @@ void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation()
 	
 	TArray<AActor*> Targets = DetectAttackTargets();
 
-	UE_LOG(LogTemp, Warning, TEXT("------------------------------Server RPC ApplyDamage"));
+	//UE_LOG(LogTemp, Warning, TEXT("------------------------------Server RPC ApplyDamage"));
 	// 감지된 대상에 데미지 적용
 	ApplyDamageToTargets(Targets);
 	// 콜라이더 비활성화 (타이밍에만 잡아야 함)
@@ -227,7 +227,7 @@ TArray<AActor*> UPlayerAttackComponent::DetectAttackTargets()
 	
 	// 자기 자신 제외
 	TArray<AActor*> ValidTargets;
-	UE_LOG(LogTemp, Warning, TEXT("Detected =====================> %d"), OverlappingActors.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("Detected =====================> %d"), OverlappingActors.Num());
 	for (AActor* Actor : OverlappingActors)
 	{
 		// 자기 자신 제외
@@ -255,7 +255,7 @@ void UPlayerAttackComponent::ApplyDamageToTargets(const TArray<AActor*>& Targets
 	// }
 	//
 	// 데미지 적용
-	UE_LOG(LogTemp, Warning, TEXT("Targets --------------> %d"), Targets.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("Targets --------------> %d"), Targets.Num());
 	for (AActor* Target : Targets)
 	{
 		if (Target)

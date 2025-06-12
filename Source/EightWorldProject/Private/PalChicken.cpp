@@ -9,8 +9,11 @@
 #include "PalChickenAnimInstance.h"
 #include "PWAIController.h"
 #include "PWGameInstance.h"
+#include "PWGameState.h"
+#include "PWPlayerController.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -106,8 +109,9 @@ void APalChicken::BeginPlay()
 
 	IntervalDamage = 10.f;
 
-	//GameInstance
-	gi = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
+	GI = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
+	GS = Cast<APWGameState>(GetWorld()->GetGameState());
+	
 }
 
 void APalChicken::Tick(float DeltaTime)
@@ -779,12 +783,41 @@ void APalChicken::CarriedItemDestroy()
 		//아이템 파괴
 		TargetItem->Destroy();
 
-		//미션 아이템 개수 추가
-		gi->OnMissionComplete.Broadcast(1);
+		//획득 아이템 개수 증가
+		if (!GetWorldTimerManager().IsTimerActive(itemHandle))
+		{
+			GetWorldTimerManager().SetTimer(itemHandle, this, &APalChicken::AddItemCount, 1.f, false);
+		}
 		
 		//반복을 위한 상태 변화
 		SetPalCarrierState(EPalCarrierState::Return, nullptr);
 	}
+}
+
+void APalChicken::AddItemCount()
+{
+	PRINTLOG(TEXT("[PalChicken AddItemCount]"));
+	
+	if (GI)
+	{
+		GI->GetItemCount++;
+		PRINTLOG(TEXT("[AddItemCount] ItemCount: %d"), GI->GetItemCount);
+		if (GI->GetItemCount >= 10)
+		{
+			auto pc = Cast<APWPlayerController>(GetWorld()->GetFirstPlayerController());
+			if (pc)
+			{
+				PRINTLOG(TEXT("[PalChicken AddItemCount] MultiRPC_ItemCount"));
+				pc->myPlayer->MultiRPC_ItemCount(true);
+			}
+		}
+		if (GS)
+		{
+			GS->SharedItemCount = GI->GetItemCount;
+			GS->SetSharedItemCount(GS->SharedItemCount);
+		}
+	}
+	
 }
 
 void APalChicken::HandleCarrierReturn()
