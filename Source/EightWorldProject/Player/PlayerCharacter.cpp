@@ -560,7 +560,7 @@ void APlayerCharacter::ConsumeManaForSprint()
 	{
 		// 마나 감소
 		float CurrentMP = PlayerStatComp->GetMP();
-		PlayerStatComp->SetMP(CurrentMP - 1.0f);
+		PlayerStatComp->SetMP(CurrentMP - 5.0f);
 		
 		// 마나가 0이 되면 달리기 중지
 		if (PlayerStatComp->GetMP() <= 0)

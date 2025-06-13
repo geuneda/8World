@@ -24,7 +24,7 @@ UPlayerAttackComponent::UPlayerAttackComponent()
 	AttackCollider->SetCollisionObjectType(ECC_Pawn);
 	AttackCollider->SetCollisionResponseToAllChannels(ECR_Overlap);
 
-	SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 }
 
 // 게임 시작 시 호출

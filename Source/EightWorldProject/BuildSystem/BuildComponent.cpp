@@ -31,7 +31,7 @@ UBuildComponent::UBuildComponent()
 		Foundation = FoundationObj.Object;
 	}
 
-	SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 }
 
 

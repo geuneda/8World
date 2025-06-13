@@ -16,6 +16,9 @@ class EIGHTWORLDPROJECT_API APWGameState : public AGameStateBase
 
 public:
 	APWGameState();
+
+	virtual void BeginPlay() override;
+	
 	//공유되는 아이템개수
 	UPROPERTY(ReplicatedUsing = OnRep_Count)
 	int32 SharedItemCount;

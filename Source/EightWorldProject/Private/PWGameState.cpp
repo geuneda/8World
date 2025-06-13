@@ -14,6 +14,17 @@ APWGameState::APWGameState()
 	SharedItemCount = 0;
 }
 
+void APWGameState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (HasAuthority())
+	{
+		SharedItemCount = 0;
+		OnRep_Count(); // UI도 초기화
+	}
+}
+
 void APWGameState::SetSharedItemCount(int32 NewCount)
 {
 	if (HasAuthority())
@@ -41,6 +52,7 @@ void APWGameState::OnRep_Count()
 				{
 					pc->missionCompleteWidget = Cast<UMissionCompleteWidget>(player->missionCompleteUI);
 					pc->missionCompleteWidget->AddToViewport();
+					pc->SetShowMouseCursor(true);
 				}
 			}
 			else

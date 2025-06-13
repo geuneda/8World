@@ -112,7 +112,16 @@ void APalYeti::BeginPlay()
 void APalYeti::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
+	if (PalMode != EPalMode::Worker)
+	{
+		FString state = UEnum::GetValueAsString(PalMode);
+		// UE_LOG(LogTemp, Warning, TEXT("state -----------> %s"), *state);
+		
+	}
 	//팰 모드 분류
 	switch (PalMode)
 	{
@@ -139,6 +148,8 @@ void APalYeti::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void APalYeti::SwitchWildState(float deltaTime)
 {
+	FString s = UEnum::GetValueAsString(PalWildState);
+	//UE_LOG(LogTemp, Warning, TEXT("---------------> PalWildState : %s"), *s);
 	switch (PalWildState)
 	{
 		case EPalWildState::Patrol:
@@ -329,15 +340,17 @@ void APalYeti::HandleWildChase()
 	//Target 플레이어로 이동하기
 	FVector meLoc = this->GetActorLocation();
 	FVector playerLoc = player->GetActorLocation();
-	
+	UE_LOG(LogTemp, Warning, TEXT("1111111111111111111111111"));
 	//AIController Move To 
 	APWAIController* MyAIController = Cast<APWAIController>(GetController());
 	if (MyAIController)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("22222222222222222222222222222"));
 		//if (!bIsMoveToTarget)
 		//{
 			if (player)
 			{
+				UE_LOG(LogTemp, Warning, TEXT("33333333333333333333333333"));
 				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 				MyAIController->MoveToLocation(playerLoc);
 				bIsPatroling = false;

@@ -59,7 +59,6 @@ void APalBox::BeginPlay()
 		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &APalBox::OnBeginOverlap);
 		SphereComp->OnComponentEndOverlap.AddDynamic(this, &APalBox::OnEndOverlap);
 
-
 		//시작때 감지된 모든 리소스 액터 담아두기(나무, 돌)
 		GetWorldTimerManager().SetTimer(SearchResourceTimerHandle, this, &APalBox::SearchAllResources, 0.2f, false);
 		//시작때 감지된 모든 팰 Worker 담아두기 - 소환됐을때도 체크를 위해 반복
@@ -96,7 +95,7 @@ void APalBox::SearchAndSetPalMode()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APal::StaticClass(), AllPals);
 	for (AActor* actor : AllPals)
 	{
-		if (actor && !AllPalsInMap.Contains(actor) && actor->GetWorld()->IsPlayInEditor())
+		if (actor && !AllPalsInMap.Contains(actor))
 		{
 			APal* pal = Cast<APal>(actor);
 			if (pal)

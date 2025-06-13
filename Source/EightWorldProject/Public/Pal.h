@@ -178,7 +178,7 @@ public:
 	bool bIsPlayerOwned = false;
 
 	//플레이어
-	UPROPERTY(Replicated, BlueprintReadOnly)
+	UPROPERTY(Replicated, BlueprintReadWrite)
 	class APlayerCharacter* player;
 
 	//공용 저장 박스
