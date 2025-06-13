@@ -116,12 +116,7 @@ void APalYeti::Tick(float DeltaTime)
 	{
 		return;
 	}
-	if (PalMode != EPalMode::Worker)
-	{
-		FString state = UEnum::GetValueAsString(PalMode);
-		// UE_LOG(LogTemp, Warning, TEXT("state -----------> %s"), *state);
-		
-	}
+
 	//팰 모드 분류
 	switch (PalMode)
 	{
@@ -148,7 +143,7 @@ void APalYeti::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void APalYeti::SwitchWildState(float deltaTime)
 {
-	FString s = UEnum::GetValueAsString(PalWildState);
+	//FString s = UEnum::GetValueAsString(PalWildState);
 	//UE_LOG(LogTemp, Warning, TEXT("---------------> PalWildState : %s"), *s);
 	switch (PalWildState)
 	{

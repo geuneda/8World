@@ -117,7 +117,10 @@ void APalChicken::BeginPlay()
 void APalChicken::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	if (GetLocalRole() != ROLE_Authority)
+	{
+		return;
+	}
 	//팰 모드 분류
 	switch (PalMode)
 	{
