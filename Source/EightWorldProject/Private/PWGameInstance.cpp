@@ -3,6 +3,7 @@
 
 #include "PWGameInstance.h"
 #include "OnlineSessionSettings.h"
+#include "PWGameState.h"
 #include "EightWorldProject/EightWorldProject.h"
 #include "Online/OnlineSessionNames.h"
 
@@ -23,6 +24,9 @@ void UPWGameInstance::Init()
 
 		//세션 입장 이벤트 등록
 		sessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UPWGameInstance::OnJoinSessionComplete);
+
+		//세션 종료 이벤트 등록
+		sessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPWGameInstance::OnMyExitRoomComplete);
 	}
 
 	// //세션 생성 (비동기 처리한다. 동기처리하면 값이 위에서 안들어오면 모든게 멈춘다. 연결이 완료되는 것까지 고려해서 지연시간을 두기 / 테스트용)
@@ -33,7 +37,7 @@ void UPWGameInstance::Init()
 	// 	FindOtherSessions();
 	// }), 2, false);
 
-	
+	GEngine->OnNetworkFailure().AddUObject(this, &UPWGameInstance::OnNetworkFailure);
 }
 
 void UPWGameInstance::CreateMySession(FString roomName, int32 playerCount)
@@ -202,6 +206,54 @@ void UPWGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCom
 	{
 		PRINTLOG(TEXT("JoinSessionComplete Failed : %d"), Result);
 	}
-
-
+	
 }
+
+void UPWGameInstance::ExitRoom()
+{
+	ServerRPC_ExitRoom();
+}
+
+void UPWGameInstance::ServerRPC_ExitRoom_Implementation()
+{
+	GS = Cast<APWGameState>(GetWorld()->GetGameState());
+	if (GS)
+	{
+		GS->SharedItemCount = 0;
+	}
+	MultiRPC_ExitRoom();
+}
+
+void UPWGameInstance::MultiRPC_ExitRoom_Implementation()
+{
+	//세션종료
+	sessionInterface->DestroySession(FName(*mySessionName));
+}
+
+void UPWGameInstance::OnMyExitRoomComplete(FName sessionName, bool bWasSuccessful)
+{
+	auto pc = GetWorld()->GetFirstPlayerController();
+	FString url = TEXT("/Game/PalWorld/Maps/MyLobbyMap");
+	pc->ClientTravel(url, TRAVEL_Absolute);
+
+	PRINTLOG(TEXT("----------------방나가기--------------"));
+}
+
+void UPWGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType,
+	const FString& ErrorString)
+{
+	//서버와의 연결이 끊기면 정상적으로 방을 나가기.
+	if (FailureType == ENetworkFailure::ConnectionLost)
+	{
+		MultiRPC_ExitRoom_Implementation();
+	}
+}
+
+
+bool UPWGameInstance::IsInRoom()
+{
+	//방이 살아있는지 체크(방에 플레이어가 있는지 체크)
+	FUniqueNetIdPtr uniqueId = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
+	return sessionInterface->IsPlayerInSession(FName(*mySessionName), *uniqueId);
+}
+

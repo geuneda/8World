@@ -13,4 +13,14 @@ UCLASS()
 class EIGHTWORLDPROJECT_API UMissionCompleteWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	virtual void NativeConstruct() override;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UButton* btn_home;
+
+	//게임 종료 - 나가기
+	UFUNCTION()
+	void OnExitClicked();
 };

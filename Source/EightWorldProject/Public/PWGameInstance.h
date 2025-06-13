@@ -82,4 +82,22 @@ public: //-----------세션(방) 입장 -------------------
 
 public: //--------아이템 획득 수----------------
 	int32 GetItemCount = 0;
+
+public://----------나가기---------------
+	UPROPERTY()
+	class APWGameState* GS;
+	
+	void ExitRoom();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_ExitRoom();
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_ExitRoom();
+
+	void OnMyExitRoomComplete(FName sessionName, bool bWasSuccessful);
+
+	//아직 게임 방(세션)안에 있는지 여부
+	bool IsInRoom();
+
+	void OnNetworkFailure(UWorld* World, UNetDriver *NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString = TEXT(""));
 };

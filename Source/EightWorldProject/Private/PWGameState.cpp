@@ -43,6 +43,17 @@ void APWGameState::OnRep_Count()
 					pc->missionCompleteWidget->AddToViewport();
 				}
 			}
+			else
+			{
+				pc->goalWidget = Cast<UGoalWidget>(player->GoalUI);
+				pc->goalWidget->OnCheckMissionCompleted(false);
+
+				// if (player->missionCompleteUI)
+				// {
+				// 	pc->missionCompleteWidget = Cast<UMissionCompleteWidget>(player->missionCompleteUI);
+				// 	pc->missionCompleteWidget->AddToViewport();
+				// }
+			}
 		}
 
 
