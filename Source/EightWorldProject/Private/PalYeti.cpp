@@ -834,7 +834,10 @@ void APalYeti::OnRep_MoveToTarget()
 void APalYeti::OnRep_WorkAnim()
 {
 	Super::OnRep_WorkAnim();
-	YetiAnimInstance->bIsWorking = bIsPlayingWorkAnim;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsWorking = bIsPlayingWorkAnim;
+	}
 }
 
 void APalYeti::HandleWorkerWorking()

@@ -258,7 +258,7 @@ void APlayerCharacter::ServerRPC_Attack_Implementation()
 		return;
 	}
 	
-	UE_LOG(LogTemp, Warning, TEXT("공격!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
+	UE_LOG(LogTemp, Warning, TEXT("공격!"));
 	if (PlayerAttackComp && !IsInventoryOpen())
 	{
 		PlayerAttackComp->StartAttack();
