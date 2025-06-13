@@ -34,7 +34,6 @@ void APWGameState::OnRep_Count()
 		{
 			if (SharedItemCount >= 10)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("[%s][OnRep_Count] "), GetNetMode()==NM_Client?TEXT("Client") : TEXT("Server"));
 				pc->goalWidget = Cast<UGoalWidget>(player->GoalUI);
 				pc->goalWidget->OnCheckMissionCompleted(true);
 
