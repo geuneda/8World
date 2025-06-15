@@ -15,6 +15,8 @@ class EIGHTWORLDPROJECT_API USessionSlotWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+	USessionSlotWidget(const FObjectInitializer& ObjectInitializer);
+	
 	virtual void NativeConstruct() override;
 	
 public:
@@ -37,4 +39,15 @@ public:
 	//세션(방) 입장 함수
 	UFUNCTION()
 	void JoinSession();
+
+public: //-------------사운드----------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* mouseHoverSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* mouseClickSound;
+
+	UFUNCTION()
+	void OnHoveredJoinButton();
+	
 };

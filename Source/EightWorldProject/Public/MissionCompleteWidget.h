@@ -15,6 +15,8 @@ class EIGHTWORLDPROJECT_API UMissionCompleteWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UMissionCompleteWidget(const FObjectInitializer& ObjectInitializer);
+	
 	virtual void NativeConstruct() override;
 	
 	UPROPERTY(meta = (BindWidget))
@@ -23,4 +25,14 @@ public:
 	//게임 종료 - 나가기
 	UFUNCTION()
 	void OnExitClicked();
+
+public: //----------사운드---------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* mouseHoverSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* mouseClickSound;
+
+	UFUNCTION()
+	void OnHoveredHomeButton();
 };

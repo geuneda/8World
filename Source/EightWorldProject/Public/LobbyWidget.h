@@ -14,6 +14,8 @@ class EIGHTWORLDPROJECT_API ULobbyWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
+	ULobbyWidget(const FObjectInitializer& ObjectInitializer);
+	
 	virtual void NativeConstruct() override;
 	
 public: //-----------바인딩---------------
@@ -60,6 +62,12 @@ public: //-----------바인딩---------------
 	//방검색 메세지
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* txt_findingMsg;
+
+	//게임시작, 게임종료 텍스트
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* txt_gameStart;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* txt_gameQuit;
 	
 	//GameInstance
 	UPROPERTY()
@@ -99,4 +107,36 @@ public: //-----------바인딩---------------
 	//방찾기 상태 이벤트 콜백
 	UFUNCTION()
 	void OnFindStateEnable(bool bIsSearching);
+
+public: //-------------사운드--------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* mouseHoverSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* mouseClickSound;
+
+	//Canvas GameStart
+	UFUNCTION()
+	void OnHoveredStartButton();
+	UFUNCTION()
+	void OnHoveredQuitButton();
+	UFUNCTION()
+	void OnUnHoveredStartButton();
+	UFUNCTION()
+	void OnUnHoveredQuitButton();
+
+	//Canvas FindRoom
+	UFUNCTION()
+	void OnHoveredFindButton();
+	UFUNCTION()
+	void OnHoveredBackButton();
+	UFUNCTION()
+	void OnHoveredCreateSessionButton();
+
+	//Canvas CreateRoom
+	UFUNCTION()
+	void OnHoveredCreateRoomButton();
+	UFUNCTION()
+	void OnHoveredBack1Button();
+	
 };

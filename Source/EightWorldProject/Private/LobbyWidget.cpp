@@ -14,6 +14,23 @@
 #include "Components/VerticalBox.h"
 #include "Kismet/GameplayStatics.h"
 
+ULobbyWidget::ULobbyWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	//Hover Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempHoverSound(TEXT("/Game/PalWorld/Sound/_ButtonHover_422836__gamedevc__g_ui_button_hover_1"));
+	if (tempHoverSound.Succeeded())
+	{
+		mouseHoverSound = tempHoverSound.Object;
+	}
+
+	//Click Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempClickSound(TEXT("/Game/PalWorld/Sound/_ButtonClick_digital-click-357350"));
+	if (tempClickSound.Succeeded())
+	{
+		mouseClickSound = tempClickSound.Object;
+	}
+}
+
 void ULobbyWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -22,22 +39,27 @@ void ULobbyWidget::NativeConstruct()
 	
 	//Create Room 바인딩
 	btn_createRoom->OnClicked.AddDynamic(this, &ULobbyWidget::CreateRoom);
+	btn_createRoom->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredCreateRoomButton);
 	//Slider PlayerCount 바인딩
 	slider_playerCount->OnValueChanged.AddDynamic(this, &ULobbyWidget::OnValueChanged);
 
 	//widget switcher 이벤트
 	btn_createSession->OnClicked.AddDynamic(this, &ULobbyWidget::SwitchCreatePanel);
+	btn_createSession->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredCreateSessionButton);
 	btn_findSession->OnClicked.AddDynamic(this, &ULobbyWidget::SwitchFindPanel);
 
 	//뒤로가기
 	btn_back->OnClicked.AddDynamic(this, &ULobbyWidget::BackToMain);
+	btn_back->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredBackButton);
 	btn_back_1->OnClicked.AddDynamic(this, &ULobbyWidget::BackToServerList);
+	btn_back_1->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredBack1Button);
 
 	//세션 찾았을 때 호출될 콜백 함수 등록
 	gi->OnSearchComplete.AddDynamic(this, &ULobbyWidget::AddSlotWidget);
 
 	//방검색
 	btn_find->OnClicked.AddDynamic(this, &ULobbyWidget::OnClickedFindSession);
+	btn_find->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredFindButton);
 
 	//방 검색 중일때 호출될 콜백 함수 등록
 	gi->OnSearchState.AddDynamic(this, &ULobbyWidget::OnFindStateEnable);
@@ -47,10 +69,21 @@ void ULobbyWidget::NativeConstruct()
 	//게임 종료 바인딩
 	btn_gameQuit->OnClicked.AddDynamic(this, &ULobbyWidget::ULobbyWidget::SwitchGameQuit);
 
+	//Mouse Hover
+	btn_gameStart->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredStartButton);
+	btn_gameQuit->OnHovered.AddDynamic(this, &ULobbyWidget::OnHoveredQuitButton);
+	//Mouse UnHover
+	btn_gameStart->OnUnhovered.AddDynamic(this, &ULobbyWidget::OnUnHoveredStartButton);
+	btn_gameQuit->OnUnhovered.AddDynamic(this, &ULobbyWidget::OnUnHoveredQuitButton);
 }
 
 void ULobbyWidget::CreateRoom()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
+	
 	//값이 있을때 가져오기
 	if (gi && edit_roomName->GetText().IsEmpty() == false)
 	{
@@ -67,12 +100,22 @@ void ULobbyWidget::OnValueChanged(float value)
 
 void ULobbyWidget::SwitchSelectServerPanel()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
+	
 	WidgetSwitcher->SetActiveWidgetIndex(1);
 	OnClickedFindSession();
 }
 
 void ULobbyWidget::SwitchGameQuit()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
+	
 	//게임 종료
 	if (auto pc = GetWorld()->GetFirstPlayerController())
 	{
@@ -83,6 +126,10 @@ void ULobbyWidget::SwitchGameQuit()
 //방목록 검색 화면
 void ULobbyWidget::SwitchCreatePanel()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
 	WidgetSwitcher->SetActiveWidgetIndex(2);
 }
 
@@ -94,11 +141,19 @@ void ULobbyWidget::SwitchFindPanel()
 
 void ULobbyWidget::BackToMain()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
 	WidgetSwitcher->SetActiveWidgetIndex(0);
 }
 
 void ULobbyWidget::BackToServerList()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
 	WidgetSwitcher->SetActiveWidgetIndex(1);
 }
 
@@ -115,6 +170,11 @@ void ULobbyWidget::AddSlotWidget(const struct FSessionInfo& sessionInfo)
 
 void ULobbyWidget::OnClickedFindSession()
 {
+	if (mouseClickSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseClickSound);
+	}
+	
 	//기존 슬롯이 있다면 모두 지운다.
 	//Scroll_roomList->ClearChildren();
 	vertical_roomList->ClearChildren();
@@ -141,4 +201,80 @@ void ULobbyWidget::OnFindStateEnable(bool bIsSearching)
 		txt_findingMsg->SetVisibility((ESlateVisibility::Hidden));
 	}
 
+}
+
+void ULobbyWidget::OnHoveredStartButton()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
+	FSlateFontInfo Startfont = txt_gameStart->GetFont();
+	Startfont.Size = 35.f;
+	txt_gameStart->SetFont(Startfont);
+}
+
+void ULobbyWidget::OnHoveredQuitButton()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
+	FSlateFontInfo Quitfont = txt_gameQuit->GetFont();
+	Quitfont.Size = 35.f;
+	txt_gameQuit->SetFont(Quitfont);
+}
+
+void ULobbyWidget::OnUnHoveredStartButton()
+{
+	FSlateFontInfo Startfont = txt_gameStart->GetFont();
+	Startfont.Size = 30.f;
+	txt_gameStart->SetFont(Startfont);
+}
+
+void ULobbyWidget::OnUnHoveredQuitButton()
+{
+	FSlateFontInfo Quitfont = txt_gameQuit->GetFont();
+	Quitfont.Size = 30.f;
+	txt_gameQuit->SetFont(Quitfont);
+}
+
+void ULobbyWidget::OnHoveredFindButton()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
+}
+
+void ULobbyWidget::OnHoveredBackButton()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
+}
+
+void ULobbyWidget::OnHoveredCreateSessionButton()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
+}
+
+void ULobbyWidget::OnHoveredCreateRoomButton()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
+}
+
+void ULobbyWidget::OnHoveredBack1Button()
+{
+	if (mouseHoverSound)
+	{
+		UGameplayStatics::PlaySound2D(this, mouseHoverSound);
+	}
 }
