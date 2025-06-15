@@ -100,4 +100,7 @@ public://----------나가기---------------
 	bool IsInRoom();
 
 	void OnNetworkFailure(UWorld* World, UNetDriver *NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString = TEXT(""));
+
+public: // ----------사운드------------
+
 };

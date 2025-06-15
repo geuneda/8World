@@ -13,4 +13,10 @@ UCLASS()
 class EIGHTWORLDPROJECT_API APWLobbyGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+	virtual void BeginPlay() override;
+
+	UPROPERTY()
+	class UPWGameInstance* GI;
 };

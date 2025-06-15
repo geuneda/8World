@@ -2,3 +2,13 @@
 
 
 #include "PWLobbyGameMode.h"
+
+#include "PWGameInstance.h"
+
+void APWLobbyGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	GI = Cast<UPWGameInstance>(GetGameInstance());
+	
+}

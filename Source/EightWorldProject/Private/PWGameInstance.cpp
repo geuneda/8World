@@ -2,6 +2,9 @@
 
 
 #include "PWGameInstance.h"
+
+#include <ObjectArray.h>
+
 #include "OnlineSessionSettings.h"
 #include "PWGameState.h"
 #include "EightWorldProject/EightWorldProject.h"
@@ -38,6 +41,7 @@ void UPWGameInstance::Init()
 	// }), 2, false);
 
 	GEngine->OnNetworkFailure().AddUObject(this, &UPWGameInstance::OnNetworkFailure);
+	
 }
 
 void UPWGameInstance::CreateMySession(FString roomName, int32 playerCount)
