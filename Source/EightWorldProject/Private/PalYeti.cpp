@@ -1029,17 +1029,17 @@ void APalYeti::SetTableData()
 	Super::SetTableData();
 
 	//팰 속도
-	MoveSpeed = YetiInfo.MoveSpeed;
+	MoveSpeed = 200.f;
 	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 
 	//팰 순찰속도
-	PatrolSpeed = YetiInfo.PatrolSpeed;
+	PatrolSpeed = 20.f;
 	
 	//팰 도망속도
-	RunSpeed = YetiInfo.RunSpeed;
+	RunSpeed = 300.f;
 	
 	//팰 체력
-	MaxHP = YetiInfo.HP;
+	MaxHP = 100.f;
 	CurHP = MaxHP;
 	LastHP = MaxHP;
 	

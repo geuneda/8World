@@ -18,21 +18,21 @@ struct FPalInfoData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName PalMode;
 
-	//팰 체력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float HP;
-
-	//팰 순찰속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float PatrolSpeed;
-	
-	//팰 이동속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float MoveSpeed;
-
-	//팰 도망속도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float RunSpeed;
+	// //팰 체력
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// float HP;
+	//
+	// //팰 순찰속도
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// float PatrolSpeed;
+	//
+	// //팰 이동속도
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// float MoveSpeed;
+	//
+	// //팰 도망속도
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// float RunSpeed;
 	
 	//팰 작업종류
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

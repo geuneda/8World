@@ -836,17 +836,17 @@ inline void APalChicken::SetTableData()
 	Super::SetTableData();
 
 	//팰 속도
-	MoveSpeed = ChickenInfo.MoveSpeed;
+	MoveSpeed = 150.f;
 	this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 
 	//팰 순찰속도
-	PatrolSpeed = ChickenInfo.PatrolSpeed;
+	PatrolSpeed = 20.f;
 	
 	//팰 도망속도
-	RunSpeed = ChickenInfo.RunSpeed;
+	RunSpeed = 300.f;
 	
 	//팰 체력
-	MaxHP = ChickenInfo.HP;
+	MaxHP = 50.f;
 	CurHP = MaxHP;
 	LastHP = MaxHP;
 }
