@@ -316,6 +316,7 @@ void APalYeti::HandleWildPlayerHitToPal()
 	if (!this->bIsDamaged)
 	{
 		this->bIsDamaged = true;
+		OnRep_Damaged();
 		//YetiAnimInstance->bIsDamaged = this->bIsDamaged;
 	}
 	MultiRPC_WildPlayerHitToPal();
@@ -330,7 +331,29 @@ void APalYeti::MultiRPC_WildPlayerHitToPal_Implementation()
 void APalYeti::OnRep_Damaged()
 {
 	Super::OnRep_Damaged();
-	YetiAnimInstance->bIsDamaged = this->bIsDamaged;
+	if (YetiAnimInstance)
+	{
+		YetiAnimInstance->bIsDamaged = this->bIsDamaged;
+
+		if (YetiAnimInstance->bIsDamaged)
+		{
+			if (IceBeamEffect)
+			{
+				IceBeamEffect->SetActive(false);
+				IceBeamEffect2->SetActive(false);
+			}
+		}
+		else
+		{
+			if (IceBeamEffect)
+			{
+				IceBeamEffect->SetActive(true);
+				IceBeamEffect2->SetActive(true);
+			}
+		}
+	}
+
+	
 }
 
 void APalYeti::OnRep_AttackAnim()
