@@ -56,7 +56,7 @@ public:
 	float PlayerDetectDistance = 1000.f;
 	//팰 공격 범위
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float AttackDistance = 600.f;
+	float AttackDistance = 300.f;
 	
 	//기준이 되는 위치
 	UPROPERTY(visibleAnywhere)
@@ -133,6 +133,11 @@ public:
 	//피격 데미지
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* IceBeamEffect;
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* IceBeamEffect2;
+	
 public: //--------네트워크 RPC------------
 	//채집 팰 WorkerIdle 함수
 	UFUNCTION(NetMulticast, Reliable)

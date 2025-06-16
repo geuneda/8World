@@ -19,6 +19,14 @@ class UPlayerAttackComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+UENUM(BlueprintType)
+enum class EHitType : uint8
+{
+	Air,
+	Resource,
+	Pal
+};
+
 UCLASS(config=Game)
 class APlayerCharacter : public ACharacter
 {
@@ -300,6 +308,53 @@ public: //---------얻은 자원--------------
 	void ServerRPC_ItemCount(bool bIsCompleted);
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiRPC_ItemCount(bool bIsCompleted);
+
+
+public: //----------사운드----------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound)
+	class USoundBase* footStepSound;
+	UPROPERTY()
+	class UAudioComponent* footStepAudioComponent;
+
+	void UpdateFootStepSound();
+
+	UPROPERTY(ReplicatedUsing=OnRep_PitchMultiplier)
+	float PitchValue;
+	UFUNCTION()
+	void OnRep_PitchMultiplier();
+
+	//플레이어 공격 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound)
+	class USoundBase* HitAirSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound)
+	class USoundBase* HitResourceSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound)
+	class USoundBase* HitPalSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Attack|Sound")
+	USoundAttenuation* HitSoundAttenuation;
+	
+	void PlayerAttackSound(EHitType HitType);
+
+	//플레이어 아이템 줍기 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sound)
+	class USoundBase* ItemGetSound;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_ItemGetSound(FVector location);
+
+
+public: //-----카메라 쉐이크----------
+	// 카메라 쉐이크 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "CameraShake")
+	TSubclassOf<UCameraShakeBase> PalHitShakeClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "CameraShake")
+	TSubclassOf<UCameraShakeBase> ResourceHitShakeClass;
+
+	// 멀티캐스트 RPC - 클라이언트에 쉐이크 재생 명령
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayCameraShake(bool bPalHit, bool bResourceHit);
 };
 
 

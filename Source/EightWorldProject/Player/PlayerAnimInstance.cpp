@@ -156,7 +156,7 @@ void UPlayerAnimInstance::AnimNotify_AttackTiming()
 	{
 		return;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("11111111111111111111111111111 %d"), TryGetPawnOwner()->GetNetMode());
+	//UE_LOG(LogTemp, Warning, TEXT("11111111111111111111111111111 %d"), TryGetPawnOwner()->GetNetMode());
 	PlayerCharacter->PlayerAttackComp->OnAttackTiming();
 }
 

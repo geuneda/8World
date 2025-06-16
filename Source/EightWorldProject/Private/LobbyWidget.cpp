@@ -3,6 +3,7 @@
 
 #include "LobbyWidget.h"
 
+#include "LoadingWidget.h"
 #include "PWGameInstance.h"
 #include "Components/Button.h"
 #include "Components/EditableText.h"
@@ -28,6 +29,20 @@ ULobbyWidget::ULobbyWidget(const FObjectInitializer& ObjectInitializer) : Super(
 	if (tempClickSound.Succeeded())
 	{
 		mouseClickSound = tempClickSound.Object;
+	}
+
+	//EnterIngame Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempEnterSound(TEXT("/Game/PalWorld/Sound/_EnterIngame_665203__silverillusionist__level-upmission-complete-fantasy"));
+	if (tempEnterSound.Succeeded())
+	{
+		enterIngameSound = tempEnterSound.Object;
+	}
+
+	//loading widget
+	ConstructorHelpers::FClassFinder<ULoadingWidget> tempLoadingWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_Loading.WBP_Loading_C'"));
+	if (tempLoadingWidget.Succeeded())
+	{
+		loadingWidgetClass = tempLoadingWidget.Class;
 	}
 }
 
@@ -83,14 +98,41 @@ void ULobbyWidget::CreateRoom()
 	{
 		UGameplayStatics::PlaySound2D(this, mouseClickSound);
 	}
-	
-	//값이 있을때 가져오기
-	if (gi && edit_roomName->GetText().IsEmpty() == false)
+
+	if (loadingWidgetClass)
 	{
-		FString roomName = edit_roomName->GetText().ToString();
-		int32 playerCOunt = slider_playerCount->GetValue();
-		gi->CreateMySession(roomName, playerCOunt);
+		loadingWidget = CreateWidget<ULoadingWidget>(GetWorld(), loadingWidgetClass);
+		if (loadingWidget && gi && edit_roomName->GetText().IsEmpty() == false)
+		{
+			loadingWidget->AddToViewport();
+			loadingWidget->PlayAnimation(loadingWidget->FadeIn);
+			
+			const float TotalDelay = 2.0f;
+			FTimerHandle TimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+			{
+				if (enterIngameSound)
+				{
+					UGameplayStatics::PlaySound2D(this, enterIngameSound);
+				}
+				
+				FTimerHandle ExitHandle;
+				GetWorld()->GetTimerManager().SetTimer(ExitHandle, [&]()
+				{
+					loadingWidget->PlayAnimation(loadingWidget->FadeOut);
+					//값이 있을때 가져오기
+					//if (gi && edit_roomName->GetText().IsEmpty() == false)
+					//{
+						FString roomName = edit_roomName->GetText().ToString();
+						int32 playerCOunt = slider_playerCount->GetValue();
+						gi->CreateMySession(roomName, playerCOunt);
+					//}
+				}, 1.5f, false);
+				
+			}, TotalDelay, false);
+		}
 	}
+	
 }
 
 void ULobbyWidget::OnValueChanged(float value)

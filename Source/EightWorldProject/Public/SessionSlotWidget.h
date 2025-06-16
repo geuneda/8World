@@ -34,6 +34,11 @@ public:
 
 	int32 sessionNumber = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class ULoadingWidget> loadingWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class ULoadingWidget* loadingWidget;
+	
 	void Set(const struct FSessionInfo& sessionInfo);
 
 	//세션(방) 입장 함수
@@ -47,6 +52,9 @@ public: //-------------사운드----------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
 	USoundBase* mouseClickSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* enterIngameSound;
+	
 	UFUNCTION()
 	void OnHoveredJoinButton();
 	

@@ -2,6 +2,8 @@
 
 
 #include "SessionSlotWidget.h"
+
+#include "LoadingWidget.h"
 #include "PWGameInstance.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -21,6 +23,20 @@ USessionSlotWidget::USessionSlotWidget(const FObjectInitializer& ObjectInitializ
 	if (tempClickSound.Succeeded())
 	{
 		mouseClickSound = tempClickSound.Object;
+	}
+
+	//EnterIngame Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempEnterSound(TEXT("/Game/PalWorld/Sound/_EnterIngame_665203__silverillusionist__level-upmission-complete-fantasy"));
+	if (tempEnterSound.Succeeded())
+	{
+		enterIngameSound = tempEnterSound.Object;
+	}
+		
+	//loading widget
+	ConstructorHelpers::FClassFinder<ULoadingWidget> tempLoadingWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_Loading.WBP_Loading_C'"));
+	if (tempLoadingWidget.Succeeded())
+	{
+		loadingWidgetClass = tempLoadingWidget.Class;
 	}
 }
 
@@ -49,12 +65,43 @@ void USessionSlotWidget::JoinSession()
 	{
 		UGameplayStatics::PlaySound2D(this, mouseClickSound);
 	}
-	
-	auto gi = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
-	if (gi)
+
+	if (loadingWidgetClass)
 	{
-		gi->JoinSelectedSession(sessionNumber);
+		loadingWidget = CreateWidget<ULoadingWidget>(GetWorld(), loadingWidgetClass);
+		if (loadingWidget)
+		{
+			loadingWidget->AddToViewport();
+			loadingWidget->PlayAnimation(loadingWidget->FadeIn);
+			
+			const float TotalDelay = 2.0f;
+			FTimerHandle TimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+			{
+				if (enterIngameSound)
+				{
+					UGameplayStatics::PlaySound2D(this, enterIngameSound);
+				}
+				
+				FTimerHandle ExitHandle;
+				GetWorld()->GetTimerManager().SetTimer(ExitHandle, [&]()
+				{
+					//값이 있을때 입장하기
+					auto gi = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
+					if (gi)
+					{
+						gi->JoinSelectedSession(sessionNumber);
+						//loadingWidget->PlayAnimation(loadingWidget->FadeOut);
+					}
+				}, 1.5f, false);
+				
+			}, TotalDelay, false);
+		}
 	}
+	
+
+	
+
 }
 
 void USessionSlotWidget::OnHoveredJoinButton()

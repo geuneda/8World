@@ -1,12 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerAttackComponent.h"
+
+#include "Pal.h"
 #include "PlayerCharacter.h"
 #include "PlayerStatComp.h"
 #include "PlayerAnimInstance.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Character.h"
 #include "Animation/AnimMontage.h"
+#include "EightWorldProject/Resources/ResourceBase.h"
 #include "GameFramework/DamageType.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -18,6 +21,7 @@ UPlayerAttackComponent::UPlayerAttackComponent()
 
 	// 공격 콜라이더 생성
 	AttackCollider = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollider"));
+	AttackCollider->SetBoxExtent(FVector(50.f, 50.f, 50.f));
 	
 	// 콜라이더 설정
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -146,16 +150,57 @@ void UPlayerAttackComponent::OnAttackTiming()
 	{
 		// 나한테 PlayerController 가 있어야 한다.
 		ServerRPC_ApplyDamage();
+
+		if (bIsPal && !bIsResource)
+		{
+			player->PlayerAttackSound(EHitType::Pal);
+			player->Multicast_PlayCameraShake(true,false);
+		}
+		else if (bIsResource && !bIsPal)
+		{
+			player->PlayerAttackSound(EHitType::Resource);
+			player->Multicast_PlayCameraShake(false,true);
+		}
+		else if (!bIsPal && !bIsResource)
+		{
+			player->PlayerAttackSound(EHitType::Air);
+		}
 	}
-	// else
-	// {
-	// 	//ApplyDamageToTargets(Targets);
-	// }
 	
-	// 공격 이벤트 발생
-	// OnAttackExecuted.Broadcast();
-	
-	
+}
+
+void UPlayerAttackComponent::OnRep_ResourcePunch()
+{
+	auto player = Cast<APlayerCharacter>(GetOwner());
+	if (bIsPal && !bIsResource)
+	{
+		player->PlayerAttackSound(EHitType::Pal);
+	}
+	else if (bIsResource && !bIsPal)
+	{
+		player->PlayerAttackSound(EHitType::Resource);
+	}
+	else if (!bIsPal && !bIsResource)
+	{
+		player->PlayerAttackSound(EHitType::Air);
+	}
+}
+
+void UPlayerAttackComponent::OnRep_PalPunch()
+{
+	auto player = Cast<APlayerCharacter>(GetOwner());
+	if (bIsPal && !bIsResource)
+	{
+		player->PlayerAttackSound(EHitType::Pal);
+	}
+	else if (bIsResource && !bIsPal)
+	{
+		player->PlayerAttackSound(EHitType::Resource);
+	}
+	else if (!bIsPal && !bIsResource)
+	{
+		player->PlayerAttackSound(EHitType::Air);
+	}
 }
 
 void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation()
@@ -164,6 +209,11 @@ void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation()
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
 	TArray<AActor*> Targets = DetectAttackTargets();
+	if (Targets.Num() <= 0)
+	{
+		bIsPal = false;
+		bIsResource = false;
+	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("------------------------------Server RPC ApplyDamage"));
 	// 감지된 대상에 데미지 적용
@@ -240,6 +290,17 @@ TArray<AActor*> UPlayerAttackComponent::DetectAttackTargets()
 		if (Actor->CanBeDamaged())
 		{
 			ValidTargets.Add(Actor);
+
+			if (auto actor = Cast<APal>(Actor))
+			{
+				bIsResource = false;
+				bIsPal = true;
+			}
+			else if (auto act = Cast<AResourceBase>(Actor))
+			{
+				bIsResource = true;
+				bIsPal = false;
+			}
 		}
 	}
 	
@@ -271,10 +332,14 @@ void UPlayerAttackComponent::ApplyDamageToTargets(const TArray<AActor*>& Targets
 	}
 }
 
+
+
 void UPlayerAttackComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UPlayerAttackComponent, bIsAttackButtonPressed);
 	DOREPLIFETIME(UPlayerAttackComponent, bIsAttacking);
+	DOREPLIFETIME(UPlayerAttackComponent,bIsResource);
+	DOREPLIFETIME(UPlayerAttackComponent,bIsPal);
 }

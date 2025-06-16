@@ -15,6 +15,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalYeti, Log, All);
 DEFINE_LOG_CATEGORY(PalYeti);
@@ -48,7 +49,27 @@ APalYeti::APalYeti()
 	{
 		GetMesh()->SetAnimInstanceClass(tempAnimInstance.Class);
 	}
-	
+
+	// Cascade 파티클 에셋 로드
+	IceBeamEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("ParticleSystemComp"));
+	IceBeamEffect->SetupAttachment(GetMesh(), TEXT("IceBeamSocket")); // 소켓 이름 확인 필요
+	IceBeamEffect->bAutoActivate = false;
+
+	ConstructorHelpers::FObjectFinder<UParticleSystem> IceBeamAsset(TEXT("/Script/Engine.ParticleSystem'/Game/PalWorld/VFX/P_Flamethrower.P_Flamethrower'"));
+	if (IceBeamAsset.Succeeded())
+	{
+		IceBeamEffect->SetTemplate(IceBeamAsset.Object);
+	}
+
+	IceBeamEffect2 = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("ParticleSystemComp2"));
+	IceBeamEffect2->SetupAttachment(GetMesh(), TEXT("IceBeamSocket2")); // 소켓 이름 확인 필요
+	IceBeamEffect2->bAutoActivate = false;
+
+	ConstructorHelpers::FObjectFinder<UParticleSystem> IceBeamAsset2(TEXT("/Script/Engine.ParticleSystem'/Game/PalWorld/VFX/P_Flamethrower.P_Flamethrower'"));
+	if (IceBeamAsset2.Succeeded())
+	{
+		IceBeamEffect2->SetTemplate(IceBeamAsset2.Object);
+	}
 }
 
 // Called when the game starts or when spawned
@@ -316,6 +337,23 @@ void APalYeti::OnRep_AttackAnim()
 {
 	Super::OnRep_AttackAnim();
 	YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+
+	if (YetiAnimInstance && YetiAnimInstance->bIsAttacking)
+	{
+		if (IceBeamEffect)
+		{
+			IceBeamEffect->SetActive(true);
+			IceBeamEffect2->SetActive(true);
+		}
+	}
+	else if (YetiAnimInstance && !YetiAnimInstance->bIsAttacking)
+	{
+		if (IceBeamEffect)
+		{
+			IceBeamEffect->SetActive(false);
+			IceBeamEffect2->SetActive(false);
+		}
+	}
 }
 
 void APalYeti::HandleWildDetectPlayer()
@@ -407,7 +445,8 @@ void APalYeti::HandleWildAttack(float deltaTime)
 	if (!bIsPlayingAttackAnim)
 	{
 		bIsPlayingAttackAnim = true;
-		YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+		//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+		MultiRPC_WildEscapeAttackAnim();
 	}
 
 	//공격 범위 넘어가면 다시 chase 상태 전환
@@ -416,7 +455,8 @@ void APalYeti::HandleWildAttack(float deltaTime)
 		if (bIsPlayingAttackAnim)
 		{
 			bIsPlayingAttackAnim = false;
-			YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+			//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+			MultiRPC_WildEscapeAttackAnim();
 		}
 		SetPalWildState(EPalWildState::Chase);
 	}
@@ -470,6 +510,23 @@ void APalYeti::HandleWildEscape()
 void APalYeti::MultiRPC_WildEscapeAttackAnim_Implementation()
 {
 	YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+
+	if (YetiAnimInstance && YetiAnimInstance->bIsAttacking)
+	{
+		if (IceBeamEffect)
+		{
+			IceBeamEffect->SetActive(true);
+			IceBeamEffect2->SetActive(true);
+		}
+	}
+	else if (YetiAnimInstance && !YetiAnimInstance->bIsAttacking)
+	{
+		if (IceBeamEffect)
+		{
+			IceBeamEffect->SetActive(false);
+			IceBeamEffect2->SetActive(false);
+		}
+	}
 }
 
 void APalYeti::MultiRPC_WildEscapePatrol_Implementation()

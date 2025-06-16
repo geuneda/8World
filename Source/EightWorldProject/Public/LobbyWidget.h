@@ -55,6 +55,11 @@ public: //-----------바인딩---------------
 	UPROPERTY(EditDefaultsOnly, category = SlotWidget)
 	TSubclassOf<class USessionSlotWidget> sessionInfoWidget;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<class ULoadingWidget> loadingWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class ULoadingWidget* loadingWidget;
+	
 	//방검색 버튼
 	UPROPERTY(meta = (BindWidget))
 	class UButton* btn_find;
@@ -114,6 +119,9 @@ public: //-------------사운드--------------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
 	USoundBase* mouseClickSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* enterIngameSound;
 
 	//Canvas GameStart
 	UFUNCTION()

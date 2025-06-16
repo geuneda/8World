@@ -97,4 +97,16 @@ public: //--------네트워크---------------------
 	void ServerRPC_ApplyDamage();
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+public: //-------공격 대상---------------
+	UPROPERTY(ReplicatedUsing=OnRep_ResourcePunch)
+	bool bIsResource = false;
+	UPROPERTY(ReplicatedUsing=OnRep_PalPunch)
+	bool bIsPal = false;
+
+	UFUNCTION()
+	void OnRep_ResourcePunch();
+	UFUNCTION()
+	void OnRep_PalPunch();
 };

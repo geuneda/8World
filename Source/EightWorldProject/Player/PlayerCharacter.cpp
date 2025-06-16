@@ -23,9 +23,11 @@
 #include "Engine/LocalPlayer.h"
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
+#include "Components/AudioComponent.h"
 #include "Components/CheckBox.h"
 #include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/BuildSystem/BuildComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -149,10 +151,62 @@ APlayerCharacter::APlayerCharacter()
 	{
 		missionCompleteUIWidget = missionWidget.Class;
 	}
+
+	//FootStep Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempFootStepSound(TEXT("/Game/PalWorld/Sound/SC_FootStep"));
+	if (tempFootStepSound.Succeeded())
+	{
+		footStepSound = tempFootStepSound.Object;
+	}
 	
 	SetReplicates(true);
 	SetReplicateMovement(true);
+
 	
+	//Footstep sound setting
+	footStepAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
+	footStepAudioComponent->SetupAttachment(RootComponent);
+	footStepAudioComponent->SetSound(footStepSound);
+	footStepAudioComponent->bAutoActivate = false;
+
+
+	//Hit Air Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempHitAirSound(TEXT("/Game/PalWorld/Sound/SC_AirPunch"));
+	if (tempHitAirSound.Succeeded())
+	{
+		HitAirSound = tempHitAirSound.Object;
+	}
+	//Hit Resource Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempHitResourceSound(TEXT("/Game/PalWorld/Sound/SC_ResourcePunch"));
+	if (tempHitResourceSound.Succeeded())
+	{
+		HitResourceSound = tempHitResourceSound.Object;
+	}
+	//Hit Pal Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempHitPalSound(TEXT("/Game/PalWorld/Sound/SC_PalPunch"));
+	if (tempHitPalSound.Succeeded())
+	{
+		HitPalSound = tempHitPalSound.Object;
+	}
+
+	//Item Get Sound
+	ConstructorHelpers::FObjectFinder<USoundBase> tempItemGetSound(TEXT("/Game/PalWorld/Sound/SC_ItemGet"));
+	if (tempItemGetSound.Succeeded())
+	{
+		ItemGetSound = tempItemGetSound.Object;
+	}
+
+	//Shake Class
+	ConstructorHelpers::FClassFinder<UCameraShakeBase> tempPalShake(TEXT("/Script/Engine.Blueprint'/Game/PalWorld/Blueprints/BP_PalHitCameraShake.BP_PalHitCameraShake_C'"));
+	if (tempPalShake.Succeeded())
+	{
+		PalHitShakeClass = tempPalShake.Class;
+	}
+	ConstructorHelpers::FClassFinder<UCameraShakeBase> tempResourceShake(TEXT("/Script/Engine.Blueprint'/Game/PalWorld/Blueprints/BP_ResourceHitCameraShake.BP_ResourceHitCameraShake_C'"));
+	if (tempResourceShake.Succeeded())
+	{
+		ResourceHitShakeClass = tempResourceShake.Class;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -277,6 +331,24 @@ void APlayerCharacter::MultiRPC_Attack_Implementation()
 	}
 }
 
+void APlayerCharacter::Multicast_PlayCameraShake_Implementation(bool bPalHit, bool bResourceHit)
+{
+	APWPlayerController* PC = Cast<APWPlayerController>(GetController());
+
+	// 로컬 플레이어만 실행 (본인 클라만)
+	if (PC && PC->IsLocalController())
+	{
+		if (bPalHit && PalHitShakeClass)
+		{
+			PC->ClientStartCameraShake(PalHitShakeClass);
+		}
+		else if (bResourceHit && ResourceHitShakeClass)
+		{
+			PC->ClientStartCameraShake(ResourceHitShakeClass);
+		}
+	}
+}
+
 // 공격 입력 종료 처리
 void APlayerCharacter::StopAttack(const FInputActionValue& Value)
 {
@@ -328,6 +400,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+		
 	}
 }
 
@@ -354,7 +427,6 @@ void APlayerCharacter::MyJump(const FInputActionValue& Value)
 	// auto anim = Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 	//
 	// anim->PlayJumpMontage();
-
 	ServerRPC_Jump();
 }
 
@@ -364,6 +436,7 @@ void APlayerCharacter::ServerRPC_Jump_Implementation()
 	//JumpKeyHoldTime = 0.0f;
 	
 	MultiRPC_Jump();
+
 }
 
 void APlayerCharacter::MultiRPC_Jump_Implementation()
@@ -431,8 +504,7 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	GS = Cast<APWGameState>(GetWorld()->GetGameState());
-
-
+	
 }
 
 void APlayerCharacter::MainUIInit()
@@ -476,6 +548,10 @@ void APlayerCharacter::ServerRPC_Sprint_Implementation()
 	if (PlayerStatComp && PlayerStatComp->GetMP() > 0)
 	{
 		bIsSprinting = true;
+
+		PitchValue = 1.5f;
+		footStepAudioComponent->Stop();
+		footStepAudioComponent->PitchMultiplier = PitchValue;
 		
 		// 달리기 속도로 변경
 		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
@@ -508,6 +584,10 @@ void APlayerCharacter::ServerRPC_SprintStop_Implementation()
 {
 	bIsSprinting = false;
 
+	PitchValue = 1.f;
+	footStepAudioComponent->Stop();
+	footStepAudioComponent->PitchMultiplier = PitchValue;
+	
 	// 걷기 속도로 복귀
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 		
@@ -519,6 +599,12 @@ void APlayerCharacter::ServerRPC_SprintStop_Implementation()
 		
 	// 마나 소모 타이머 중지
 	GetWorldTimerManager().ClearTimer(SprintManaTimerHandle);
+}
+
+void APlayerCharacter::OnRep_PitchMultiplier()
+{
+	footStepAudioComponent->Stop();
+	footStepAudioComponent->PitchMultiplier = PitchValue;
 }
 
 void APlayerCharacter::OnRep_CheckSprint()
@@ -605,6 +691,11 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 	// 인벤토리에 추가 성공하면 아이템 제거
 	if (bAdded)
 	{
+		PRINTLOG(TEXT("[PickupItem] 아이템 인벤토리 추가 성공"));
+
+		//줍기 사운드 실행
+		MultiRPC_ItemGetSound(Item->GetActorLocation());
+		
 		Item->Destroy();
 	}
 	else
@@ -663,6 +754,26 @@ void APlayerCharacter::ServerRPC_Count_Implementation()
 	PRINTLOG(TEXT("[PickupItem] ItemCount: %d"), GI->GetItemCount);
 	FString NetMode = GetNetMode() == NM_Client ? TEXT("Client") : TEXT("Server");
 	UE_LOG(LogTemp, Warning, TEXT("[%s] [PickupItem]"), *NetMode);
+}
+
+void APlayerCharacter::MultiRPC_ItemGetSound_Implementation(FVector location)
+{
+	//아이템 줍기 사운드
+	if (ItemGetSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+		this,
+		ItemGetSound,
+		location,
+		FRotator::ZeroRotator,
+		1.0f,
+		1.0f,
+		0.0f,
+		HitSoundAttenuation,
+		nullptr,
+		true  // bAutoDestroy
+	);
+	}
 }
 
 void APlayerCharacter::ThrowPalSphere(const FInputActionValue& Value)
@@ -819,6 +930,33 @@ void APlayerCharacter::Tick(float DeltaTime)
 	
 	// 카메라 줌 업데이트
 	UpdateCameraZoom(DeltaTime);
+
+	//FootStep Sound 업데이트
+	UpdateFootStepSound();
+}
+
+void APlayerCharacter::UpdateFootStepSound()
+{
+	const FVector Velocity = GetVelocity();
+	const bool bIsMoving = Velocity.SizeSquared() > 10.0f; // 아주 작을 때 제외
+
+	//PRINTLOG(TEXT("Velocity.SizeSquared() : %f"), Velocity.SizeSquared());
+	
+	if (bIsMoving)
+	{
+		if (!footStepAudioComponent->IsPlaying())
+		{
+			
+			footStepAudioComponent->Play();
+		}
+	}
+	else
+	{
+		if (footStepAudioComponent->IsPlaying())
+		{
+			footStepAudioComponent->Stop();
+		}
+	}
 }
 
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -830,6 +968,7 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME(APlayerCharacter, bIsSprinting);
 	DOREPLIFETIME(APlayerCharacter, SprintSpeed);
 	DOREPLIFETIME(APlayerCharacter, WalkSpeed);
+	DOREPLIFETIME(APlayerCharacter, PitchValue);
 }
 
 void APlayerCharacter::ServerRPC_ItemCount_Implementation(bool bIsCompleted)
@@ -852,5 +991,39 @@ void APlayerCharacter::MultiRPC_ItemCount_Implementation(bool bIsCompleted)
 			pc->goalWidget = Cast<UGoalWidget>(player->GoalUI);
 			pc->goalWidget->OnCheckMissionCompleted(bIsCompleted);
 		}
+	}
+}
+
+void APlayerCharacter::PlayerAttackSound(EHitType HitType)
+{
+	USoundBase* SelectedSound = nullptr;
+
+	switch (HitType)
+	{
+	case EHitType::Air:
+		SelectedSound = HitAirSound;
+		break;
+	case EHitType::Resource:
+		SelectedSound = HitResourceSound;
+		break;
+	case EHitType::Pal:
+		SelectedSound = HitPalSound;
+		break;
+	}
+
+	if (SelectedSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			SelectedSound,
+			GetActorLocation(),
+			FRotator::ZeroRotator,
+			1.0f,
+			1.0f,
+			0.0f,
+			HitSoundAttenuation,
+			nullptr,
+			true  // bAutoDestroy
+		);
 	}
 }
