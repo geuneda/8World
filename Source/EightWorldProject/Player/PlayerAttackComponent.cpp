@@ -2,7 +2,11 @@
 
 #include "PlayerAttackComponent.h"
 
+#include "DamageTextActor.h"
 #include "Pal.h"
+#include "PalBox.h"
+#include "PalChicken.h"
+#include "PalYeti.h"
 #include "PlayerCharacter.h"
 #include "PlayerStatComp.h"
 #include "PlayerAnimInstance.h"
@@ -328,6 +332,28 @@ void UPlayerAttackComponent::ApplyDamageToTargets(const TArray<AActor*>& Targets
 				PlayerCharacter,                            // 데미지 원인 액터
 				UDamageType::StaticClass()                  // 데미지 유형
 			);
+
+			//팰박스 제외시키기
+			auto actor = Cast<APalBox>(Target);
+			auto yeti = Cast<APalYeti>(Target);
+			auto chicken = Cast<APalChicken>(Target);
+			if (!actor)
+			{
+				if (yeti && yeti->bIsWildMode || chicken && chicken->bIsWildMode)
+				{
+					FVector SpawnLocation = Target->GetActorLocation() + FVector(0, 0, 100);
+					FActorSpawnParameters params;
+					ADamageTextActor* DamageActor = GetWorld()->SpawnActor<ADamageTextActor>(PlayerCharacter->DamageTextActorClass, SpawnLocation, FRotator::ZeroRotator, params);
+					if (DamageActor)
+					{
+						DamageActor->SetDamageText(AttackDamage);
+						UE_LOG(LogTemp, Warning, TEXT("ShowDamage at: %s"), *Target->GetName());
+					}
+
+					PlayerCharacter->MultiRPC_ShowDamageText(Target->GetActorLocation() + FVector(0, 0, 100),AttackDamage);	
+				}
+			}
+
 		}
 	}
 }

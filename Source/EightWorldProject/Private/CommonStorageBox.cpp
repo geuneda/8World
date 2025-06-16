@@ -13,14 +13,14 @@ ACommonStorageBox::ACommonStorageBox()
 
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	BoxComp->SetupAttachment(RootComponent);
-	BoxComp->SetBoxExtent(FVector(50.f));
+	BoxComp->SetBoxExtent(FVector(45.f,45.f,40.f));
 
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetupAttachment(BoxComp);
-	MeshComp->SetRelativeLocationAndRotation(FVector(0.f), FRotator(0.f));
+	MeshComp->SetRelativeLocationAndRotation(FVector(-40.f, 40.f, -40.f), FRotator(0.f));
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	ConstructorHelpers::FObjectFinder<UStaticMesh> tempMesh(TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+	ConstructorHelpers::FObjectFinder<UStaticMesh> tempMesh(TEXT("/Script/Engine.StaticMesh'/Game/PalWorld/Box/wood-box/source/wood_box.wood_box'"));
 	if (tempMesh.Succeeded())
 	{
 		MeshComp->SetStaticMesh(tempMesh.Object);

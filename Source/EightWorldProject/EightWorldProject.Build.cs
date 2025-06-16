@@ -9,6 +9,6 @@ public class EightWorldProject : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { "Niagara" });
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "UMG", "NavigationSystem", "OnlineSubsystem", "OnlineSubsystemSteam"  });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "UMG", "NavigationSystem", "OnlineSubsystem", "OnlineSubsystemSteam", "Niagara"  });
 	}
 }

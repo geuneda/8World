@@ -15,6 +15,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalYeti, Log, All);
@@ -396,17 +398,17 @@ void APalYeti::HandleWildChase()
 	//Target 플레이어로 이동하기
 	FVector meLoc = this->GetActorLocation();
 	FVector playerLoc = player->GetActorLocation();
-	UE_LOG(LogTemp, Warning, TEXT("1111111111111111111111111"));
+	//UE_LOG(LogTemp, Warning, TEXT("1111111111111111111111111"));
 	//AIController Move To 
 	APWAIController* MyAIController = Cast<APWAIController>(GetController());
 	if (MyAIController)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("22222222222222222222222222222"));
+		//UE_LOG(LogTemp, Warning, TEXT("22222222222222222222222222222"));
 		//if (!bIsMoveToTarget)
 		//{
 			if (player)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("33333333333333333333333333"));
+				//UE_LOG(LogTemp, Warning, TEXT("33333333333333333333333333"));
 				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 				MyAIController->MoveToLocation(playerLoc);
 				bIsPatroling = false;
@@ -700,6 +702,7 @@ float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& Damage
 	//데미지 받았을 때 상태 전환
 	if (this->bIsWildMode)
 	{
+		
 		//일정 체력 이하로 떨어지면 Escape 상태로 변경
 		if (CurHP < 30 && CurHP > 0)
 		{
@@ -1132,3 +1135,4 @@ void APalYeti::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APalYeti, bIsPatroling);
 	//DOREPLIFETIME(APalYeti, GetMesh());
 }
+

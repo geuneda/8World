@@ -9,6 +9,7 @@
 #include "../Inventory/InventoryComponent.h"
 #include "../Inventory/InventoryWidget.h"
 #include "PalSphereComponent.h"
+#include "NiagaraSystem.h"
 #include "PlayerCharacter.generated.h"
 
 class USpringArmComponent;
@@ -355,6 +356,14 @@ public: //-----카메라 쉐이크----------
 	// 멀티캐스트 RPC - 클라이언트에 쉐이크 재생 명령
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlayCameraShake(bool bPalHit, bool bResourceHit);
+
+
+public: //----------데미지 위젯---------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class ADamageTextActor> DamageTextActorClass;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_ShowDamageText(FVector WorldLocation, float Damage);
 };
 
 

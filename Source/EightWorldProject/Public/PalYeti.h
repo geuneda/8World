@@ -6,6 +6,7 @@
 #include "Pal.h"
 #include "PWAIController.h"
 #include "GameFramework/Character.h"
+#include "NiagaraSystem.h"
 #include "PalYeti.generated.h"
 
 UCLASS()

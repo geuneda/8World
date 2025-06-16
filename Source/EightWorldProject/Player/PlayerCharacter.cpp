@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "PlayerCharacter.h"
+
+#include "DamageTextActor.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -1025,5 +1027,20 @@ void APlayerCharacter::PlayerAttackSound(EHitType HitType)
 			nullptr,
 			true  // bAutoDestroy
 		);
+	}
+}
+
+void APlayerCharacter::MultiRPC_ShowDamageText_Implementation(FVector WorldLocation, float Damage)
+{
+	if (DamageTextActorClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		ADamageTextActor* DamageActor = GetWorld()->SpawnActor<ADamageTextActor>(DamageTextActorClass, WorldLocation, FRotator::ZeroRotator, SpawnParams);
+		if (DamageActor)
+		{
+			DamageActor->SetDamageText(Damage);
+		}
 	}
 }
