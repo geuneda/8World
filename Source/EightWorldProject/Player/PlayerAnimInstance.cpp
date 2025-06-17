@@ -160,6 +160,23 @@ void UPlayerAnimInstance::AnimNotify_AttackTiming()
 	PlayerCharacter->PlayerAttackComp->OnAttackTiming();
 }
 
+void UPlayerAnimInstance::AnimNotify_AttackEnd()
+{
+	if (!PlayerCharacter)
+	{
+		return;
+	}
+
+	if (PlayerCharacter->IsLocallyControlled() == false)
+	{
+		return;
+	}
+	if (PlayerCharacter->PlayerAttackComp)
+	{
+		PlayerCharacter->PlayerAttackComp->OnAttackEnd();
+	}
+}
+
 void UPlayerAnimInstance::AnimNotify_Throw()
 {
 	if (!PlayerCharacter)
@@ -175,3 +192,5 @@ void UPlayerAnimInstance::AnimNotify_Throw()
 	// 팰스피어 컴포넌트에서 팰스피어 던지기 실행
 	PlayerCharacter->PalSphereComp->ThrowPalSphere();
 }
+
+

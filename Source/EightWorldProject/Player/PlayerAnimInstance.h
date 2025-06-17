@@ -41,6 +41,9 @@ public:
 	UFUNCTION()
 	void AnimNotify_AttackTiming();
 
+	UFUNCTION()
+	void AnimNotify_AttackEnd();
+
 	// 팰 스피어 투척 타이밍 애님 노티파이
 	UFUNCTION()
 	void AnimNotify_Throw();

@@ -6,7 +6,7 @@
 ATree::ATree()
 {
 	// 충돌 컴포넌트 크기 설정
-	Box->SetBoxExtent(FVector(50.0f, 50.0f, 150.0f));
+	Box->SetBoxExtent(FVector(90.0f, 90.0f, 150.0f));
 	
 	// 리소스 ID 설정
 	ResourceID = TEXT("Tree");
