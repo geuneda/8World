@@ -671,7 +671,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 		PlayerStatComp->SetHP(PlayerStatComp->GetHP()-ActualDamage);
 		PlayerStatComp->SetHP(FMath::Clamp(PlayerStatComp->GetHP(), 0.0f, PlayerStatComp->GetMaxHP()));
 
-		PRINTLOG(TEXT("Player : %s, PlayerStatComp GetHP : %f"), *this->GetName(), PlayerStatComp->GetHP());
+		//PRINTLOG(TEXT("Player : %s, PlayerStatComp GetHP : %f"), *this->GetName(), PlayerStatComp->GetHP());
 		
 		//MainUI->hp = PlayerStatComp->GetHP() / PlayerStatComp->GetMaxHP();
 		//OnRep_MyTakeDamage();
