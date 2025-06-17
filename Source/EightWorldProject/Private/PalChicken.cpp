@@ -278,7 +278,7 @@ void APalChicken::HandleWildPatrol()
 	{
 		return;
 	}
-	PRINTLOG(TEXT("bIsPatroling : %d"), bIsPatroling);
+	//PRINTLOG(TEXT("bIsPatroling : %d"), bIsPatroling);
 	if (!bIsPatroling)
 	{
 		//지정해둔 범위 내에 랜덤 위치 받아오기
@@ -286,7 +286,7 @@ void APalChicken::HandleWildPatrol()
 		//첫 시작 지점을 기준으로 지정
 		InitLocation = this->GetActorLocation();
 		bool bFound = NaviSystem->GetRandomReachablePointInRadius(InitLocation, PatrolRadius,RandomPoint);
-		PRINTLOG(TEXT("bFound : %d"), bFound);
+		//PRINTLOG(TEXT("bFound : %d"), bFound);
 		if (bFound)
 		{
 			//타겟 지정해서 저장, 애니메이션 실행, 팰 목표 장소 이동
@@ -301,7 +301,7 @@ void APalChicken::HandleWildPatrol()
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
-			UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol PatrolSpeed = %f"), PatrolSpeed);
+			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol PatrolSpeed = %f"), PatrolSpeed);
 		}
 	}
 	//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
@@ -640,7 +640,7 @@ void APalChicken::HandleCarrierPatrol()
 			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
 
-			PRINTLOG(TEXT("PatrolSpeed : %f"), PatrolSpeed);
+			//PRINTLOG(TEXT("PatrolSpeed : %f"), PatrolSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleCarrierPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
 		}

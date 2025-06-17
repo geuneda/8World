@@ -27,6 +27,9 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	class UBuildModeUI* BuildModeUI;
 
+	UPROPERTY(meta=(BindWidget))
+	class UProgressBar* HealthBar;
+	
 	UPROPERTY(BlueprintReadOnly, Category=HP)
 	float hp = 1.f; //최대값
 	

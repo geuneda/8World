@@ -324,7 +324,7 @@ void APalYeti::HandleWildPatrol()
 			OnRep_CheckDistance();
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
-			UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol PatrolSpeed = %f"), PatrolSpeed);
+			//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol PatrolSpeed = %f"), PatrolSpeed);
 		}
 	}
 	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
@@ -540,6 +540,10 @@ void APalYeti::HandleWildAttack(float deltaTime)
 		bIsPlayingAttackAnim = true;
 		//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
 		MultiRPC_WildEscapeAttackAnim();
+
+		player->bTakeDamage = true;
+		//1초마다 데미지 10주기
+		GetWorldTimerManager().SetTimer(attackTimerHandle, this, &APalYeti::ApplyDamageRepeat, 1.f, true);
 	}
 
 	//공격 범위 넘어가면 다시 chase 상태 전환
@@ -550,6 +554,9 @@ void APalYeti::HandleWildAttack(float deltaTime)
 			bIsPlayingAttackAnim = false;
 			//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
 			MultiRPC_WildEscapeAttackAnim();
+			//데미지 주기 멈춤
+			player->bTakeDamage = false;
+			GetWorldTimerManager().ClearTimer(attackTimerHandle);
 		}
 		SetPalWildState(EPalWildState::Chase);
 	}
@@ -562,6 +569,12 @@ void APalYeti::HandleWildAttack(float deltaTime)
 
 	FRotator newRotation = FMath::RInterpTo(currentRotation, playerRotation, deltaTime, 5.f);
 	SetActorRotation(newRotation);
+}
+
+void APalYeti::ApplyDamageRepeat()
+{
+	//플레이어한테 데미지 주기
+	UGameplayStatics::ApplyDamage(player, 10.f, GetController(), this, nullptr);
 }
 
 void APalYeti::HandleWildEscape()

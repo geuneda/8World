@@ -200,7 +200,12 @@ public: //-------------체력바---------------
 	virtual void OnRep_CurHP() override;
 	UFUNCTION()
 	void OnRep_CheckDistance();
-	
+
+
+public: //--------------플레이어 데미지를 지속적으로 주는 함수------------------
+	FTimerHandle attackTimerHandle;
+
+	void ApplyDamageRepeat();
 };
 
 

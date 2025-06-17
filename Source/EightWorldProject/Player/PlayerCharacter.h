@@ -364,6 +364,15 @@ public: //----------데미지 위젯---------
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiRPC_ShowDamageText(FVector WorldLocation, float Damage);
+
+
+	UPROPERTY(ReplicatedUsing = OnRep_MyTakeDamage)
+	bool bTakeDamage;
+	UFUNCTION()
+	void OnRep_MyTakeDamage();
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_MyTakeDamage(float damgePercent);
 };
 
 

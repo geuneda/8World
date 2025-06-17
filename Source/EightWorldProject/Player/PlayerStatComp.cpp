@@ -4,6 +4,7 @@
 #include "PlayerStatComp.h"
 
 #include "PlayerCharacter.h"
+#include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/UI/MainUI.h"
 #include "EightWorldProject/UI/MPUI.h"
 #include "Net/UnrealNetwork.h"
@@ -25,8 +26,11 @@ void UPlayerStatComp::BeginPlay()
 	Player = Cast<APlayerCharacter>(GetOwner());
 
 	// Initialize HP and MP to their maximum values
-	SetHP(MaxHP);
-	SetMP(MaxMP);
+	if (Player && Player->HasAuthority())
+	{
+		SetHP(MaxHP);
+		SetMP(MaxMP);
+	}
 }
 
 
@@ -53,12 +57,23 @@ void UPlayerStatComp::SetHP(float NewHP)
 void UPlayerStatComp::SetMP(float NewMP)
 {
 	MP = FMath::Clamp(NewMP, 0.0f, MaxMP);
+	//PRINTLOG(TEXT("=============> MP : %f"), MP);
+	OnRep_MP();
+	// if (Player && Player->MainUI && Player->MainUI->MPUI)
+	// {
+	// 	Player->MainUI->MPUI->SetMP(GetMP(), GetMaxMP());
+	// }
+}
 
+void UPlayerStatComp::OnRep_MP()
+{
+	//PRINTLOG( TEXT("MP : %f, parent : %p, child : %p"), GetMP(), Player, this);
 	if (Player && Player->MainUI && Player->MainUI->MPUI)
 	{
-		Player->MainUI->MPUI->SetMP(GetMP(), GetMaxMP());
+		Player->MainUI->MPUI->SetMP(MP, GetMaxMP());
 	}
 }
+
 
 void UPlayerStatComp::RegenMP()
 {
@@ -76,6 +91,7 @@ void UPlayerStatComp::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UPlayerStatComp, bIsRest);
+	DOREPLIFETIME(UPlayerStatComp, MP);
 	
 }
 

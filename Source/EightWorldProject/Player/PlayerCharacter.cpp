@@ -670,6 +670,12 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	{
 		PlayerStatComp->SetHP(PlayerStatComp->GetHP()-ActualDamage);
 		PlayerStatComp->SetHP(FMath::Clamp(PlayerStatComp->GetHP(), 0.0f, PlayerStatComp->GetMaxHP()));
+
+		PRINTLOG(TEXT("Player : %s, PlayerStatComp GetHP : %f"), *this->GetName(), PlayerStatComp->GetHP());
+		
+		//MainUI->hp = PlayerStatComp->GetHP() / PlayerStatComp->GetMaxHP();
+		//OnRep_MyTakeDamage();
+		ClientRPC_MyTakeDamage(PlayerStatComp->GetHP() / PlayerStatComp->GetMaxHP());
 		
 		// 체력이 0 이하면 사망 처리 (추후 구현)
 		if (PlayerStatComp->GetHP() <= 0.0f)
@@ -679,6 +685,22 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	}
 
 	return ActualDamage;
+}
+
+void APlayerCharacter::OnRep_MyTakeDamage()
+{
+	// if (MainUI && IsLocallyControlled())
+	// {
+	// 	MainUI->hp = PlayerStatComp->GetHP() / PlayerStatComp->GetMaxHP();
+	// }
+}
+
+void APlayerCharacter::ClientRPC_MyTakeDamage_Implementation(float damgePercent)
+{
+	if (MainUI)
+	{
+		MainUI->hp = damgePercent;
+	}
 }
 
 void APlayerCharacter::PickupItem(AResourceItem* Item)
@@ -930,7 +952,7 @@ void APlayerCharacter::UpdateCameraZoom(float DeltaTime)
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	// 카메라 줌 업데이트
 	UpdateCameraZoom(DeltaTime);
 

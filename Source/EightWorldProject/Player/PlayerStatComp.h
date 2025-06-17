@@ -16,7 +16,7 @@ public:
 	// Sets default values for this component's properties
 	UPlayerStatComp();
 
-protected:
+public:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
@@ -30,8 +30,10 @@ protected:
 	float MaxHP = 1000.f;
 	
 	// 기력
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP, ReplicatedUsing=OnRep_MP)
 	float MP;
+	UFUNCTION()
+	void OnRep_MP();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP)
 	float MaxMP = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP)
@@ -51,6 +53,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	void SetHP(float NewHP);
+	
 	
 	UFUNCTION(BlueprintCallable, Category = "Stats")
 	float GetMaxHP() const { return MaxHP; }
