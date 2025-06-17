@@ -64,7 +64,7 @@ public:
 	FVector InitLocation;
 	
 	//patrol 이동 여부
-	UPROPERTY(ReplicatedUsing =  OnRep_Patrol)
+	UPROPERTY(ReplicatedUsing = OnRep_Patrol)
 	bool bIsPatroling = false;
 	UFUNCTION()
 	void OnRep_Patrol();

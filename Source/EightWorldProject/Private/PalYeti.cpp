@@ -303,6 +303,7 @@ void APalYeti::HandleWildPatrol()
 	{
 		return;
 	}
+	
 	if (!bIsPatroling)
 	{
 		//지정해둔 범위 내에 랜덤 위치 받아오기
@@ -323,6 +324,7 @@ void APalYeti::HandleWildPatrol()
 			OnRep_CheckDistance();
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
+			UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol PatrolSpeed = %f"), PatrolSpeed);
 		}
 	}
 	//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol Distance = %f"), FVector::DistXY(this->GetActorLocation(), CurrentPatrolTargetLocation));
