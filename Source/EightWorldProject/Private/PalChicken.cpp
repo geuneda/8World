@@ -137,6 +137,8 @@ void APalChicken::BeginPlay()
 		if (widget)
 		{
 			hpUIHealthBar = Cast<UPalHealthBar>(widget);
+			//초기에 꺼두고 가까워지면 켜기
+			hpUIComp->SetVisibility(false);
 		}
 	}
 	
@@ -294,6 +296,8 @@ void APalChicken::HandleWildPatrol()
 			//ChickenAnimInstance->bIsPatroling = this->bIsPatroling;
 			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
+			bVisibleDistance = false;
+			OnRep_CheckDistance();
 			
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
@@ -388,7 +392,8 @@ void APalChicken::HandleWildEscape()
 	{
 		return;
 	}
-	
+	bVisibleDistance = true;
+	OnRep_CheckDistance();
 	//patrol 애니메이션 취소
 	if (bIsPatroling)
 	{
@@ -406,6 +411,18 @@ void APalChicken::HandleWildEscape()
 	
 	//도망 함수 타이머
 	GetWorldTimerManager().SetTimer(EscapeTimerHandle, this, &APalChicken::UpdateEscapeLocation, 0.2f, true);
+}
+
+void APalChicken::OnRep_CheckDistance()
+{
+	if (bVisibleDistance)
+	{
+		hpUIComp->SetVisibility(true);
+	}
+	else
+	{
+		hpUIComp->SetVisibility(false);
+	}
 }
 
 void APalChicken::MultiRPC_WildPatrol_Implementation()
@@ -1004,4 +1021,5 @@ void APalChicken::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APalChicken, bIsPatroling);
+	DOREPLIFETIME(APalChicken, bVisibleDistance);
 }

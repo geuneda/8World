@@ -188,7 +188,11 @@ public: //-------------체력바---------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UPalHealthBar* hpUIHealthBar;
 
-
+	UPROPERTY(ReplicatedUsing = OnRep_CheckDistance)
+	bool bVisibleDistance;
+	
 	virtual void OnRep_CurHP() override;
+	UFUNCTION()
+	void OnRep_CheckDistance();
 };
 
