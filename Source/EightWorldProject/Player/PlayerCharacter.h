@@ -20,6 +20,9 @@ class UPlayerAttackComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+DECLARE_MULTICAST_DELEGATE(FOnPlayerDead);
+
+
 UENUM(BlueprintType)
 enum class EHitType : uint8
 {
@@ -86,6 +89,10 @@ class APlayerCharacter : public ACharacter
 	/** Zoom In/Out */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ZoomInAction;
+
+	//ESC to Title
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ESCAction;
 
 public:
 	APlayerCharacter();
@@ -373,6 +380,37 @@ public: //----------데미지 위젯---------
 
 	UFUNCTION(Client, Reliable)
 	void ClientRPC_MyTakeDamage(float damgePercent);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiRPC_PlayerDie();
+
+public: //----------죽음-------------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UDeathWidget* DeathWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UDeathWidget> DeathWidgetClass;
+
+	FOnPlayerDead OnPlayerDead;
+
+	bool bIsDead = false;
+	
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_DeathWidget();
+
+	//타이머 함수
+	void OpenDeathWidget();
+
+public: //-----------------ESC to Title----------
+	void ESCToTitle();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UESCWidget* ESCWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UESCWidget> ESCWidgetClass;
+
+	bool bIsESCOpened = false;
+
+	
 };
 
 

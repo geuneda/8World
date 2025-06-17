@@ -3,6 +3,7 @@
 #include "PlayerCharacter.h"
 
 #include "DamageTextActor.h"
+#include "DeathWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -11,6 +12,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "ESCWidget.h"
 #include "GoalWidget.h"
 #include "PlayerAttackComponent.h"
 #include "PlayerStatComp.h"
@@ -27,8 +29,11 @@
 #include "../Inventory/InventoryWidget.h"
 #include "Components/AudioComponent.h"
 #include "Components/CheckBox.h"
+#include "Components/ProgressBar.h"
+#include "Components/TextBlock.h"
 #include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/BuildSystem/BuildComponent.h"
+#include "EightWorldProject/UI/MPUI.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -209,6 +214,24 @@ APlayerCharacter::APlayerCharacter()
 	{
 		ResourceHitShakeClass = tempResourceShake.Class;
 	}
+
+	ConstructorHelpers::FClassFinder<UDeathWidget> deathWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_Death.WBP_Death_C'"));
+	if (deathWidget.Succeeded())
+	{
+		DeathWidgetClass = deathWidget.Class;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction> escInput(TEXT("/Script/EnhancedInput.InputAction'/Game/PalWorld/Input/Actions/IA_ESC.IA_ESC'"));
+	if (escInput.Succeeded())
+	{
+		ESCAction = escInput.Object;
+	}
+
+	ConstructorHelpers::FClassFinder<UESCWidget> escWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_ESC.WBP_ESC_C'"));
+	if (escWidget.Succeeded())
+	{
+		ESCWidgetClass = escWidget.Class;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -263,6 +286,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		// 줌 인/아웃 입력 바인딩
 		EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Started, this, &APlayerCharacter::ZoomIn);
 		EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Completed, this, &APlayerCharacter::ZoomOut);
+
+		//esc to title
+		EnhancedInputComponent->BindAction(ESCAction, ETriggerEvent::Started, this, &APlayerCharacter::ESCToTitle);
 	}
 	else
 	{
@@ -681,6 +707,25 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 		if (PlayerStatComp->GetHP() <= 0.0f)
 		{
 			// 사망 처리 로직
+			PRINTLOG(TEXT("player : %s Died"), *Cast<APlayerCharacter>(PlayerStatComp->GetOwner())->GetName());
+
+			//플레이어 죽음 알림 델리게이트
+			OnPlayerDead.Broadcast();
+			bIsDead = true;
+			
+			//RagDoll
+			//물리 시뮬레이션 활성화
+			GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+			GetMesh()->SetSimulatePhysics(true);
+
+			//캡슐 콜라이더 비활성화
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);\
+
+			MultiRPC_PlayerDie();
+
+			//죽음 UI
+			FTimerHandle deathTimerHandle;
+			GetWorldTimerManager().SetTimer(deathTimerHandle, this, &APlayerCharacter::OpenDeathWidget, 2.f, false);
 		}
 	}
 
@@ -701,6 +746,56 @@ void APlayerCharacter::ClientRPC_MyTakeDamage_Implementation(float damgePercent)
 	{
 		MainUI->hp = damgePercent;
 	}
+}
+
+void APlayerCharacter::MultiRPC_PlayerDie_Implementation()
+{
+	//RagDoll
+	//물리 시뮬레이션 활성화
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+
+	//캡슐 콜라이더 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void APlayerCharacter::ClientRPC_DeathWidget_Implementation()
+{
+	PRINTLOG(TEXT("ClientRPC_DeathWidget"));
+	auto pc = Cast<APlayerController>(GetController());
+	if (!pc) return;
+
+	if (DeathWidgetClass)
+	{
+		DeathWidget = Cast<UDeathWidget>(CreateWidget<UDeathWidget>(GetWorld(), DeathWidgetClass));
+		if (DeathWidget)
+		{
+			DeathWidget->AddToViewport();
+			GoalUI->SetVisibility(ESlateVisibility::Hidden);
+			MainUI->MPUI->SetVisibility(ESlateVisibility::Hidden);
+			MainUI->HealthBar->SetVisibility(ESlateVisibility::Hidden);
+			MainUI->txt_hp->SetVisibility(ESlateVisibility::Hidden);
+
+			//컨트롤러 제거
+			//DetachFromControllerPendingDestroy();
+		}
+
+		//입력 모드를 UI Only로 변경
+		FInputModeUIOnly InputMode;
+		InputMode.SetWidgetToFocus(DeathWidget->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 혹은 LockAlways
+		pc->SetInputMode(InputMode);
+
+		//마우스 커서 표시
+		pc->bShowMouseCursor = true;
+	}
+
+	
+}
+
+void APlayerCharacter::OpenDeathWidget()
+{
+	ClientRPC_DeathWidget();
 }
 
 void APlayerCharacter::PickupItem(AResourceItem* Item)
@@ -1066,4 +1161,37 @@ void APlayerCharacter::MultiRPC_ShowDamageText_Implementation(FVector WorldLocat
 			DamageActor->SetDamageText(Damage);
 		}
 	}
+}
+
+void APlayerCharacter::ESCToTitle()
+{
+	//PRINTLOG(TEXT("[ESCToTitle] Open Widget"));
+
+	auto pc = Cast<APlayerController>(GetController());
+	if (!pc) return;
+
+	if (ESCWidgetClass && !bIsESCOpened)
+	{
+		bIsESCOpened = true;
+		ESCWidget = Cast<UESCWidget>(CreateWidget<UESCWidget>(GetWorld(), ESCWidgetClass));
+		ESCWidget->AddToViewport();
+	}
+	else if (bIsESCOpened)
+	{
+		if (ESCWidget)
+		{
+			ESCWidget->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+
+	// //입력 모드를 UI Only로 변경
+	FInputModeUIOnly InputMode;
+	InputMode.SetWidgetToFocus(ESCWidget->TakeWidget());
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 혹은 LockAlways
+	pc->SetInputMode(InputMode);
+	
+	//마우스 커서 표시
+	pc->bShowMouseCursor = true;
+
+	
 }

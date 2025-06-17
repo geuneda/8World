@@ -20,6 +20,7 @@
 #include "PalHealthBar.h"
 #include "Components/WidgetComponent.h"
 #include "EightWorldProject/EightWorldProject.h"
+#include "EightWorldProject/Player/PlayerStatComp.h"
 #include "Particles/ParticleSystemComponent.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalYeti, Log, All);
@@ -444,7 +445,6 @@ void APalYeti::HandleWildChase()
 {
 	//UE_LOG(PalYeti, Warning, TEXT("[PalYeti, HandleWildChase] WorkerState : Chase, Pal Name : %s"), *this->GetName());
 
-
 	
 	//Target 플레이어로 이동하기
 	FVector meLoc = this->GetActorLocation();
@@ -457,8 +457,11 @@ void APalYeti::HandleWildChase()
 		//UE_LOG(LogTemp, Warning, TEXT("22222222222222222222222222222"));
 		//if (!bIsMoveToTarget)
 		//{
-			if (player)
+			if (player && player->bIsDead == false)
 			{
+				//델리게이트 등록
+				player->OnPlayerDead.AddUObject(this, &APalYeti::OnPlayerDied);
+				
 				//UE_LOG(LogTemp, Warning, TEXT("33333333333333333333333333"));
 				this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 				MyAIController->MoveToLocation(playerLoc);
@@ -573,8 +576,11 @@ void APalYeti::HandleWildAttack(float deltaTime)
 
 void APalYeti::ApplyDamageRepeat()
 {
-	//플레이어한테 데미지 주기
-	UGameplayStatics::ApplyDamage(player, 10.f, GetController(), this, nullptr);
+	if (player->PlayerStatComp->GetHP() > 0)
+	{
+		//플레이어한테 데미지 주기
+		UGameplayStatics::ApplyDamage(player, 100.f, GetController(), this, nullptr);
+	}
 }
 
 void APalYeti::HandleWildEscape()
@@ -1236,3 +1242,30 @@ void APalYeti::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLi
 	//DOREPLIFETIME(APalYeti, GetMesh());
 }
 
+void APalYeti::OnPlayerDied()
+{
+	PRINTLOG(TEXT("Player died! Reverting to patrol."));
+
+	// AI 행동 중단
+	// auto AIController = Cast<AAIController>(GetController());
+	// if (AIController)
+	// {
+	// 	AIController->StopMovement();
+	// }
+	
+	// if (bIsPlayingAttackAnim)
+	// {
+	// 	bIsPlayingAttackAnim = false;
+	// 	//YetiAnimInstance->bIsAttacking = bIsPlayingAttackAnim;
+	// 	MultiRPC_WildEscapeAttackAnim();
+	// 	//데미지 주기 멈춤
+	// 	player->bTakeDamage = false;
+	// 	GetWorldTimerManager().ClearTimer(attackTimerHandle);
+	// }
+	// this->bIsDamaged = false;
+	// bIsPatroling = false;
+	// IceBeamEffect->SetActive(false);
+	// IceBeamEffect2->SetActive(false);
+	// SetPalWildState(EPalWildState::Patrol);
+	
+}

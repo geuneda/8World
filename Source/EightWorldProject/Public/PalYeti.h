@@ -206,6 +206,8 @@ public: //--------------플레이어 데미지를 지속적으로 주는 함수-
 	FTimerHandle attackTimerHandle;
 
 	void ApplyDamageRepeat();
+
+	void OnPlayerDied();
 };
 
 

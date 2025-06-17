@@ -26,4 +26,16 @@ public: //--------------UI----------------
 	class UGoalWidget* goalWidget;
 	UPROPERTY()
 	class UMissionCompleteWidget* missionCompleteWidget;
+
+public:
+	UPROPERTY()
+	class APWGameMode* gm;
+
+public:
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_RespawnPlayer();
+
+	FTimerHandle TimerHandle;
+	
+	void RespawnAfterDelay();
 };
