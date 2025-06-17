@@ -4,6 +4,7 @@
 #include "Pal.h"
 
 #include "PWAIController.h"
+#include "Components/WidgetComponent.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -42,6 +43,7 @@ APal::APal()
 
 	//동기화 여부
 	bReplicates = true;
+	
 }
 
 // Called when the game starts or when spawned

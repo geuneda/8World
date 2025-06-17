@@ -180,5 +180,15 @@ public: //---------게임 인스턴스------------
 	FTimerHandle itemHandle;
 
 	void AddItemCount();
+
+public: //-------------체력바---------------
+	UPROPERTY(visibleAnywhere)
+	class UWidgetComponent* hpUIComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UPalHealthBar* hpUIHealthBar;
+
+
+	virtual void OnRep_CurHP() override;
 };
 

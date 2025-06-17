@@ -17,6 +17,9 @@
 #include "Net/UnrealNetwork.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "PalHealthBar.h"
+#include "Components/WidgetComponent.h"
+#include "EightWorldProject/EightWorldProject.h"
 #include "Particles/ParticleSystemComponent.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PalYeti, Log, All);
@@ -72,6 +75,12 @@ APalYeti::APalYeti()
 	{
 		IceBeamEffect2->SetTemplate(IceBeamAsset2.Object);
 	}
+
+	//UI 위젯 컴포넌트 추가
+	hpUIComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("hpUIComp"));
+	hpUIComp->SetupAttachment(GetMesh());
+	//hpUIHealthBar = Cast<UPalHealthBar>(hpUIComp->GetWidgetClass());
+
 }
 
 // Called when the game starts or when spawned
@@ -100,6 +109,18 @@ void APalYeti::BeginPlay()
 		SetPalWildState(EPalWildState::Patrol);
 		SetPalBattleState(EPalBattleState::FollowPlayer);
 		SetPalWorkerState(EPalWorkerState::Idle, nullptr);
+
+		//팰 속도
+		MoveSpeed = 200.f;
+		this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+		//팰 순찰속도
+		PatrolSpeed = 20.f;
+		//팰 도망속도
+		RunSpeed = 300.f;
+		//팰 체력
+		MaxHP = 100.f;
+		CurHP = MaxHP;
+		LastHP = MaxHP;
 	}
 
 	//팰 현재 모드 출력
@@ -129,12 +150,38 @@ void APalYeti::BeginPlay()
 
 	IntervalDamage = 30.f;
 
+	//hp bar widget class 가져오기
+	if (hpUIComp)
+	{
+		UUserWidget* widget = hpUIComp->GetUserWidgetObject();
+		if (widget)
+		{
+			hpUIHealthBar = Cast<UPalHealthBar>(widget);
+			//초기에 꺼두고 가까워지면 켜기
+			hpUIComp->SetVisibility(false);
+		}
+	}
+	
 }
 
 // Called every frame
 void APalYeti::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//빌보딩처리
+	if (hpUIComp && hpUIComp->GetVisibleFlag())
+	{
+		//카메라를 바라보도록 하고 싶다.
+		//카메라로 향하는 방향이 필요하다.
+		//dir = target - me
+		//1. P.C -> 2. Pawn. -> 3. GetFollow
+		FVector camLocation = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();
+		FVector direction = camLocation - hpUIComp->GetComponentLocation();
+		direction.Z = 0;
+		hpUIComp->SetWorldRotation(direction.ToOrientationRotator());
+	}
+	
 	if (GetLocalRole() != ROLE_Authority)
 	{
 		return;
@@ -155,6 +202,7 @@ void APalYeti::Tick(float DeltaTime)
 		case EPalMode::Carrier:
 			break;
 	}
+	
 }
 
 // Called to bind functionality to input
@@ -271,7 +319,8 @@ void APalYeti::HandleWildPatrol()
 			//YetiAnimInstance->bIsPatroling = this->bIsPatroling;
 			this->GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 			MyController->MoveToLocation(CurrentPatrolTargetLocation);
-			
+			bVisibleDistance = false;
+			OnRep_CheckDistance();
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol My MaxWalkSpeed = %f"), this->GetCharacterMovement()->MaxWalkSpeed);
 			//UE_LOG(PalChicken, Warning, TEXT("[PalYeti, HandleWildPatrol] Patrol bIsPatroling = %d"), bIsPatroling);
 		}
@@ -416,6 +465,10 @@ void APalYeti::HandleWildChase()
 				//YetiAnimInstance->bIsPatroling = bIsPatroling;
 				bIsMoveToTarget = true;
 				MultiRPC_WildChaseMoveToTarget();
+				
+				bVisibleDistance = true;
+				OnRep_CheckDistance();
+				
 				//YetiAnimInstance->bIsMove = bIsMoveToTarget;
 			}
 		//}
@@ -448,6 +501,19 @@ void APalYeti::HandleWildChase()
 		SetPalWildState(EPalWildState::Attack);
 		
 	}
+}
+
+void APalYeti::OnRep_CheckDistance()
+{
+	if (bVisibleDistance)
+	{
+		hpUIComp->SetVisibility(true);
+	}
+	else
+	{
+		hpUIComp->SetVisibility(false);
+	}
+	
 }
 
 void APalYeti::MultiRPC_WildChasePatrol_Implementation()
@@ -697,6 +763,11 @@ float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& Damage
 	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, damage = %f"), *this->GetName(), damage);
 	//팰 체력 감소
 	CurHP = FMath::Clamp(CurHP - damage, 0, MaxHP);
+	if (hpUIHealthBar)
+	{
+		//hpUIHealthBar->hp = CurHP / MaxHP;
+		OnRep_CurHP();
+	}
 	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, CurHP = %f"), *this->GetName(), CurHP);
 	
 	//데미지 받았을 때 상태 전환
@@ -724,6 +795,19 @@ float APalYeti::TakeDamage(float DamageAmount, struct FDamageEvent const& Damage
 	}
 	
 	return damage;
+}
+
+void APalYeti::OnRep_CurHP()
+{
+	Super::OnRep_CurHP();
+	if (hpUIHealthBar)
+	{
+		hpUIHealthBar->hp = CurHP / MaxHP;
+		if (hpUIHealthBar->hp <= 0)
+		{
+			hpUIComp->SetVisibility(false);
+		}
+	}
 }
 
 void APalYeti::HandleBattleFollowPlayer()
@@ -1133,6 +1217,7 @@ void APalYeti::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APalYeti, bIsPatroling);
+	DOREPLIFETIME(APalYeti, bVisibleDistance);
 	//DOREPLIFETIME(APalYeti, GetMesh());
 }
 

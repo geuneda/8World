@@ -7,12 +7,14 @@
 #include "NavigationSystem.h"
 #include "PalBox.h"
 #include "PalChickenAnimInstance.h"
+#include "PalHealthBar.h"
 #include "PWAIController.h"
 #include "PWGameInstance.h"
 #include "PWGameState.h"
 #include "PWPlayerController.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 #include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/Player/PlayerCharacter.h"
 #include "EightWorldProject/Resources/ResourceItem.h"
@@ -54,6 +56,10 @@ APalChicken::APalChicken()
 	SphereComp->SetupAttachment(GetMesh());
 	SphereComp->SetSphereRadius(50.f);
 	SphereComp->SetRelativeLocation(FVector(0, 50.f, 26.f));
+
+	//UI 위젯 컴포넌트 추가
+	hpUIComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("hpUIComp"));
+	hpUIComp->SetupAttachment(GetMesh());
 }
 
 void APalChicken::BeginPlay()
@@ -84,6 +90,18 @@ void APalChicken::BeginPlay()
 		SetPalWildState(EPalWildState::Patrol);
 		SetPalBattleState(EPalBattleState::FollowPlayer);
 		SetPalCarrierState(EPalCarrierState::Patrol, nullptr);
+
+		//팰 속도
+		MoveSpeed = 150.f;
+		this->GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+		//팰 순찰속도
+		PatrolSpeed = 20.f;
+		//팰 도망속도
+		RunSpeed = 300.f;
+		//팰 체력
+		MaxHP = 50.f;
+		CurHP = MaxHP;
+		LastHP = MaxHP;
 	}
 
 
@@ -111,12 +129,36 @@ void APalChicken::BeginPlay()
 
 	GI = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
 	GS = Cast<APWGameState>(GetWorld()->GetGameState());
+
+	//hp bar widget class 가져오기
+	if (hpUIComp)
+	{
+		UUserWidget* widget = hpUIComp->GetUserWidgetObject();
+		if (widget)
+		{
+			hpUIHealthBar = Cast<UPalHealthBar>(widget);
+		}
+	}
 	
 }
 
 void APalChicken::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//빌보딩처리
+	if (hpUIComp && hpUIComp->GetVisibleFlag())
+	{
+		//카메라를 바라보도록 하고 싶다.
+		//카메라로 향하는 방향이 필요하다.
+		//dir = target - me
+		//1. P.C -> 2. Pawn. -> 3. GetFollow
+		FVector camLocation = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->GetCameraLocation();
+		FVector direction = camLocation - hpUIComp->GetComponentLocation();
+		direction.Z = 0;
+		hpUIComp->SetWorldRotation(direction.ToOrientationRotator());
+	}
+	
 	if (GetLocalRole() != ROLE_Authority)
 	{
 		return;
@@ -136,6 +178,7 @@ void APalChicken::Tick(float DeltaTime)
 	case EPalMode::Worker:
 		break;
 	}
+	
 }
 
 void APalChicken::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -481,6 +524,11 @@ float APalChicken::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
 	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, damage = %f"), *this->GetName(), damage);
 	//팰 체력 감소
 	CurHP = FMath::Clamp(CurHP - damage, 0, MaxHP);
+	if (hpUIHealthBar)
+	{
+		//hpUIHealthBar->hp = CurHP / MaxHP;
+		OnRep_CurHP();
+	}
 	UE_LOG(LogTemp, Warning, TEXT("this pal Name = %s, CurHP = %f"), *this->GetName(), CurHP);
 	
 	//데미지 받았을 때 상태 전환
@@ -501,6 +549,20 @@ float APalChicken::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
 	}
 	
 	return damage;
+}
+
+void APalChicken::OnRep_CurHP()
+{
+	Super::OnRep_CurHP();
+	if (hpUIHealthBar)
+	{
+		hpUIHealthBar->hp = CurHP / MaxHP;
+
+		if (hpUIHealthBar->hp <= 0)
+		{
+			hpUIComp->SetVisibility(false);
+		}
+	}
 }
 
 void APalChicken::HandleBattleFollowPlayer()

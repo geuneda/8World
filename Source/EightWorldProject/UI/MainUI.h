@@ -27,7 +27,9 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	class UBuildModeUI* BuildModeUI;
 
-
+	UPROPERTY(BlueprintReadOnly, Category=HP)
+	float hp = 1.f; //최대값
+	
 public:
 	void SetCrosshair(bool bIsVisible);
 

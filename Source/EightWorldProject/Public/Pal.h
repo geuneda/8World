@@ -190,8 +190,10 @@ public:
 	class APalBox* palBox;
 
 	//팰 체력
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_CurHP)
 	float CurHP;
+	UFUNCTION()
+	virtual void OnRep_CurHP() {};
 	UPROPERTY(Replicated)
 	float MaxHP;
 	UPROPERTY(Replicated)
@@ -250,4 +252,5 @@ public:
 public: //-------------네트워크-------------------
 	//변수 동기화 함수
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 };

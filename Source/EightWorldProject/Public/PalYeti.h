@@ -185,6 +185,22 @@ public: //--------네트워크 RPC------------
 	
 	//변수 동기화 함수
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+public: //-------------체력바---------------
+	UPROPERTY(visibleAnywhere)
+	class UWidgetComponent* hpUIComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UPalHealthBar* hpUIHealthBar;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CheckDistance)
+	bool bVisibleDistance;
+
+
+	virtual void OnRep_CurHP() override;
+	UFUNCTION()
+	void OnRep_CheckDistance();
+	
 };
 
 
