@@ -42,6 +42,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	void OnAttackTiming();
 
+	UFUNCTION(BlueprintCallable, Category = "Attack")
+	void OnAttackEnd();
+
 	// 공격 가능 여부 확인
 	UFUNCTION(BlueprintCallable, Category = "Attack")
 	bool CanAttack() const;
@@ -95,6 +98,9 @@ private:
 public: //--------네트워크---------------------
 	UFUNCTION(Server, Reliable)
 	void ServerRPC_ApplyDamage();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRPC_EndDamage();
 
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 

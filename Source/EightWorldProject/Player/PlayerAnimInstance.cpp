@@ -160,6 +160,23 @@ void UPlayerAnimInstance::AnimNotify_AttackTiming()
 	PlayerCharacter->PlayerAttackComp->OnAttackTiming();
 }
 
+void UPlayerAnimInstance::AnimNotify_AttackEnd()
+{
+	if (!PlayerCharacter)
+	{
+		return;
+	}
+
+	if (PlayerCharacter->IsLocallyControlled() == false)
+	{
+		return;
+	}
+	if (PlayerCharacter->PlayerAttackComp)
+	{
+		PlayerCharacter->PlayerAttackComp->OnAttackEnd();
+	}
+}
+
 void UPlayerAnimInstance::AnimNotify_Throw()
 {
 	if (!PlayerCharacter)

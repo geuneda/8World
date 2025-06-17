@@ -526,6 +526,7 @@ void APlayerCharacter::MainUIInit()
 // 달리기 입력 처리
 void APlayerCharacter::Sprint(const FInputActionValue& Value)
 {
+
 	// // 마나가 충분한지 확인
 	// if (PlayerStatComp && PlayerStatComp->GetMP() > 0)
 	// {

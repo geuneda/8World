@@ -6,7 +6,7 @@
 ARock::ARock()
 {
 	// 충돌 컴포넌트 크기 설정
-	Box->SetBoxExtent(FVector(100, 100, 100));
+	Box->SetBoxExtent(FVector(140, 140, 160));
 	
 	// 리소스 ID 설정
 	ResourceID = TEXT("Rock");

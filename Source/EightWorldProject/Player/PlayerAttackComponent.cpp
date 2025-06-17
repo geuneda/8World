@@ -141,6 +141,9 @@ void UPlayerAttackComponent::OnAttackTiming()
 		return;
 	}
 	
+	//한번 껐다가 켜기
+	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttackCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
 	// 공격 대상 감지
 	// TArray<AActor*> Targets = DetectAttackTargets();
@@ -171,6 +174,20 @@ void UPlayerAttackComponent::OnAttackTiming()
 		}
 	}
 	
+}
+
+void UPlayerAttackComponent::OnAttackEnd()
+{
+	auto player = Cast<APlayerCharacter>(GetOwner());
+	if (player && player->IsLocallyControlled())
+	{
+		ServerRPC_EndDamage();
+	}
+}
+
+void UPlayerAttackComponent::ServerRPC_EndDamage_Implementation()
+{
+	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void UPlayerAttackComponent::OnRep_ResourcePunch()
@@ -210,6 +227,7 @@ void UPlayerAttackComponent::OnRep_PalPunch()
 void UPlayerAttackComponent::ServerRPC_ApplyDamage_Implementation()
 {
 	// 콜라이더 활성화
+	AttackCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	AttackCollider->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
 	TArray<AActor*> Targets = DetectAttackTargets();
@@ -275,9 +293,17 @@ void UPlayerAttackComponent::StartNextAttack()
 TArray<AActor*> UPlayerAttackComponent::DetectAttackTargets()
 {
 	TArray<AActor*> OverlappingActors;
+
+	//초기화
+	if (OverlappingActors.Num() > 0)
+	{
+		OverlappingActors.Empty();
+		bIsPal = false;
+		bIsResource = false;
+	}
 	
 	// 콜라이더와 겹치는 액터 가져오기
-	AttackCollider->GetOverlappingActors(OverlappingActors);
+	AttackCollider->GetOverlappingActors(OverlappingActors, AActor::StaticClass());
 	
 	// 자기 자신 제외
 	TArray<AActor*> ValidTargets;
@@ -293,7 +319,11 @@ TArray<AActor*> UPlayerAttackComponent::DetectAttackTargets()
 		// 데미지를 받을 수 있는 대상만 추가
 		if (Actor->CanBeDamaged())
 		{
-			ValidTargets.Add(Actor);
+			auto p = Cast<APalBox>(Actor);
+			if (!p)
+			{
+				ValidTargets.Add(Actor);
+			}
 
 			if (auto actor = Cast<APal>(Actor))
 			{
@@ -337,9 +367,10 @@ void UPlayerAttackComponent::ApplyDamageToTargets(const TArray<AActor*>& Targets
 			auto actor = Cast<APalBox>(Target);
 			auto yeti = Cast<APalYeti>(Target);
 			auto chicken = Cast<APalChicken>(Target);
+			auto resource = Cast<AResourceBase>(Target);
 			if (!actor)
 			{
-				if (yeti && yeti->bIsWildMode || chicken && chicken->bIsWildMode)
+				if (resource || yeti && yeti->bIsWildMode || chicken && chicken->bIsWildMode)
 				{
 					FVector SpawnLocation = Target->GetActorLocation() + FVector(0, 0, 100);
 					FActorSpawnParameters params;
@@ -366,6 +397,6 @@ void UPlayerAttackComponent::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 
 	DOREPLIFETIME(UPlayerAttackComponent, bIsAttackButtonPressed);
 	DOREPLIFETIME(UPlayerAttackComponent, bIsAttacking);
-	DOREPLIFETIME(UPlayerAttackComponent,bIsResource);
-	DOREPLIFETIME(UPlayerAttackComponent,bIsPal);
+	DOREPLIFETIME(UPlayerAttackComponent, bIsResource);
+	DOREPLIFETIME(UPlayerAttackComponent, bIsPal);
 }
