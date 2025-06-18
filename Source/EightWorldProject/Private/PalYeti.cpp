@@ -1080,7 +1080,7 @@ void APalYeti::PalWorking()
 	//UE_LOG(PalLog, Warning, TEXT("[PalYeti, PalWorking] WorkerState : Working, WorkerPalName : %s"), *this->GetName());
 
 	//자원에 데미지 10씩 주기
-	UGameplayStatics::ApplyDamage(TargetResource, 10.f, GetController(), this, nullptr);
+	UGameplayStatics::ApplyDamage(TargetResource, 20.f, GetController(), this, nullptr);
 	
 	//데미지 주다가 자원이 비활성화 되면, 자원과 팰 둘다 작업상태 멈춤 Rest상태로 Rest 배열에 자동 추가됨(자원은 재생성될때)
 	if (ATree* tree = Cast<ATree>(TargetResource))

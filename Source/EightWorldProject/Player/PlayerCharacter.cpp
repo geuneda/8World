@@ -906,7 +906,7 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 				PRINTLOG(TEXT("[PickupItem] ItemCount: %d"), GI->GetItemCount);
 			}
 			
-			if (GI->GetItemCount >= 10)
+			if (GI->GetItemCount >= 20)
 			{
 				ServerRPC_ItemCount(true);
 				

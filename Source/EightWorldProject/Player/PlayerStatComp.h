@@ -27,7 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HP)
 	float HP;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=HP)
-	float MaxHP = 1000.f;
+	float MaxHP = 500.f;
 	
 	// 기력
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=MP, ReplicatedUsing=OnRep_MP)

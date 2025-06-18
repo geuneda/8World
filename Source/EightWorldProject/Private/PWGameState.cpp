@@ -46,9 +46,9 @@ void APWGameState::OnRep_Count()
 		if (player && player->GoalUI)
 		{
 			pc->goalWidget = Cast<UGoalWidget>(player->GoalUI);
-			pc->goalWidget->txt_mission->SetText(FText::Format(FText::FromString(TEXT("떨어진 목재나 돌맹이를 주워 10개를 획득하세요. ({0}/10)")),FText::AsNumber(SharedItemCount)));
+			pc->goalWidget->txt_mission->SetText(FText::Format(FText::FromString(TEXT("떨어진 목재나 돌맹이를 주워 10개를 획득하세요. ({0}/20)")),FText::AsNumber(SharedItemCount)));
 			
-			if (SharedItemCount >= 10)
+			if (SharedItemCount >= 20)
 			{
 				pc->goalWidget->OnCheckMissionCompleted(true);
 
