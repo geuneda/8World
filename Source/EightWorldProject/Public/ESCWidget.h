@@ -24,12 +24,18 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* btn_noBackTitle;
 
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	class UWidgetAnimation* PopUp;
+
 public: //-------------사운드--------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
 	USoundBase* mouseHoverSound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
 	USoundBase* mouseClickSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* escSound;
 
 	UFUNCTION()
 	void OnHoveredButton();

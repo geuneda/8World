@@ -22,6 +22,12 @@ UDeathWidget::UDeathWidget(const FObjectInitializer& ObjectInitializer) : Super(
 	{
 		mouseClickSound = tempClickSound.Object;
 	}
+
+	ConstructorHelpers::FObjectFinder<USoundBase> tempGameoverSound(TEXT("/Game/PalWorld/Sound/GameOver"));
+	if (tempGameoverSound.Succeeded())
+	{
+		gameOverSound = tempGameoverSound.Object;
+	}
 }
 
 void UDeathWidget::NativeConstruct()

@@ -17,6 +17,7 @@
 #include "PlayerAttackComponent.h"
 #include "PlayerStatComp.h"
 #include "InputActionValue.h"
+#include "ItemNotifyWidget.h"
 #include "MissionCompleteWidget.h"
 #include "PlayerAnimInstance.h"
 #include "PWGameInstance.h"
@@ -33,6 +34,8 @@
 #include "Components/TextBlock.h"
 #include "EightWorldProject/EightWorldProject.h"
 #include "EightWorldProject/BuildSystem/BuildComponent.h"
+#include "EightWorldProject/Resources/RockItem.h"
+#include "EightWorldProject/Resources/TreeItem.h"
 #include "EightWorldProject/UI/MPUI.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -231,6 +234,18 @@ APlayerCharacter::APlayerCharacter()
 	if (escWidget.Succeeded())
 	{
 		ESCWidgetClass = escWidget.Class;
+	}
+
+	ConstructorHelpers::FClassFinder<UESCWidget> itemNotifyWidget(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/PalWorld/UI/WBP_ItemNotify.WBP_ItemNotify_C'"));
+	if (itemNotifyWidget.Succeeded())
+	{
+		ItemNotifyWidgetClass = itemNotifyWidget.Class;
+	}
+
+	ConstructorHelpers::FObjectFinder<USoundBase> tempplayerSound(TEXT("/Game/PalWorld/Sound/playerDeath"));
+	if (tempplayerSound.Succeeded())
+	{
+		playerDeathSound = tempplayerSound.Object;
 	}
 }
 
@@ -493,12 +508,27 @@ void APlayerCharacter::MouseWheelUp(const FInputActionValue& Value)
 		PlayerBuildComp->ChangeMesh();
 	}
 }
+
+void APlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (IsLocallyControlled())
+	{
+		MainUIInit();
+	}
+}
+
 void APlayerCharacter::BeginPlay()
 {
-	// 컴포넌트보다 먼저 UI 생성
-	MainUIInit();
-	
 	Super::BeginPlay();
+
+	// 컴포넌트보다 먼저 UI 생성
+	if (IsLocallyControlled() && HasAuthority() == false )
+	{
+		MainUIInit();
+		
+	}
 	
 	// 인벤토리 UI 생성
 	if (InventoryWidgetClass)
@@ -518,18 +548,7 @@ void APlayerCharacter::BeginPlay()
 
 	GI = Cast<UPWGameInstance>(GetWorld()->GetGameInstance());
 	
-	if (IsLocallyControlled())
-	{
-		GoalUI = Cast<UGoalWidget>(CreateWidget(GetWorld(), GoalUIWiget));
-		GoalUI->AddToViewport();
-		
-		if (GI && GI->GetItemCount >= 10)
-		{
-			MultiRPC_ItemCount_Implementation(true);
-		}
-
-		missionCompleteUI = Cast<UMissionCompleteWidget>(CreateWidget(GetWorld(), missionCompleteUIWidget));
-	}
+	
 
 	GS = Cast<APWGameState>(GetWorld()->GetGameState());
 	
@@ -547,6 +566,19 @@ void APlayerCharacter::MainUIInit()
 	
 	// 초기에 크로스헤어 숨기기
 	MainUI->SetCrosshair(false);
+
+	if (IsLocallyControlled())
+	{
+		GoalUI = Cast<UGoalWidget>(CreateWidget(GetWorld(), GoalUIWiget));
+		GoalUI->AddToViewport();
+		
+		if (GI && GI->GetItemCount >= 10)
+		{
+			MultiRPC_ItemCount_Implementation(true);
+		}
+
+		missionCompleteUI = Cast<UMissionCompleteWidget>(CreateWidget(GetWorld(), missionCompleteUIWidget));
+	}
 }
 
 // 달리기 입력 처리
@@ -725,7 +757,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 
 			//죽음 UI
 			FTimerHandle deathTimerHandle;
-			GetWorldTimerManager().SetTimer(deathTimerHandle, this, &APlayerCharacter::OpenDeathWidget, 2.f, false);
+			GetWorldTimerManager().SetTimer(deathTimerHandle, this, &APlayerCharacter::OpenDeathWidget, 0.1f, false);
 		}
 	}
 
@@ -765,32 +797,53 @@ void APlayerCharacter::ClientRPC_DeathWidget_Implementation()
 	auto pc = Cast<APlayerController>(GetController());
 	if (!pc) return;
 
-	if (DeathWidgetClass)
+	if (playerDeathSound)
 	{
-		DeathWidget = Cast<UDeathWidget>(CreateWidget<UDeathWidget>(GetWorld(), DeathWidgetClass));
-		if (DeathWidget)
-		{
-			DeathWidget->AddToViewport();
-			GoalUI->SetVisibility(ESlateVisibility::Hidden);
-			MainUI->MPUI->SetVisibility(ESlateVisibility::Hidden);
-			MainUI->HealthBar->SetVisibility(ESlateVisibility::Hidden);
-			MainUI->txt_hp->SetVisibility(ESlateVisibility::Hidden);
-
-			//컨트롤러 제거
-			//DetachFromControllerPendingDestroy();
-		}
-
-		//입력 모드를 UI Only로 변경
-		FInputModeUIOnly InputMode;
-		InputMode.SetWidgetToFocus(DeathWidget->TakeWidget());
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 혹은 LockAlways
-		pc->SetInputMode(InputMode);
-
-		//마우스 커서 표시
-		pc->bShowMouseCursor = true;
+		UGameplayStatics::PlaySound2D(this, playerDeathSound);
 	}
 
+	FTimerHandle deathTimerHandle;
+	auto DeathEvent = [&, pc]()
+	{
+		if (DeathWidgetClass)
+		{
+			DeathWidget = Cast<UDeathWidget>(CreateWidget<UDeathWidget>(GetWorld(), DeathWidgetClass));
+			if (DeathWidget)
+			{
+				DeathWidget->AddToViewport();
+				GoalUI->SetVisibility(ESlateVisibility::Hidden);
+				MainUI->MPUI->SetVisibility(ESlateVisibility::Hidden);
+				MainUI->HealthBar->SetVisibility(ESlateVisibility::Hidden);
+				MainUI->txt_hp->SetVisibility(ESlateVisibility::Hidden);
 	
+				if (DeathWidget->gameOverSound)
+				{
+					UGameplayStatics::PlaySound2D(this, DeathWidget->gameOverSound);
+				}
+				DeathWidget->PlayAnimation(DeathWidget->Opacity);
+			
+				// GetWorld()->GetTimerManager().SetTimer(RepeatTimerHandle, [this]()
+				// {
+				// 	DeathWidget->PlayAnimation(DeathWidget->Repeat, 0.f, -1, EUMGSequencePlayMode::Forward);
+				// }, 1.6f, false); 
+			
+			
+				//컨트롤러 제거
+				//DetachFromControllerPendingDestroy();
+			}
+
+			//입력 모드를 UI Only로 변경
+			FInputModeUIOnly InputMode;
+			InputMode.SetWidgetToFocus(DeathWidget->TakeWidget());
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); // 혹은 LockAlways
+			pc->SetInputMode(InputMode);
+
+			//마우스 커서 표시
+			pc->bShowMouseCursor = true;
+		}
+	};
+	
+	GetWorldTimerManager().SetTimer(deathTimerHandle, FTimerDelegate::CreateLambda(DeathEvent), 1.0f, false);
 }
 
 void APlayerCharacter::OpenDeathWidget()
@@ -804,6 +857,8 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 	{
 		return;
 	}
+	//줍기 화면 UI
+	ClientRPC_ShowItemNotification(Item);
 	
 	// 아이템을 인벤토리에 추가
 	bool bAdded = InventoryComponent->AddItem(Item->ResourceID, Item->Quantity);
@@ -861,6 +916,23 @@ void APlayerCharacter::PickupItem(AResourceItem* Item)
 		
 	}
 	
+}
+
+void APlayerCharacter::ClientRPC_ShowItemNotification_Implementation(AResourceItem* Item)
+{
+	auto pc = Cast<APWPlayerController>(GetWorld()->GetFirstPlayerController());
+	if (!pc) return;
+
+	if (auto tree = Cast<ATreeItem>(Item))
+	{
+		txtName = FText::FromString(TEXT("통나무 + 1"));
+		ShowItemPickupNotification(txtName, TreeIcon);
+	}
+	else if (auto rock = Cast<ARockItem>(Item))
+	{
+		txtName = FText::FromString(TEXT("돌맹이 + 1"));
+		ShowItemPickupNotification(txtName, StoneIcon);
+	}
 }
 
 void APlayerCharacter::ServerRPC_Count_Implementation()
@@ -1170,17 +1242,31 @@ void APlayerCharacter::ESCToTitle()
 	auto pc = Cast<APlayerController>(GetController());
 	if (!pc) return;
 
+	
 	if (ESCWidgetClass && !bIsESCOpened)
 	{
 		bIsESCOpened = true;
 		ESCWidget = Cast<UESCWidget>(CreateWidget<UESCWidget>(GetWorld(), ESCWidgetClass));
 		ESCWidget->AddToViewport();
+
+		ESCWidget->PlayAnimation(ESCWidget->PopUp);
+
+		if (ESCWidget->escSound)
+		{
+			UGameplayStatics::PlaySound2D(this, ESCWidget->escSound);
+		}
 	}
 	else if (bIsESCOpened)
 	{
 		if (ESCWidget)
 		{
 			ESCWidget->SetVisibility(ESlateVisibility::Visible);
+			ESCWidget->PlayAnimation(ESCWidget->PopUp);
+
+			if (ESCWidget->escSound)
+			{
+				UGameplayStatics::PlaySound2D(this, ESCWidget->escSound);
+			}
 		}
 	}
 
@@ -1192,6 +1278,30 @@ void APlayerCharacter::ESCToTitle()
 	
 	//마우스 커서 표시
 	pc->bShowMouseCursor = true;
-
 	
+	
+}
+
+void APlayerCharacter::ShowItemPickupNotification(FText ItemName, UTexture2D* ItemIcon)
+{
+	//PRINTLOG(TEXT("22222221"));
+	if (!ItemNotifyWidgetClass)
+		return;
+	//PRINTLOG(TEXT("33333331"));
+	ItemNotifyWidget = CreateWidget<UItemNotifyWidget>(GetWorld(), ItemNotifyWidgetClass);
+	if (ItemNotifyWidget)
+	{
+		//PRINTLOG(TEXT("11111111111111111111"));
+		ItemNotifyWidget->Setup(ItemName, ItemIcon);
+		ItemNotifyWidget->AddToViewport();
+
+		//애니메이션 플레이
+		ItemNotifyWidget->PlayAnimation(ItemNotifyWidget->UPAnim);
+		
+		// 일정 시간 후 제거
+		FTimerHandle Handle;
+		GetWorld()->GetTimerManager().SetTimer(Handle, [&]() {
+			ItemNotifyWidget->RemoveFromParent();
+		}, 2.0f, false);
+	}
 }

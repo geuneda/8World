@@ -22,6 +22,12 @@ UMissionCompleteWidget::UMissionCompleteWidget(const FObjectInitializer& ObjectI
 	{
 		mouseClickSound = tempClickSound.Object;
 	}
+	
+	ConstructorHelpers::FObjectFinder<USoundBase> tempcompleteSound(TEXT("/Game/PalWorld/Sound/missionComplete"));
+	if (tempcompleteSound.Succeeded())
+	{
+		missionCompleteSound = tempcompleteSound.Object;
+	}
 }
 
 void UMissionCompleteWidget::NativeConstruct()

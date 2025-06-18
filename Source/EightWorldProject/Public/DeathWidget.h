@@ -30,6 +30,14 @@ public: //-------------사운드--------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
 	USoundBase* mouseClickSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* gameOverSound;
+	
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	class UWidgetAnimation* Opacity;
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	class UWidgetAnimation* Repeat;
+
 	UFUNCTION()
 	void OnHoveredButton();
 	UFUNCTION()

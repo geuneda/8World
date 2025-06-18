@@ -119,7 +119,7 @@ void ULobbyWidget::CreateRoom()
 				FTimerHandle ExitHandle;
 				GetWorld()->GetTimerManager().SetTimer(ExitHandle, [&]()
 				{
-					loadingWidget->PlayAnimation(loadingWidget->FadeOut);
+					//loadingWidget->PlayAnimation(loadingWidget->FadeOut);
 					//값이 있을때 가져오기
 					//if (gi && edit_roomName->GetText().IsEmpty() == false)
 					//{

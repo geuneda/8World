@@ -23,6 +23,12 @@ UESCWidget::UESCWidget(const FObjectInitializer& ObjectInitializer) : Super(Obje
 	{
 		mouseClickSound = tempClickSound.Object;
 	}
+
+	ConstructorHelpers::FObjectFinder<USoundBase> tempescSound(TEXT("/Game/PalWorld/Sound/ESC"));
+	if (tempescSound.Succeeded())
+	{
+		escSound = tempescSound.Object;
+	}
 }
 
 void UESCWidget::NativeConstruct()

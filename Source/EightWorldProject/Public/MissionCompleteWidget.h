@@ -22,6 +22,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* btn_home;
 
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	class UWidgetAnimation* PopUp;
+
 	//게임 종료 - 나가기
 	UFUNCTION()
 	void OnExitClicked();
@@ -32,6 +35,9 @@ public: //----------사운드---------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
 	USoundBase* mouseClickSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* missionCompleteSound;
 
 	UFUNCTION()
 	void OnHoveredHomeButton();

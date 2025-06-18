@@ -22,6 +22,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UCheckBox* quest_checkBox;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* txt_mission;
+
 	//미션 체크 함수
 	void OnCheckMissionCompleted(bool bIsCompleted);
 };

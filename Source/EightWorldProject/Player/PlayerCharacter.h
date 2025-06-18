@@ -139,6 +139,8 @@ protected:
 	/** 마나 소모 타이머 핸들 */
 	FTimerHandle SprintManaTimerHandle;
 
+	virtual void PossessedBy(AController* NewController) override;
+	
 	virtual void BeginPlay() override;
 
 	virtual void NotifyControllerChanged() override;
@@ -410,7 +412,31 @@ public: //-----------------ESC to Title----------
 
 	bool bIsESCOpened = false;
 
+public: //--------------아이템 팝업 정보-------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UItemNotifyWidget* ItemNotifyWidget;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UItemNotifyWidget> ItemNotifyWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText txtName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* TreeIcon;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* StoneIcon;
 	
+	void ShowItemPickupNotification(FText ItemName, UTexture2D* ItemIcon);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRPC_ShowItemNotification(AResourceItem* Item);
+
+
+	FTimerHandle RepeatTimerHandle;
+
+public: //-------------사운드--------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* playerDeathSound;
 };
 
 

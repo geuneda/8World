@@ -29,6 +29,6 @@ public:
 
 	//아이템개수 세팅
 	void SetSharedItemCount(int32 NewCount);
-
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
