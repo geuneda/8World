@@ -5,6 +5,7 @@
 
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Styling/SlateBrush.h"
 #include "EightWorldProject/EightWorldProject.h"
 
 void UItemNotifyWidget::NativeConstruct()
@@ -22,12 +23,6 @@ void UItemNotifyWidget::Setup(FText Name, UTexture2D* Icon)
 
 	if (itemicon && Icon)
 	{
-		FSlateBrush Brush;
-		Brush.SetResourceObject(Icon);
-		Brush.ImageSize = FVector2D(50.f, 50.f);
-		Brush.DrawAs = ESlateBrushDrawType::Image;
-
-		itemicon->SetBrushFromTexture(Icon, true);
-
+		itemicon->SetBrushFromTexture(Icon);
 	}
 }

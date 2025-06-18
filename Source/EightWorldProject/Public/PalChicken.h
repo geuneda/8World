@@ -190,6 +190,12 @@ public: //-------------체력바---------------
 
 	UPROPERTY(ReplicatedUsing = OnRep_CheckDistance)
 	bool bVisibleDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	USoundBase* hitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, category = Sound)
+	UAudioComponent* audioComp;;
 	
 	virtual void OnRep_CurHP() override;
 	UFUNCTION()

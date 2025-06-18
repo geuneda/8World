@@ -4,6 +4,7 @@
 #include "PalChickenAnimInstance.h"
 
 #include "PalChicken.h"
+#include "Components/AudioComponent.h"
 
 UPalChickenAnimInstance::UPalChickenAnimInstance()
 {
@@ -19,7 +20,8 @@ void UPalChickenAnimInstance::NativeInitializeAnimation()
 void UPalChickenAnimInstance::AnimNotify_DamageAnimEnd()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[AnimNotify_DamageAnimEnd] DamageEnd"));
-
+	
+	
 	//데미지 애니메이션 취소
 	if (this->bIsDamaged)
 	{

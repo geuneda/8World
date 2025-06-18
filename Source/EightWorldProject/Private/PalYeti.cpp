@@ -546,7 +546,10 @@ void APalYeti::HandleWildAttack(float deltaTime)
 
 		player->bTakeDamage = true;
 		//1초마다 데미지 10주기
-		GetWorldTimerManager().SetTimer(attackTimerHandle, this, &APalYeti::ApplyDamageRepeat, 1.f, true);
+		if (!GetWorldTimerManager().IsTimerActive(attackTimerHandle))
+		{
+			GetWorldTimerManager().SetTimer(attackTimerHandle, this, &APalYeti::ApplyDamageRepeat, 2.f, true);
+		}
 	}
 
 	//공격 범위 넘어가면 다시 chase 상태 전환
@@ -579,7 +582,7 @@ void APalYeti::ApplyDamageRepeat()
 	if (player->PlayerStatComp->GetHP() > 0)
 	{
 		//플레이어한테 데미지 주기
-		UGameplayStatics::ApplyDamage(player, 100.f, GetController(), this, nullptr);
+		UGameplayStatics::ApplyDamage(player, 10.f, GetController(), this, nullptr);
 	}
 }
 

@@ -12,6 +12,7 @@
 #include "PWGameInstance.h"
 #include "PWGameState.h"
 #include "PWPlayerController.h"
+#include "Components/AudioComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
@@ -60,6 +61,12 @@ APalChicken::APalChicken()
 	//UI 위젯 컴포넌트 추가
 	hpUIComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("hpUIComp"));
 	hpUIComp->SetupAttachment(GetMesh());
+
+	ConstructorHelpers::FObjectFinder<USoundBase> temphitSound(TEXT("/Game/PalWorld/Sound/chicken-talk-30453"));
+	if (temphitSound.Succeeded())
+	{
+		hitSound = temphitSound.Object;
+	}
 }
 
 void APalChicken::BeginPlay()
@@ -353,6 +360,8 @@ void APalChicken::MultiRPC_WildPlayerHitToPal_Implementation()
 {
 	ChickenAnimInstance->bIsMoving = bIsMoveToTarget;
 	ChickenAnimInstance->bIsDamaged = this->bIsDamaged;
+
+
 }
 
 void APalChicken::OnRep_Damaged()
